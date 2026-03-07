@@ -130,11 +130,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const dHour = designDate.getUTCHours()
     const dMinute = designDate.getUTCMinutes()
 
-    // Fetch both personality and design positions in parallel
-    const [personalityPositions, designPositions] = await Promise.all([
-      getPlanetaryPositions(year, month, day, hour, minute, latitude, longitude, timezone),
-      getPlanetaryPositions(dYear, dMonth, dDay, dHour, dMinute, latitude, longitude, timezone),
-    ])
+    // Fetch sequentially with delay to respect free tier rate limit (1 req/sec)
+    const personalityPositions = await getPlanetaryPositions(year, month, day, hour, minute, latitude, longitude, timezone)
+    await new Promise(resolve => setTimeout(resolve, 1100))
+    const designPositions = await getPlanetaryPositions(dYear, dMonth, dDay, dHour, dMinute, latitude, longitude, timezone)
 
     // Map to gates and lines
     const planets = ['sun', 'earth', 'moon', 'northNode', 'southNode', 'mercury', 'venus', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune', 'pluto']
