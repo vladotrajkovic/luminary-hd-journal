@@ -5,6 +5,7 @@ import { supabase } from '../../lib/supabase'
 
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Dashboard', icon: '◈' },
+  { href: '/chart', label: 'Chart Generator', icon: '✺' },
   { href: '/journal', label: 'Journal', icon: '✍' },
   { href: '/journal/new', label: 'New Entry', icon: '✦' },
   { href: '/profile', label: 'My Chart', icon: '◎' },
