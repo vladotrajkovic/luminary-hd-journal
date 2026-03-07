@@ -118,20 +118,38 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ error: 'Missing required fields' })
     }
 
+    // Use LOCAL birth time directly - the API handles timezone conversion internally
     const [year, month, day] = birthDate.split('-').map(Number)
     const [hour, minute] = birthTime ? birthTime.split(':').map(Number) : [12, 0]
 
-    // Calculate design date: 88 days + 88 minutes before birth
-    const birthMs = new Date(`${birthDate}T${birthTime || '12:00'}:00`).getTime()
-    const designMs = birthMs - (88 * 24 * 60 * 60 * 1000) - (88 * 60 * 1000)
-    const designDate = new Date(designMs)
-    const dYear = designDate.getUTCFullYear()
-    const dMonth = designDate.getUTCMonth() + 1
-    const dDay = designDate.getUTCDate()
-    const dHour = designDate.getUTCHours()
-    const dMinute = designDate.getUTCMinutes()
+    // Calculate design date: 88 days + 88 minutes before birth (in UTC)
+    // We convert local birth time to UTC just for the design date calculation
+    const localBirthStr = `${birthDate}T${birthTime || '12:00'}:00`
+    // Get UTC offset for the timezone at birth date using Intl
+    const tzFormatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: timezone,
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', hour12: false
+    })
+    const probeUTC = new Date(localBirthStr + 'Z')
+    const localStr = tzFormatter.format(probeUTC)
+    const localDate = new Date(localStr.replace(/(\d+)\/(\d+)\/(\d+),\s(\d+):(\d+)/, '$3-$1-$2T$4:$5:00Z'))
+    const offsetMs = probeUTC.getTime() - localDate.getTime()
+    // birthUTC = local time minus the offset
+    const birthUTC = new Date(probeUTC.getTime() - offsetMs)
+
+    const designUTC = new Date(birthUTC.getTime() - (88 * 24 * 60 * 60 * 1000) - (88 * 60 * 1000))
+    // Convert design UTC back to local time for the timezone (API expects local time)
+    const designLocalStr = tzFormatter.format(designUTC)
+    const designParsed = designLocalStr.match(/(\d+)\/(\d+)\/(\d+),\s(\d+):(\d+)/)
+    const dYear = parseInt(designParsed![3])
+    const dMonth = parseInt(designParsed![1])
+    const dDay = parseInt(designParsed![2])
+    const dHour = parseInt(designParsed![4])
+    const dMinute = parseInt(designParsed![5])
 
     // Fetch sequentially with delay to respect free tier rate limit (1 req/sec)
+    // Pass LOCAL times + timezone — the API does UTC conversion internally
     const personalityPositions = await getPlanetaryPositions(year, month, day, hour, minute, latitude, longitude, timezone, city || 'Unknown')
     await new Promise(resolve => setTimeout(resolve, 1100))
     const designPositions = await getPlanetaryPositions(dYear, dMonth, dDay, dHour, dMinute, latitude, longitude, timezone, city || 'Unknown')
