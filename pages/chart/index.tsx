@@ -1,5 +1,5 @@
 import Head from 'next/head'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/router'
 import Layout from '../../components/layout/Layout'
 import BodyGraph from '../../components/chart/BodyGraph'
@@ -25,15 +25,69 @@ export default function ChartGenerator() {
   const router = useRouter()
   const [birthDate, setBirthDate] = useState('')
   const [birthTime, setBirthTime] = useState('')
+  const [birthPlace, setBirthPlace] = useState('')
+  const [placeResults, setPlaceResults] = useState<any[]>([])
+  const [selectedPlace, setSelectedPlace] = useState<{ name: string; timezone: string; lat: number; lon: number } | null>(null)
+  const [searchingPlace, setSearchingPlace] = useState(false)
   const [chart, setChart] = useState<HDChart | null>(null)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [activeTab, setActiveTab] = useState<'graph' | 'activations' | 'channels'>('graph')
+  const searchTimeout = useRef<any>(null)
+
+  // Search cities using Open-Meteo geocoding (free, no API key)
+  const searchPlace = async (query: string) => {
+    if (query.length < 2) { setPlaceResults([]); return }
+    setSearchingPlace(true)
+    try {
+      const res = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=6&language=en&format=json`)
+      const data = await res.json()
+      setPlaceResults(data.results || [])
+    } catch {
+      setPlaceResults([])
+    }
+    setSearchingPlace(false)
+  }
+
+  const handlePlaceInput = (val: string) => {
+    setBirthPlace(val)
+    setSelectedPlace(null)
+    clearTimeout(searchTimeout.current)
+    searchTimeout.current = setTimeout(() => searchPlace(val), 350)
+  }
+
+  const selectPlace = (place: any) => {
+    const timezone = place.timezone || 'UTC'
+    setSelectedPlace({ name: `${place.name}, ${place.country}`, timezone, lat: place.latitude, lon: place.longitude })
+    setBirthPlace(`${place.name}, ${place.country}`)
+    setPlaceResults([])
+  }
 
   const handleCalculate = () => {
     if (!birthDate) return
-    const dateStr = birthTime ? `${birthDate}T${birthTime}:00` : `${birthDate}T12:00:00`
-    const date = new Date(dateStr)
+    let date: Date
+    if (selectedPlace && birthTime) {
+      // Convert local birth time to UTC using the location timezone
+      const dateTimeStr = `${birthDate}T${birthTime}:00`
+      // Use Intl to get the UTC offset for the timezone at the birth date/time
+      const localDate = new Date(dateTimeStr)
+      const tzFormatter = new Intl.DateTimeFormat('en-US', {
+        timeZone: selectedPlace.timezone,
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', second: '2-digit',
+        hour12: false
+      })
+      // Get UTC offset by comparing local time in that timezone vs UTC
+      const utcDate = new Date(dateTimeStr + 'Z')
+      const localInTZ = new Date(tzFormatter.format(utcDate).replace(/(\d+)\/(\d+)\/(\d+),\s/, '$3-$1-$2T') + 'Z')
+      const offsetMs = utcDate.getTime() - localInTZ.getTime()
+      date = new Date(localDate.getTime() + offsetMs)
+    } else if (birthTime) {
+      // No timezone — treat as local browser time
+      date = new Date(`${birthDate}T${birthTime}:00`)
+    } else {
+      date = new Date(`${birthDate}T12:00:00Z`)
+    }
     const result = calculateHDChart(date)
     setChart(result)
     setActiveTab('graph')
@@ -55,6 +109,7 @@ export default function ChartGenerator() {
       active_gates: chart.allGates.map(String),
       birth_date: birthDate,
       birth_time: birthTime || null,
+      birth_place: selectedPlace?.name || birthPlace || null,
     }).eq('id', session.user.id)
 
     setSaved(true)
@@ -100,7 +155,7 @@ export default function ChartGenerator() {
             </div>
             <div>
               <label style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, letterSpacing: '.1em', color: 'rgba(167,139,250,.7)', textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>
-                Birth Time (important for accuracy)
+                Birth Time
               </label>
               <input
                 type="time"
@@ -109,11 +164,68 @@ export default function ChartGenerator() {
                 onChange={e => setBirthTime(e.target.value)}
               />
             </div>
+            <div style={{ position: 'relative' }}>
+              <label style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, letterSpacing: '.1em', color: 'rgba(167,139,250,.7)', textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>
+                Birth City *
+              </label>
+              <input
+                type="text"
+                className="input-cosmic"
+                placeholder="e.g. London, New York, Tokyo"
+                value={birthPlace}
+                onChange={e => handlePlaceInput(e.target.value)}
+                autoComplete="off"
+              />
+              {/* City search dropdown */}
+              {placeResults.length > 0 && (
+                <div style={{
+                  position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 100,
+                  background: 'rgba(15,10,46,0.98)', border: '1px solid rgba(123,79,212,.4)',
+                  borderRadius: 10, marginTop: 4, overflow: 'hidden',
+                  boxShadow: '0 8px 32px rgba(0,0,0,.6)'
+                }}>
+                  {placeResults.map((place: any, i: number) => (
+                    <div
+                      key={i}
+                      onClick={() => selectPlace(place)}
+                      style={{
+                        padding: '11px 16px', cursor: 'pointer',
+                        borderBottom: i < placeResults.length - 1 ? '1px solid rgba(123,79,212,.1)' : 'none',
+                        transition: 'background .15s'
+                      }}
+                      onMouseEnter={e => (e.currentTarget.style.background = 'rgba(123,79,212,.2)')}
+                      onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                    >
+                      <div style={{ fontFamily: 'Cinzel, serif', fontSize: 13, color: '#EDE9FE' }}>
+                        {place.name}{place.admin1 ?  : ''}
+                      </div>
+                      <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(167,139,250,.5)', marginTop: 2 }}>
+                        {place.country} · {place.timezone}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {/* Selected place confirmation */}
+              {selectedPlace && (
+                <div style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ color: '#2DD4BF', fontSize: 12 }}>✓</span>
+                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(45,212,191,.8)' }}>
+                    {selectedPlace.timezone}
+                  </span>
+                </div>
+              )}
+              {searchingPlace && (
+                <div style={{ marginTop: 6, fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(167,139,250,.5)' }}>
+                  Searching...
+                </div>
+              )}
+            </div>
           </div>
 
           <div style={{ background: 'rgba(212,175,55,.07)', border: '1px solid rgba(212,175,55,.2)', borderRadius: 10, padding: '12px 18px', marginBottom: 20 }}>
             <p style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 15, color: 'rgba(212,175,55,.8)' }}>
-              ✦ Birth time significantly affects your Moon, Ascendant, and several gate activations. If unknown, use 12:00 noon for a partial chart.
+              ✦ Birth city resolves the exact timezone so your time is accurately converted to UTC for planetary calculations.
             </p>
           </div>
 
