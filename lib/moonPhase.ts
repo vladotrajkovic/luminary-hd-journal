@@ -1,15 +1,19 @@
 import { MOON_PHASES } from './hdData'
 
 /**
- * Calculates the accurate moon phase for a given date
- * using a known new moon reference date and the lunar cycle length.
- * Reference new moon: January 29, 2025 at 12:36 UTC
+ * Calculates the accurate moon phase for a given date.
+ * Uses the Full Moon on March 3, 2026 at 11:38 UTC as reference,
+ * verified against astronomy.com and moongiant.com.
  */
 export function getMoonPhase(date: Date = new Date()) {
   const LUNAR_CYCLE = 29.53058867 // days
 
-  // Known new moon reference: Jan 29, 2025 12:36 UTC
-  const knownNewMoon = new Date('2025-01-29T12:36:00Z')
+  // Known Full Moon: March 3, 2026 at 11:38 UTC (verified)
+  // Working back half a cycle gives the last New Moon
+  const knownFullMoon = new Date('2026-03-03T11:38:00Z')
+  const knownNewMoon = new Date(
+    knownFullMoon.getTime() - (LUNAR_CYCLE / 2) * 24 * 60 * 60 * 1000
+  )
 
   const daysSinceNewMoon =
     (date.getTime() - knownNewMoon.getTime()) / (1000 * 60 * 60 * 24)
@@ -25,6 +29,8 @@ export function getMoonPhase(date: Date = new Date()) {
     phase: MOON_PHASES[phaseIndex],
     phaseIndex,
     cyclePosition: Math.round(cyclePosition * 10) / 10,
-    daysInCycle: Math.round(LUNAR_CYCLE * 10) / 10,
+    illumination: Math.round(
+      ((1 - Math.cos((cyclePosition / LUNAR_CYCLE) * 2 * Math.PI)) / 2) * 100
+    ),
   }
 }
