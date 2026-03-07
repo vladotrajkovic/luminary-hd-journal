@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
-import { createClientComponentClient, createServerComponentClient } from '@supabase/auth-helpers-nextjs'
+import { createBrowserClient as createSSRBrowserClient } from '@supabase/ssr'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -8,7 +8,7 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 // Use in Client Components
-export const createBrowserClient = () => createClientComponentClient()
+export const createBrowserClient = () => createSSRBrowserClient(supabaseUrl, supabaseAnonKey)
 
 // Database types
 export type HDType = 'Manifestor' | 'Generator' | 'Manifesting Generator' | 'Projector' | 'Reflector'
