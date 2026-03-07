@@ -122,31 +122,40 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const [year, month, day] = birthDate.split('-').map(Number)
     const [hour, minute] = birthTime ? birthTime.split(':').map(Number) : [12, 0]
 
-    // Calculate design date: 88 days + 88 minutes before birth (in UTC)
-    // We convert local birth time to UTC just for the design date calculation
-    const localBirthStr = `${birthDate}T${birthTime || '12:00'}:00`
-    // Get UTC offset for the timezone at birth date using Intl
-    const tzFormatter = new Intl.DateTimeFormat('en-US', {
-      timeZone: timezone,
-      year: 'numeric', month: '2-digit', day: '2-digit',
-      hour: '2-digit', minute: '2-digit', hour12: false
-    })
-    const probeUTC = new Date(localBirthStr + 'Z')
-    const localStr = tzFormatter.format(probeUTC)
-    const localDate = new Date(localStr.replace(/(\d+)\/(\d+)\/(\d+),\s(\d+):(\d+)/, '$3-$1-$2T$4:$5:00Z'))
-    const offsetMs = probeUTC.getTime() - localDate.getTime()
-    // birthUTC = local time minus the offset
-    const birthUTC = new Date(probeUTC.getTime() - offsetMs)
+    // Get the UTC offset for the birth timezone at the birth date
+    // by comparing what the local time reads vs what UTC reads
+    const getUTCOffset = (date: Date, tz: string): number => {
+      // Format the same instant in both UTC and the target timezone
+      const utcStr = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'UTC', year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', hour12: false
+      }).format(date)
+      const localStr = new Intl.DateTimeFormat('en-CA', {
+        timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', hour12: false
+      }).format(date)
+      // Parse both as UTC dates and diff
+      const utcDate = new Date(utcStr.replace(', ', 'T') + ':00Z')
+      const localDate = new Date(localStr.replace(', ', 'T') + ':00Z')
+      return (localDate.getTime() - utcDate.getTime()) / 60000 // offset in minutes
+    }
 
+    // Convert local birth time to UTC
+    const birthLocalMs = Date.UTC(year, month - 1, day, hour, minute)
+    const birthOffsetMin = getUTCOffset(new Date(birthLocalMs), timezone)
+    const birthUTC = new Date(birthLocalMs - birthOffsetMin * 60000)
+
+    // Design = 88 days + 88 minutes before birth UTC
     const designUTC = new Date(birthUTC.getTime() - (88 * 24 * 60 * 60 * 1000) - (88 * 60 * 1000))
-    // Convert design UTC back to local time for the timezone (API expects local time)
-    const designLocalStr = tzFormatter.format(designUTC)
-    const designParsed = designLocalStr.match(/(\d+)\/(\d+)\/(\d+),\s(\d+):(\d+)/)
-    const dYear = parseInt(designParsed![3])
-    const dMonth = parseInt(designParsed![1])
-    const dDay = parseInt(designParsed![2])
-    const dHour = parseInt(designParsed![4])
-    const dMinute = parseInt(designParsed![5])
+
+    // Convert design UTC back to local time using the offset at that historical date
+    const designOffsetMin = getUTCOffset(designUTC, timezone)
+    const designLocal = new Date(designUTC.getTime() + designOffsetMin * 60000)
+    const dYear = designLocal.getUTCFullYear()
+    const dMonth = designLocal.getUTCMonth() + 1
+    const dDay = designLocal.getUTCDate()
+    const dHour = designLocal.getUTCHours()
+    const dMinute = designLocal.getUTCMinutes()
 
     // Fetch sequentially with delay to respect free tier rate limit (1 req/sec)
     // Pass LOCAL times + timezone — the API does UTC conversion internally
