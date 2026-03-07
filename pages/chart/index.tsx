@@ -197,7 +197,7 @@ export default function ChartGenerator() {
                       onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                     >
                       <div style={{ fontFamily: 'Cinzel, serif', fontSize: 13, color: '#EDE9FE' }}>
-                        {place.name}{place.admin1 ?  : ''}
+                        {place.name}{place.admin1 ? `, ${place.admin1}` : ''}
                       </div>
                       <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(167,139,250,.5)', marginTop: 2 }}>
                         {place.country} · {place.timezone}
