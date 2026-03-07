@@ -132,6 +132,7 @@ export default function ChartGenerator() {
   const [activeTab, setActiveTab] = useState<'graph' | 'activations' | 'channels'>('graph')
   const [calculating, setCalculating] = useState(false)
   const [calcError, setCalcError] = useState('')
+  const [debugInfo, setDebugInfo] = useState<any>(null)
   const searchTimeout = useRef<any>(null)
 
   // Search cities using Open-Meteo geocoding (free, no API key)
@@ -189,6 +190,7 @@ export default function ChartGenerator() {
       // Build HDChart from API activations
       const result = buildChartFromActivations(data.activations)
       setChart(result)
+      setDebugInfo(data.debug)
       setActiveTab('graph')
     } catch (err: any) {
       setCalcError(err.message || 'Failed to calculate chart. Please try again.')
@@ -333,6 +335,15 @@ export default function ChartGenerator() {
             </p>
           </div>
 
+          {debugInfo && (
+            <div style={{ background: 'rgba(45,212,191,.07)', border: '1px solid rgba(45,212,191,.2)', borderRadius: 10, padding: '12px 18px', marginBottom: 16, fontFamily: 'monospace', fontSize: 12, color: 'rgba(45,212,191,.9)' }}>
+              <div>📡 API received: {JSON.stringify(debugInfo.inputReceived)}</div>
+              <div>🌟 Sent Personality: {JSON.stringify(debugInfo.sentToAPI?.personality)}</div>
+              <div>🔴 Sent Design: {JSON.stringify(debugInfo.sentToAPI?.design)}</div>
+              <div>☉ P.Sun longitude: {debugInfo.sunLongitudes?.personality?.toFixed(4)}°</div>
+              <div>☉ D.Sun longitude: {debugInfo.sunLongitudes?.design?.toFixed(4)}°</div>
+            </div>
+          )}
           {calcError && (
             <div style={{ background: 'rgba(248,113,113,.1)', border: '1px solid rgba(248,113,113,.3)', borderRadius: 10, padding: '12px 18px', marginBottom: 16 }}>
               <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 15, color: '#F87171' }}>{calcError}</p>

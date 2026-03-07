@@ -174,6 +174,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       personalityPositions,
       designPositions,
       designDate: designUTC.toISOString(),
+      // Debug info - remove once profile is correct
+      debug: {
+        inputReceived: { birthDate, birthTime, timezone, city },
+        sentToAPI: {
+          personality: { year, month, day, hour, minute },
+          design: { dYear, dMonth, dDay, dHour, dMinute }
+        },
+        sunLongitudes: {
+          personality: personalityPositions.sun,
+          design: designPositions.sun
+        }
+      }
     })
 
   } catch (err: any) {
