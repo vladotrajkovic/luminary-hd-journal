@@ -180,6 +180,7 @@ export default function ChartGenerator() {
           latitude: selectedPlace.lat,
           longitude: selectedPlace.lon,
           timezone: selectedPlace.timezone,
+          city: selectedPlace.name,
         }),
       })
       const data = await res.json()

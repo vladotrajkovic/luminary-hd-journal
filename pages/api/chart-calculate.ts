@@ -54,6 +54,7 @@ async function getPlanetaryPositions(
       longitude,
       latitude,
       timezone,
+      city: city || 'Unknown',
     }
   }
 
@@ -111,7 +112,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const { birthDate, birthTime, latitude, longitude, timezone } = req.body
+    const { birthDate, birthTime, latitude, longitude, timezone, city } = req.body
 
     if (!birthDate || !latitude || !longitude || !timezone) {
       return res.status(400).json({ error: 'Missing required fields' })
