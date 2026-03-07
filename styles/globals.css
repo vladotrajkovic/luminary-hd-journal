@@ -1,0 +1,471 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Cinzel:wght@400;500;600&family=Inter:wght@300;400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Cosmic Color Palette */
+  --void: #03020A;
+  --deep-space: #080618;
+  --nebula: #0F0A2E;
+  --cosmic-purple: #1A0A3E;
+  --star-dust: #2D1B69;
+  --aurora: #4C2A9E;
+  --violet: #7B4FD4;
+  --lavender: #A78BFA;
+  --pale-violet: #C4B5FD;
+  --moonlight: #EDE9FE;
+  --starlight: #F5F3FF;
+  
+  /* Accent Colors */
+  --gold: #D4AF37;
+  --amber: #F59E0B;
+  --rose-gold: #E8A598;
+  --teal: #2DD4BF;
+  --cosmic-blue: #6366F1;
+  
+  /* Typography */
+  --font-display: 'Cinzel', serif;
+  --font-body: 'Cormorant Garamond', serif;
+  --font-ui: 'Inter', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--void);
+  color: var(--moonlight);
+  font-family: var(--font-body);
+  font-size: 18px;
+  line-height: 1.6;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ============================================
+   COSMIC BACKGROUND
+   ============================================ */
+.cosmic-bg {
+  background: 
+    radial-gradient(ellipse at 20% 50%, rgba(76, 42, 158, 0.15) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(99, 102, 241, 0.1) 0%, transparent 50%),
+    radial-gradient(ellipse at 60% 80%, rgba(45, 212, 191, 0.05) 0%, transparent 50%),
+    var(--void);
+}
+
+/* Stars */
+.stars {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  background-image: 
+    radial-gradient(1px 1px at 10% 15%, rgba(255,255,255,0.4) 0%, transparent 100%),
+    radial-gradient(1px 1px at 25% 45%, rgba(255,255,255,0.3) 0%, transparent 100%),
+    radial-gradient(1px 1px at 40% 25%, rgba(255,255,255,0.5) 0%, transparent 100%),
+    radial-gradient(1px 1px at 55% 65%, rgba(255,255,255,0.2) 0%, transparent 100%),
+    radial-gradient(1px 1px at 70% 10%, rgba(255,255,255,0.4) 0%, transparent 100%),
+    radial-gradient(1px 1px at 85% 35%, rgba(255,255,255,0.3) 0%, transparent 100%),
+    radial-gradient(1px 1px at 90% 75%, rgba(255,255,255,0.5) 0%, transparent 100%),
+    radial-gradient(1px 1px at 15% 85%, rgba(255,255,255,0.2) 0%, transparent 100%),
+    radial-gradient(1px 1px at 60% 50%, rgba(255,255,255,0.3) 0%, transparent 100%),
+    radial-gradient(1px 1px at 35% 90%, rgba(255,255,255,0.4) 0%, transparent 100%),
+    radial-gradient(2px 2px at 5% 5%, rgba(167, 139, 250, 0.6) 0%, transparent 100%),
+    radial-gradient(2px 2px at 95% 5%, rgba(167, 139, 250, 0.5) 0%, transparent 100%),
+    radial-gradient(2px 2px at 50% 95%, rgba(167, 139, 250, 0.4) 0%, transparent 100%);
+}
+
+/* ============================================
+   TYPOGRAPHY
+   ============================================ */
+.font-display { font-family: var(--font-display); }
+.font-body { font-family: var(--font-body); }
+.font-ui { font-family: var(--font-ui); }
+
+h1, h2, h3 {
+  font-family: var(--font-display);
+  letter-spacing: 0.05em;
+}
+
+/* ============================================
+   GLASS CARDS
+   ============================================ */
+.glass {
+  background: rgba(26, 10, 62, 0.4);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(167, 139, 250, 0.15);
+  border-radius: 16px;
+}
+
+.glass-light {
+  background: rgba(45, 27, 105, 0.3);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(167, 139, 250, 0.2);
+  border-radius: 12px;
+}
+
+.glass-hover {
+  transition: all 0.3s ease;
+}
+
+.glass-hover:hover {
+  background: rgba(45, 27, 105, 0.5);
+  border-color: rgba(167, 139, 250, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(123, 79, 212, 0.2);
+}
+
+/* ============================================
+   BUTTONS
+   ============================================ */
+.btn-cosmic {
+  background: linear-gradient(135deg, var(--aurora) 0%, var(--violet) 100%);
+  color: white;
+  border: none;
+  padding: 12px 28px;
+  border-radius: 8px;
+  font-family: var(--font-display);
+  font-size: 14px;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-cosmic::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+  transition: left 0.5s;
+}
+
+.btn-cosmic:hover::before {
+  left: 100%;
+}
+
+.btn-cosmic:hover {
+  box-shadow: 0 0 24px rgba(123, 79, 212, 0.5);
+  transform: translateY(-1px);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--lavender);
+  border: 1px solid rgba(167, 139, 250, 0.3);
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-family: var(--font-ui);
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-ghost:hover {
+  border-color: var(--lavender);
+  background: rgba(167, 139, 250, 0.1);
+}
+
+/* ============================================
+   FORM ELEMENTS
+   ============================================ */
+.input-cosmic {
+  background: rgba(15, 10, 46, 0.6);
+  border: 1px solid rgba(167, 139, 250, 0.2);
+  border-radius: 8px;
+  color: var(--moonlight);
+  padding: 12px 16px;
+  font-family: var(--font-body);
+  font-size: 16px;
+  width: 100%;
+  transition: border-color 0.3s ease;
+  outline: none;
+}
+
+.input-cosmic:focus {
+  border-color: var(--lavender);
+  box-shadow: 0 0 12px rgba(167, 139, 250, 0.15);
+}
+
+.input-cosmic::placeholder {
+  color: rgba(167, 139, 250, 0.4);
+}
+
+.textarea-cosmic {
+  background: rgba(15, 10, 46, 0.6);
+  border: 1px solid rgba(167, 139, 250, 0.2);
+  border-radius: 8px;
+  color: var(--moonlight);
+  padding: 14px 16px;
+  font-family: var(--font-body);
+  font-size: 16px;
+  width: 100%;
+  resize: vertical;
+  min-height: 120px;
+  transition: border-color 0.3s ease;
+  outline: none;
+  line-height: 1.7;
+}
+
+.textarea-cosmic:focus {
+  border-color: var(--lavender);
+  box-shadow: 0 0 12px rgba(167, 139, 250, 0.15);
+}
+
+.textarea-cosmic::placeholder {
+  color: rgba(167, 139, 250, 0.4);
+}
+
+.select-cosmic {
+  background: rgba(15, 10, 46, 0.6);
+  border: 1px solid rgba(167, 139, 250, 0.2);
+  border-radius: 8px;
+  color: var(--moonlight);
+  padding: 12px 16px;
+  font-family: var(--font-body);
+  font-size: 16px;
+  width: 100%;
+  cursor: pointer;
+  outline: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23A78BFA' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 40px;
+}
+
+.select-cosmic option {
+  background: var(--nebula);
+  color: var(--moonlight);
+}
+
+/* ============================================
+   DIVIDERS & DECORATIVE
+   ============================================ */
+.divider-cosmic {
+  border: none;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(167, 139, 250, 0.3), transparent);
+  margin: 24px 0;
+}
+
+.glyph {
+  color: var(--gold);
+  font-size: 20px;
+  opacity: 0.7;
+}
+
+/* ============================================
+   SIDEBAR
+   ============================================ */
+.sidebar {
+  width: 260px;
+  min-height: 100vh;
+  background: rgba(8, 6, 24, 0.8);
+  backdrop-filter: blur(20px);
+  border-right: 1px solid rgba(167, 139, 250, 0.1);
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 100;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  color: rgba(196, 181, 253, 0.6);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  letter-spacing: 0.05em;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  border-radius: 8px;
+  margin: 2px 8px;
+  text-transform: uppercase;
+}
+
+.nav-item:hover {
+  color: var(--pale-violet);
+  background: rgba(123, 79, 212, 0.15);
+}
+
+.nav-item.active {
+  color: var(--moonlight);
+  background: rgba(123, 79, 212, 0.25);
+  border-left: 2px solid var(--violet);
+}
+
+/* ============================================
+   ENERGY RATING
+   ============================================ */
+.energy-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 2px solid transparent;
+}
+
+/* ============================================
+   SCROLLBAR
+   ============================================ */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--deep-space);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(123, 79, 212, 0.4);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(123, 79, 212, 0.7);
+}
+
+/* ============================================
+   ANIMATIONS
+   ============================================ */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 12px rgba(123, 79, 212, 0.3); }
+  50% { box-shadow: 0 0 24px rgba(123, 79, 212, 0.6); }
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-float { animation: float 6s ease-in-out infinite; }
+.animate-pulse-glow { animation: pulse-glow 3s ease-in-out infinite; }
+.animate-twinkle { animation: twinkle 2s ease-in-out infinite; }
+.animate-fade-up { animation: fade-up 0.5s ease forwards; }
+
+/* ============================================
+   RESPONSIVE MAIN CONTENT
+   ============================================ */
+.main-content {
+  margin-left: 260px;
+  min-height: 100vh;
+  padding: 32px;
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+  }
+  .sidebar.open {
+    transform: translateX(0);
+  }
+  .main-content {
+    margin-left: 0;
+    padding: 16px;
+  }
+}
+
+/* ============================================
+   CENTER BADGES
+   ============================================ */
+.center-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-family: var(--font-ui);
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.center-defined {
+  background: rgba(123, 79, 212, 0.3);
+  border: 1px solid rgba(123, 79, 212, 0.5);
+  color: var(--pale-violet);
+}
+
+.center-open {
+  background: rgba(45, 212, 191, 0.1);
+  border: 1px solid rgba(45, 212, 191, 0.3);
+  color: #5EEAD4;
+}
+
+/* ============================================
+   GATE CARDS
+   ============================================ */
+.gate-card {
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.gate-card:hover {
+  transform: scale(1.02);
+}
+
+.gate-number {
+  font-family: var(--font-display);
+  font-size: 28px;
+  color: var(--gold);
+  opacity: 0.8;
+}
+
+/* ============================================
+   JOURNAL SECTIONS
+   ============================================ */
+.journal-section {
+  border-left: 2px solid rgba(123, 79, 212, 0.4);
+  padding-left: 20px;
+  margin-bottom: 32px;
+}
+
+.journal-section-title {
+  font-family: var(--font-display);
+  font-size: 13px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--lavender);
+  margin-bottom: 8px;
+}
+
+.prompt-text {
+  font-style: italic;
+  color: rgba(196, 181, 253, 0.5);
+  font-size: 15px;
+  margin-bottom: 10px;
+  font-family: var(--font-body);
+}
