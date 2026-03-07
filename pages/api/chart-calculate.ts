@@ -42,7 +42,7 @@ const PLANET_MAP: Record<string, string> = {
 async function getPlanetaryPositions(
   year: number, month: number, day: number,
   hour: number, minute: number,
-  latitude: number, longitude: number, timezone: string
+  latitude: number, longitude: number, timezone: string, city: string = 'Unknown'
 ): Promise<Record<string, number>> {
   const apiKey = process.env.RAPIDAPI_KEY
   if (!apiKey) throw new Error('RAPIDAPI_KEY not configured')
@@ -54,7 +54,7 @@ async function getPlanetaryPositions(
       longitude,
       latitude,
       timezone,
-      city: city || 'Unknown',
+      city,
     }
   }
 
@@ -132,9 +132,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const dMinute = designDate.getUTCMinutes()
 
     // Fetch sequentially with delay to respect free tier rate limit (1 req/sec)
-    const personalityPositions = await getPlanetaryPositions(year, month, day, hour, minute, latitude, longitude, timezone)
+    const personalityPositions = await getPlanetaryPositions(year, month, day, hour, minute, latitude, longitude, timezone, city || 'Unknown')
     await new Promise(resolve => setTimeout(resolve, 1100))
-    const designPositions = await getPlanetaryPositions(dYear, dMonth, dDay, dHour, dMinute, latitude, longitude, timezone)
+    const designPositions = await getPlanetaryPositions(dYear, dMonth, dDay, dHour, dMinute, latitude, longitude, timezone, city || 'Unknown')
 
     // Map to gates and lines
     const planets = ['sun', 'earth', 'moon', 'northNode', 'southNode', 'mercury', 'venus', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune', 'pluto']
