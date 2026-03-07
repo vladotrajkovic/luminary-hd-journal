@@ -173,7 +173,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       activations,
       personalityPositions,
       designPositions,
-      designDate: designDate.toISOString(),
+      designDate: designUTC.toISOString(),
     })
 
   } catch (err: any) {
