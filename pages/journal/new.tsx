@@ -283,7 +283,7 @@ export default function NewJournalEntry() {
               <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 20, flexWrap: 'wrap' }}>
                 {Array.from({ length: 10 }, (_, i) => i + 1).map(n => (
                   <button key={n} onClick={() => update('energy_level', n)} style={{
-                    width: 40, height: 40, borderRadius: '50%', border: 'none',
+                    width: 40, height: 40, borderRadius: '50%',
                     background: form.energy_level >= n
                       ? `hsl(${260 + n * 8}, 70%, ${40 + n * 3}%)`
                       : 'rgba(45,27,105,0.3)',
