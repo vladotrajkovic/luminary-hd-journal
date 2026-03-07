@@ -72,7 +72,7 @@ export default function Dashboard() {
                   Add your HD type, authority, profile and centers to unlock personalized prompts and guidance.
                 </p>
               </div>
-              <Link href="/profile/setup">
+              <Link href="/profile">
                 <button className="btn-cosmic">Configure My Chart →</button>
               </Link>
             </div>
