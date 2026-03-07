@@ -4,8 +4,105 @@ import { useRouter } from 'next/router'
 import Layout from '../../components/layout/Layout'
 import BodyGraph from '../../components/chart/BodyGraph'
 import { supabase } from '../../lib/supabase'
-import { calculateHDChart, HDChart } from '../../lib/hdCalculator'
+import { HDChart, ALL_CHANNELS, CENTER_GATES } from '../../lib/hdCalculator'
 import { HD_TYPES, HD_AUTHORITIES, GATES_64 } from '../../lib/hdData'
+import type { Center } from '../../lib/hdCalculator'
+
+// Build a full HDChart from API-returned planet activations
+function buildChartFromActivations(activations: any[]): HDChart {
+  const personalityGates = activations.map((a: any) => a.personality.gate)
+  const designGates = activations.map((a: any) => a.design.gate)
+  const allGates = Array.from(new Set([...personalityGates, ...designGates]))
+
+  // Find active channels (both gates present)
+  const activeChannels = ALL_CHANNELS.filter(ch =>
+    allGates.includes(ch.gates[0]) && allGates.includes(ch.gates[1])
+  )
+
+  // Defined centers: any center with a complete channel
+  const definedSet = new Set<Center>()
+  for (const ch of activeChannels) {
+    definedSet.add(ch.centers[0])
+    definedSet.add(ch.centers[1])
+  }
+  const definedCenters = Array.from(definedSet)
+  const allCenters: Center[] = ['Head','Ajna','Throat','G','Heart','Sacral','SolarPlexus','Spleen','Root']
+  const openCenters = allCenters.filter(c => !definedCenters.includes(c))
+
+  // Type
+  const hasSacral = definedCenters.includes('Sacral')
+  const hasThroat = definedCenters.includes('Throat')
+  const motorToThroat = (
+    (definedCenters.includes('Heart') && hasThroat) ||
+    (definedCenters.includes('SolarPlexus') && hasThroat) ||
+    (definedCenters.includes('Root') && hasThroat) ||
+    (hasSacral && hasThroat)
+  )
+  let type = 'Projector'
+  if (definedCenters.length === 0) type = 'Reflector'
+  else if (hasSacral && hasThroat && motorToThroat) type = 'Manifesting Generator'
+  else if (hasSacral) type = 'Generator'
+  else if (!hasSacral && hasThroat && motorToThroat) type = 'Manifestor'
+
+  // Authority
+  let authority = 'Mental/Environment'
+  if (type === 'Reflector') authority = 'Lunar'
+  else if (definedCenters.includes('SolarPlexus')) authority = 'Emotional/Solar Plexus'
+  else if (definedCenters.includes('Sacral')) authority = 'Sacral'
+  else if (definedCenters.includes('Spleen')) authority = 'Splenic'
+  else if (definedCenters.includes('Heart')) authority = 'Ego/Heart'
+  else if (definedCenters.includes('G')) authority = 'G Center/Self'
+
+  // Profile
+  const sunAct = activations.find((a: any) => a.planet === 'sun')
+  const profile = sunAct ? `${sunAct.personality.line}/${sunAct.design.line}` : '?/?'
+
+  // Definition
+  const visited = new Set<string>()
+  let components = 0
+  const graph: Record<string, Set<string>> = {}
+  definedCenters.forEach(c => { graph[c] = new Set() })
+  activeChannels.forEach(ch => {
+    const [c1, c2] = ch.centers
+    if (definedCenters.includes(c1) && definedCenters.includes(c2)) {
+      graph[c1]?.add(c2); graph[c2]?.add(c1)
+    }
+  })
+  definedCenters.forEach(c => {
+    if (!visited.has(c)) {
+      components++
+      const q = [c]
+      while (q.length) {
+        const n = q.shift()!
+        if (visited.has(n)) continue
+        visited.add(n)
+        graph[n]?.forEach(nb => { if (!visited.has(nb)) q.push(nb) })
+      }
+    }
+  })
+  const definition = ['','Single','Split','Triple Split','Quadruple Split'][Math.min(components, 4)] || 'Single'
+
+  const sunPos = sunAct?.personality
+  const earthAct = activations.find((a: any) => a.planet === 'earth')
+  const dSun = sunAct?.design
+  const dEarth = earthAct?.design
+  const incarnationCross = `Cross of Gates ${sunPos?.gate ?? '?'}/${earthAct?.personality?.gate ?? '?'} | ${dSun?.gate ?? '?'}/${dEarth?.gate ?? '?'}`
+
+  return {
+    type, authority, profile, definition, incarnationCross,
+    personalityActivations: activations,
+    allPersonalityGates: personalityGates,
+    allDesignGates: designGates,
+    allGates,
+    activeChannels,
+    definedCenters,
+    openCenters,
+    birthJD: 0,
+    designJD: 0,
+    sunLongitudePersonality: sunAct?.personality?.longitude ?? 0,
+    sunLongitudeDesign: sunAct?.design?.longitude ?? 0,
+  }
+}
 
 const PLANET_SYMBOLS: Record<string, string> = {
   sun: '☉', earth: '⊕', moon: '☽', northNode: '☊', southNode: '☋',
@@ -33,6 +130,8 @@ export default function ChartGenerator() {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [activeTab, setActiveTab] = useState<'graph' | 'activations' | 'channels'>('graph')
+  const [calculating, setCalculating] = useState(false)
+  const [calcError, setCalcError] = useState('')
   const searchTimeout = useRef<any>(null)
 
   // Search cities using Open-Meteo geocoding (free, no API key)
@@ -63,34 +162,38 @@ export default function ChartGenerator() {
     setPlaceResults([])
   }
 
-  const handleCalculate = () => {
+  const handleCalculate = async () => {
     if (!birthDate) return
-    let date: Date
-    if (selectedPlace && birthTime) {
-      // Convert local birth time to UTC using the location timezone
-      const dateTimeStr = `${birthDate}T${birthTime}:00`
-      // Use Intl to get the UTC offset for the timezone at the birth date/time
-      const localDate = new Date(dateTimeStr)
-      const tzFormatter = new Intl.DateTimeFormat('en-US', {
-        timeZone: selectedPlace.timezone,
-        year: 'numeric', month: '2-digit', day: '2-digit',
-        hour: '2-digit', minute: '2-digit', second: '2-digit',
-        hour12: false
-      })
-      // Get UTC offset by comparing local time in that timezone vs UTC
-      const utcDate = new Date(dateTimeStr + 'Z')
-      const localInTZ = new Date(tzFormatter.format(utcDate).replace(/(\d+)\/(\d+)\/(\d+),\s/, '$3-$1-$2T') + 'Z')
-      const offsetMs = utcDate.getTime() - localInTZ.getTime()
-      date = new Date(localDate.getTime() + offsetMs)
-    } else if (birthTime) {
-      // No timezone — treat as local browser time
-      date = new Date(`${birthDate}T${birthTime}:00`)
-    } else {
-      date = new Date(`${birthDate}T12:00:00Z`)
+    if (!selectedPlace) {
+      setCalcError('Please select a birth city from the dropdown to ensure accurate timezone calculation.')
+      return
     }
-    const result = calculateHDChart(date)
-    setChart(result)
-    setActiveTab('graph')
+    setCalculating(true)
+    setCalcError('')
+    try {
+      const res = await fetch('/api/chart-calculate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          birthDate,
+          birthTime: birthTime || '12:00',
+          latitude: selectedPlace.lat,
+          longitude: selectedPlace.lon,
+          timezone: selectedPlace.timezone,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Calculation failed')
+
+      // Build HDChart from API activations
+      const result = buildChartFromActivations(data.activations)
+      setChart(result)
+      setActiveTab('graph')
+    } catch (err: any) {
+      setCalcError(err.message || 'Failed to calculate chart. Please try again.')
+    } finally {
+      setCalculating(false)
+    }
   }
 
   const handleSaveToProfile = async () => {
@@ -229,13 +332,18 @@ export default function ChartGenerator() {
             </p>
           </div>
 
+          {calcError && (
+            <div style={{ background: 'rgba(248,113,113,.1)', border: '1px solid rgba(248,113,113,.3)', borderRadius: 10, padding: '12px 18px', marginBottom: 16 }}>
+              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 15, color: '#F87171' }}>{calcError}</p>
+            </div>
+          )}
           <button
             className="btn-cosmic"
             onClick={handleCalculate}
-            disabled={!birthDate}
-            style={{ fontSize: 13, padding: '13px 32px', opacity: birthDate ? 1 : 0.5 }}
+            disabled={!birthDate || calculating}
+            style={{ fontSize: 13, padding: '13px 32px', opacity: (birthDate && !calculating) ? 1 : 0.5 }}
           >
-            ✦ Calculate My Chart
+            {calculating ? '✦ Calculating...' : '✦ Calculate My Chart'}
           </button>
         </div>
 
