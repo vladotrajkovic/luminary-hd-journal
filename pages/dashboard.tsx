@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { supabase } from '../lib/supabase'
 import Layout from '../components/layout/Layout'
 import { HD_TYPES, HD_AUTHORITIES, GATES_64, MOON_PHASES } from '../lib/hdData'
+import { getMoonPhase } from '../lib/moonPhase'
 import { format } from 'date-fns'
 
 export default function Dashboard() {
@@ -16,8 +17,7 @@ export default function Dashboard() {
   const todayStr = format(today, 'yyyy-MM-dd')
   const dayOfYear = Math.floor((today.getTime() - new Date(today.getFullYear(), 0, 0).getTime()) / 86400000)
   const gateOfDay = String((dayOfYear % 64) + 1)
-  const moonPhaseIndex = Math.floor((today.getDate() / 29.5) * 8) % 8
-  const moonPhase = MOON_PHASES[moonPhaseIndex]
+  const { phase: moonPhase } = getMoonPhase(today)
 
   useEffect(() => {
     const load = async () => {

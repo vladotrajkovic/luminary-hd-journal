@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import Layout from '../../components/layout/Layout'
 import { supabase } from '../../lib/supabase'
 import { MOON_PHASES, GATES_64 } from '../../lib/hdData'
+import { getMoonPhase } from '../../lib/moonPhase'
 import { format } from 'date-fns'
 
 export default function Transits() {
@@ -12,8 +13,7 @@ export default function Transits() {
 
   const today = new Date()
   const todayStr = format(today, 'yyyy-MM-dd')
-  const moonPhaseIndex = Math.floor((today.getDate() / 29.5) * 8) % 8
-  const currentMoon = MOON_PHASES[moonPhaseIndex]
+  const { phase: currentMoon, phaseIndex: moonPhaseIndex } = getMoonPhase(today)
   const dayOfYear = Math.floor((today.getTime() - new Date(today.getFullYear(), 0, 0).getTime()) / 86400000)
   const gateOfDay = String((dayOfYear % 64) + 1)
 

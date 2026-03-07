@@ -4,6 +4,7 @@ import { useRouter } from 'next/router'
 import Layout from '../../components/layout/Layout'
 import { supabase } from '../../lib/supabase'
 import { HD_TYPES, HD_AUTHORITIES, DECONDITIONING_PROMPTS, GATES_64, MOON_PHASES } from '../../lib/hdData'
+import { getMoonPhase } from '../../lib/moonPhase'
 import { format } from 'date-fns'
 
 const MOOD_OPTIONS = [
