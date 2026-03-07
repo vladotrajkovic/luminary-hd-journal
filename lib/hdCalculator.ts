@@ -402,7 +402,7 @@ function determineDefinition(activeChannels: Channel[], definedCenters: Center[]
         const node = queue.shift()!
         if (visited.has(node)) continue
         visited.add(node)
-        centerGraph[node]?.forEach(n => { if (!visited.has(n)) queue.push(n) })
+        centerGraph[node]?.forEach(n => { if (!visited.has(n)) queue.push(n as Center) })
       }
     }
   })
