@@ -4,9 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "node scripts/download-ephe.js && next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "build:local": "next build"
   },
   "dependencies": {
     "next": "^15.1.0",
