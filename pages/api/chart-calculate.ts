@@ -1,7 +1,5 @@
 /**
- * /api/chart-calculate
- * Computes planetary positions using the real Swiss Ephemeris (swisseph npm).
- * Requires Railway or any real Node.js server — will NOT work on Vercel.
+ * /api/chart-calculate — Swiss Ephemeris via swisseph-v2 (synchronous API)
  */
 
 import type { NextApiRequest, NextApiResponse } from 'next'
@@ -51,7 +49,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     const birthOffsetMin = getUTCOffset(new Date(birthLocalMs), timezone)
     const birthUTC       = new Date(birthLocalMs - birthOffsetMin * 60000)
 
-    // Design = 91 calendar days before birth (Jovian Archive validated)
+    // Design = 91 calendar days before birth
     const designUTC = new Date(birthUTC.getTime() - 91 * 24 * 60 * 60 * 1000)
 
     const pJD = dateToJD(
@@ -63,8 +61,12 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
       designUTC.getUTCHours(), designUTC.getUTCMinutes()
     )
 
+    console.log(`📡 pJD=${pJD.toFixed(4)} dJD=${dJD.toFixed(4)}`)
+
     const pPos = computeAllPlanets(pJD)
     const dPos = computeAllPlanets(dJD)
+
+    console.log(`☉ P.Sun=${pPos.sun.toFixed(4)}° D.Sun=${dPos.sun.toFixed(4)}°`)
 
     const planets: (keyof PlanetPositions)[] = [
       'sun', 'earth', 'moon', 'northNode', 'southNode',
@@ -83,7 +85,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
       personalityPositions: pPos,
       designPositions: dPos,
       designDate: designUTC.toISOString(),
-      engine: 'swisseph',
+      engine: 'swisseph-v2',
       debug: {
         birthUTC:    birthUTC.toISOString(),
         designUTC:   designUTC.toISOString(),
