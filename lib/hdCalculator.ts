@@ -445,7 +445,9 @@ const CROSS_NAMES: Record<string, string> = {
 
 export function getIncarnationCross(pSunGate: number, pEarthGate: number, dSunGate: number, dEarthGate: number): string {
   const key = `${pSunGate}/${pEarthGate}/${dSunGate}/${dEarthGate}`
-  return CROSS_NAMES[key] || `Cross of Gates ${pSunGate}/${pEarthGate} | ${dSunGate}/${dEarthGate}`
+  const gates = `(${pSunGate}/${pEarthGate} | ${dSunGate}/${dEarthGate})`
+  const name = CROSS_NAMES[key]
+  return name ? `${name} ${gates}` : `Cross of Gates ${gates}`
 }
 
 // ── EARTH GATE (opposite of Sun) ───────────────────────────
