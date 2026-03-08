@@ -1,10 +1,10 @@
 /**
  * lib/swissEph.ts
- * Planetary positions using the swisseph npm package — real Swiss Ephemeris.
- * Same engine used by Jovian Archive. Requires a real Node.js server (Railway).
+ * Planetary positions using swisseph-v2 — real Swiss Ephemeris.
+ * swisseph-v2 is synchronous and returns { longitude, latitude, distance, ... }
+ * Uses SEFLG_MOSEPH (Moshier) — no ephemeris files needed, accuracy ~1 arcmin.
  */
 
-// swisseph is a native C extension — works on Railway, not on Vercel serverless
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const swe = require('swisseph-v2')
 
@@ -32,19 +32,34 @@ export function dateToJD(
   year: number, month: number, day: number,
   hour: number, minute: number
 ): number {
-  // swe_julday returns a plain number
-  return swe.swe_julday(year, month, day, hour + minute / 60, swe.SE_GREG_CAL)
+  // swe_utc_to_jd returns { julianDayUT, julianDayET } in swisseph-v2
+  const result = swe.swe_utc_to_jd(year, month, day, hour, minute, 0, swe.SE_GREG_CAL)
+  if (result && typeof result.julianDayUT === 'number') {
+    return result.julianDayUT
+  }
+  // Fallback: swe_julday (may be synchronous in v2)
+  const jd = swe.swe_julday(year, month, day, hour + minute / 60, swe.SE_GREG_CAL)
+  return typeof jd === 'number' ? jd : 0
 }
 
 function calcPlanet(jd: number, planetId: number): number {
-  // SEFLG_SWIEPH (2) = use Swiss Ephemeris built-in data
-  const result = swe.swe_calc_ut(jd, planetId, swe.SEFLG_SWIEPH)
-  if (result.error) {
-    // Fallback to Moshier — no ephemeris files needed, slightly less accurate
-    const fallback = swe.swe_calc_ut(jd, planetId, swe.SEFLG_MOSEPH)
-    return Array.isArray(fallback.data) ? fallback.data[0] : 0
+  // SEFLG_MOSEPH = Moshier ephemeris, no files needed, ~1 arcmin accuracy
+  const flag = swe.SEFLG_SPEED | swe.SEFLG_MOSEPH
+  const result = swe.swe_calc_ut(jd, planetId, flag)
+
+  // swisseph-v2 returns { longitude, latitude, distance, longitudeSpeed, ... }
+  if (result && typeof result.longitude === 'number') {
+    return result.longitude
   }
-  return Array.isArray(result.data) ? result.data[0] : 0
+  // Some builds return array-like
+  if (result && Array.isArray(result) && typeof result[0] === 'number') {
+    return result[0]
+  }
+  // Fallback: try .data property (older builds)
+  if (result && result.data && typeof result.data[0] === 'number') {
+    return result.data[0]
+  }
+  return 0
 }
 
 export function computeAllPlanets(jd: number): PlanetPositions {
