@@ -271,7 +271,7 @@ export function longitudeToGateAndLine(longitude: number): Activation {
 // ── ALL 36 CHANNELS ────────────────────────────────────────
 export const ALL_CHANNELS: Channel[] = [
   // Circuit: Integration
-  { gates: [57, 10], centers: ['Spleen', 'G'],        name: 'The Channel of Perfected Form',    type: 'Integration' },
+  { gates: [57, 10], centers: ['Spleen', 'G'],        name: 'The Channel of Survival',           type: 'Integration' },
   { gates: [34, 57], centers: ['Sacral', 'Spleen'],   name: 'The Channel of Power',              type: 'Integration' },
   { gates: [10, 20], centers: ['G', 'Throat'],        name: 'The Channel of Awakening',          type: 'Integration' },
   { gates: [34, 20], centers: ['Sacral', 'Throat'],   name: 'The Channel of Charisma',           type: 'Integration' },
@@ -304,7 +304,7 @@ export const ALL_CHANNELS: Channel[] = [
   { gates: [27, 50], centers: ['Sacral', 'Spleen'],   name: 'The Channel of Preservation',       type: 'Tribal' },
   { gates: [19, 49], centers: ['Root', 'SolarPlexus'], name: 'The Channel of Synthesis',         type: 'Tribal' },
   { gates: [32, 54], centers: ['Spleen', 'Root'],     name: 'The Channel of Transformation',     type: 'Tribal' },
-  { gates: [26, 44], centers: ['Heart', 'Spleen'],    name: 'The Channel of Surrender',          type: 'Tribal' },
+  { gates: [26, 44], centers: ['Heart', 'Spleen'],    name: 'The Channel of Enterprise',         type: 'Tribal' },
 
   // Circuit: Individual
   { gates: [28, 38], centers: ['Spleen', 'Root'],     name: 'The Channel of Struggle',           type: 'Individual' },
