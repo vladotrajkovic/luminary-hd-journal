@@ -133,6 +133,7 @@ export default function ChartGenerator() {
   const [calculating, setCalculating] = useState(false)
   const [calcError, setCalcError] = useState('')
   const [debugInfo, setDebugInfo] = useState<any>(null)
+  const [profileOverride, setProfileOverride] = useState('')
   const searchTimeout = useRef<any>(null)
 
   // Search cities using Open-Meteo geocoding (free, no API key)
@@ -208,7 +209,7 @@ export default function ChartGenerator() {
     await supabase.from('profiles').update({
       hd_type: chart.type,
       hd_authority: chart.authority,
-      hd_profile: chart.profile,
+      hd_profile: profileOverride || chart.profile,
       hd_definition: chart.definition,
       hd_incarnation_cross: chart.incarnationCross,
       defined_centers: chart.definedCenters,
@@ -407,6 +408,23 @@ export default function ChartGenerator() {
                     </div>
                   </div>
                 ))}
+              </div>
+
+              {/* Profile Override */}
+              <div style={{ marginTop: 16, background: 'rgba(212,175,55,.05)', border: '1px solid rgba(212,175,55,.15)', borderRadius: 10, padding: '14px 20px' }}>
+                <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, letterSpacing: '.1em', color: 'rgba(212,175,55,.6)', textTransform: 'uppercase', marginBottom: 8 }}>
+                  Profile Override (optional)
+                </div>
+                <p style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 13, color: 'rgba(196,181,253,.5)', marginBottom: 10 }}>
+                  If you know your profile from another source, enter it here to override the calculated value when saving (e.g. "2/4").
+                </p>
+                <input
+                  type="text"
+                  placeholder={`Calculated: ${chart.profile}`}
+                  value={profileOverride}
+                  onChange={e => setProfileOverride(e.target.value)}
+                  style={{ background: 'rgba(30,20,60,.5)', border: '1px solid rgba(212,175,55,.25)', borderRadius: 8, padding: '8px 14px', color: '#EDE9FE', fontFamily: 'Cinzel, serif', fontSize: 14, width: '120px' }}
+                />
               </div>
 
               {/* Incarnation Cross */}

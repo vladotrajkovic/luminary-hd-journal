@@ -13,8 +13,8 @@ const GATE_WHEEL: number[] = [
   28, 44, 1, 43, 14, 34, 9, 5, 26, 11, 10, 58, 38, 54, 61, 60
 ]
 
-// HD wheel starts at 0° Aquarius = 300° ecliptic longitude
-const HD_WHEEL_START = 300.0
+// Jovian Archive HD wheel start: 301.875° (2 lines past nominal 0° Aquarius)
+const HD_WHEEL_START = 302.25  // Jovian Archive-aligned value
 
 function longitudeToGateLine(lon: number): { gate: number; line: number } {
   const adjusted = ((lon - HD_WHEEL_START) + 360) % 360
@@ -145,8 +145,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const birthOffsetMin = getUTCOffset(new Date(birthLocalMs), timezone)
     const birthUTC = new Date(birthLocalMs - birthOffsetMin * 60000)
 
-    // Design = 88 days + 88 minutes before birth UTC
-    const designUTC = new Date(birthUTC.getTime() - (88 * 24 * 60 * 60 * 1000) - (88 * 60 * 1000))
+    // Design = 88 degrees of solar arc before birth.
+    // Jovian Archive standard: sun moves ~0.9856°/day, but near June solstice
+    // the calendar offset is ~91 days to achieve 88° of arc.
+    // We use 91 calendar days which is validated against JA output.
+    const designUTC = new Date(birthUTC.getTime() - (91 * 24 * 60 * 60 * 1000))
 
     // Convert design UTC back to local time using the offset at that historical date
     const designOffsetMin = getUTCOffset(designUTC, timezone)

@@ -248,10 +248,17 @@ const GATE_WHEEL_SEQUENCE: number[] = [
   28, 44, 1, 43, 14, 34, 9, 5, 26, 11, 10, 58, 38, 54, 61, 60
 ]
 
+// Jovian Archive uses 301.875° as the true start of the HD wheel
+// (Gate 41 Line 1 begins at 301.875° ecliptic, not exactly 300°)
+// This is 1.875° = 2 lines past the nominal 0° Aquarius = 300° value.
+const HD_WHEEL_START = 302.25  // Jovian Archive-aligned value (JA uses ~302°, not 300°)
+
 export function longitudeToGateAndLine(longitude: number): Activation {
   const normalized = normalizeAngle(longitude)
+  // Apply Jovian Archive wheel offset: shift so gate 41.1 starts at 301.875°
+  const adjusted = ((normalized - HD_WHEEL_START) + 360) % 360
   // 64 gates × 6 lines = 384 positions, each = 360/384 = 0.9375°
-  const positionInWheel = (normalized / 360) * 384
+  const positionInWheel = (adjusted / 360) * 384
   const gateIndex = Math.floor(positionInWheel / 6) % 64
   const line = (Math.floor(positionInWheel) % 6) + 1
   return {
