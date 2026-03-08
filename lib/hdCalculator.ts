@@ -312,7 +312,7 @@ export const ALL_CHANNELS: Channel[] = [
   { gates: [39, 55], centers: ['Root', 'SolarPlexus'], name: 'The Channel of Emoting',            type: 'Individual' },
   { gates: [12, 22], centers: ['Throat', 'SolarPlexus'], name: 'The Channel of Openness',        type: 'Individual' },
   { gates: [20, 57], centers: ['Throat', 'Spleen'],   name: 'The Channel of The Brainwave',      type: 'Individual' },
-  { gates: [10, 57], centers: ['G', 'Spleen'],        name: 'The Channel of Perfected Form',     type: 'Individual' },
+  // Note: Channel 10-57 = same as 57-10 above (listed in Integration, also called "Survival" in Individual)
   { gates: [14, 2],  centers: ['Sacral', 'G'],        name: 'The Channel of The Beat',           type: 'Individual' },
   { gates: [29, 46], centers: ['Sacral', 'G'],        name: 'The Channel of Discovery',          type: 'Individual' },
   { gates: [3, 60],  centers: ['Sacral', 'Root'],     name: 'The Channel of Mutation',           type: 'Individual' },

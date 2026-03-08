@@ -86,10 +86,16 @@ async function getPlanetaryPositions(
   // Map each planet
   for (const [ourName, apiName] of Object.entries(PLANET_MAP)) {
     // Planets are in subject as lowercase keys
-    const key = apiName.toLowerCase()
-    const planetData = subject[key]
-    if (planetData && typeof planetData.abs_pos === 'number') {
-      planets[ourName] = planetData.abs_pos
+    // North Node: try multiple possible API key names
+    const keysToTry = ourName === 'northNode'
+      ? ['mean_node', 'true_node', 'north_node', 'meannode', 'node']
+      : [apiName.toLowerCase()]
+    for (const key of keysToTry) {
+      const planetData = subject[key]
+      if (planetData && typeof planetData.abs_pos === 'number') {
+        planets[ourName] = planetData.abs_pos
+        break
+      }
     }
   }
 
@@ -196,6 +202,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         sunLongitudes: {
           personality: personalityPositions.sun,
           design: designPositions.sun
+        },
+        nodePositions: {
+          personalityNorthNode: personalityPositions.northNode,
+          personalitySouthNode: personalityPositions.southNode,
+          designNorthNode: designPositions.northNode,
+          designSouthNode: designPositions.southNode
+        },
+        mercuryPositions: {
+          personalityMercury: personalityPositions.mercury,
+          designMercury: designPositions.mercury
+        },
+        saturnPositions: {
+          personalitySaturn: personalityPositions.saturn,
+          designSaturn: designPositions.saturn
         }
       }
     })
