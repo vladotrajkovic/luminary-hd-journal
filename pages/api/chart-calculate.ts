@@ -35,7 +35,7 @@ function getUTCOffset(date: Date, tz: string): number {
   return (localDate.getTime() - utcDate.getTime()) / 60000
 }
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+export default function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
   }
@@ -70,10 +70,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     )
 
     // Compute both moments in parallel
-    const [pPos, dPos] = await Promise.all([
-      computeAllPlanets(pJD),
-      computeAllPlanets(dJD),
-    ])
+    const pPos = computeAllPlanets(pJD)
+    const dPos = computeAllPlanets(dJD)
 
     const planets: (keyof PlanetPositions)[] = [
       'sun', 'earth', 'moon', 'northNode', 'southNode',
@@ -92,7 +90,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       personalityPositions: pPos,
       designPositions: dPos,
       designDate: designUTC.toISOString(),
-      engine: 'sweph-wasm',
+      engine: 'vsop87-builtin',
       debug: {
         birthUTC:    birthUTC.toISOString(),
         designUTC:   designUTC.toISOString(),
