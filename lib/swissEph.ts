@@ -1,12 +1,10 @@
 /**
  * lib/swissEph.ts
- * Planetary positions using the sweph npm package (real Swiss Ephemeris).
- * Same engine used by Jovian Archive. No external API needed.
+ * Planetary positions using sweph-wasm (Swiss Ephemeris via WebAssembly).
+ * No C compilation needed — works on Vercel out of the box.
  */
 
-import * as sweph from 'sweph'
-
-// ── TYPES ─────────────────────────────────────────────────────────────────────
+import SwissEPH from 'sweph-wasm'
 
 export interface PlanetPositions {
   sun:       number
@@ -24,45 +22,52 @@ export interface PlanetPositions {
   pluto:     number
 }
 
-// ── JULIAN DAY ────────────────────────────────────────────────────────────────
-
-export function dateToJD(
-  year: number, month: number, day: number,
-  hour: number, minute: number
-): number {
-  return sweph.julday(year, month, day, hour + minute / 60, sweph.constants.SE_GREG_CAL)
+// Singleton — initialise once per cold start
+let sweInstance: Awaited<ReturnType<typeof SwissEPH.init>> | null = null
+async function getSwe() {
+  if (!sweInstance) sweInstance = await SwissEPH.init()
+  return sweInstance
 }
-
-// ── COMPUTE ALL PLANETS ───────────────────────────────────────────────────────
 
 function norm360(d: number): number {
   return ((d % 360) + 360) % 360
 }
 
-function calcPlanet(jd: number, planetId: number): number {
-  const result = sweph.calc_ut(jd, planetId, sweph.constants.SEFLG_SWIEPH)
-  if ('error' in result) {
-    // fallback to Moshier (no ephemeris files needed)
-    const fallback = sweph.calc_ut(jd, planetId, sweph.constants.SEFLG_MOSEPH)
-    return 'longitude' in fallback ? fallback.longitude : 0
-  }
-  return result.longitude
+export function dateToJD(
+  year: number, month: number, day: number,
+  hour: number, minute: number
+): number {
+  // Julian Day calculation (pure math, no library needed)
+  if (month <= 2) { year -= 1; month += 12 }
+  const A = Math.floor(year / 100)
+  const B = 2 - A + Math.floor(A / 4)
+  return Math.floor(365.25 * (year + 4716))
+       + Math.floor(30.6001 * (month + 1))
+       + day + (hour + minute / 60) / 24
+       + B - 1524.5
 }
 
-export function computeAllPlanets(jd: number): PlanetPositions {
-  const SE = sweph.constants
+export async function computeAllPlanets(jd: number): Promise<PlanetPositions> {
+  const swe = await getSwe()
 
-  const sun       = calcPlanet(jd, SE.SE_SUN)
-  const moon      = calcPlanet(jd, SE.SE_MOON)
-  const mercury   = calcPlanet(jd, SE.SE_MERCURY)
-  const venus     = calcPlanet(jd, SE.SE_VENUS)
-  const mars      = calcPlanet(jd, SE.SE_MARS)
-  const jupiter   = calcPlanet(jd, SE.SE_JUPITER)
-  const saturn    = calcPlanet(jd, SE.SE_SATURN)
-  const uranus    = calcPlanet(jd, SE.SE_URANUS)
-  const neptune   = calcPlanet(jd, SE.SE_NEPTUNE)
-  const pluto     = calcPlanet(jd, SE.SE_PLUTO)
-  const northNode = calcPlanet(jd, SE.SE_MEAN_NODE)
+  // Planet IDs: 0=Sun, 1=Moon, 2=Mercury, 3=Venus, 4=Mars,
+  //             5=Jupiter, 6=Saturn, 7=Uranus, 8=Neptune, 9=Pluto, 10=MeanNode
+  function calc(planetId: number): number {
+    const result = swe.swe_calc_ut(jd, planetId, 0)
+    return result[0] // longitude in degrees
+  }
+
+  const sun       = calc(0)
+  const moon      = calc(1)
+  const mercury   = calc(2)
+  const venus     = calc(3)
+  const mars      = calc(4)
+  const jupiter   = calc(5)
+  const saturn    = calc(6)
+  const uranus    = calc(7)
+  const neptune   = calc(8)
+  const pluto     = calc(9)
+  const northNode = calc(10)
 
   return {
     sun,
