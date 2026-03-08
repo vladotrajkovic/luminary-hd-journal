@@ -18,8 +18,7 @@
     "framer-motion": "^11.1.9",
     "lucide-react": "^0.378.0",
     "react-hook-form": "^7.51.4",
-    "zustand": "^4.5.2",
-    "sweph-wasm": "latest"
+    "zustand": "^4.5.2"
   },
   "devDependencies": {
     "@types/node": "^20",
