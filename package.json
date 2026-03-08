@@ -19,7 +19,7 @@
     "lucide-react": "^0.378.0",
     "react-hook-form": "^7.51.4",
     "zustand": "^4.5.2",
-    "swisseph": "^2.10.3"
+    "sweph": "^2.10.3"
   },
   "devDependencies": {
     "@types/node": "^20",
