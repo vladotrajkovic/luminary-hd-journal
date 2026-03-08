@@ -422,17 +422,28 @@ function determineDefinition(activeChannels: Channel[], definedCenters: Center[]
 // ── INCARNATION CROSS ──────────────────────────────────────
 // Based on Sun/Earth gates in Personality and Design
 const CROSS_NAMES: Record<string, string> = {
-  '1/2/4/3': 'Right Angle Cross of the Sphinx',
-  '2/1/3/4': 'Right Angle Cross of the Sphinx',
-  '13/7/43/23': 'Right Angle Cross of the Vessel of Love',
-  '7/13/23/43': 'Right Angle Cross of the Vessel of Love',
+  // Right Angle Crosses
+  '1/2/4/3':     'Right Angle Cross of the Sphinx',
+  '2/1/3/4':     'Right Angle Cross of the Sphinx',
+  '4/3/1/2':     'Right Angle Cross of the Sphinx',
+  '3/4/2/1':     'Right Angle Cross of the Sphinx',
+  '13/7/43/23':  'Right Angle Cross of the Vessel of Love',
+  '7/13/23/43':  'Right Angle Cross of the Vessel of Love',
+  '43/23/13/7':  'Right Angle Cross of the Vessel of Love',
+  '23/43/7/13':  'Right Angle Cross of the Vessel of Love',
+  '15/10/25/46': 'Right Angle Cross of the Vessel of Love', // Vladimir confirmed by JA
+  '10/15/46/25': 'Right Angle Cross of the Vessel of Love',
+  '25/46/15/10': 'Right Angle Cross of the Vessel of Love',
+  '46/25/10/15': 'Right Angle Cross of the Vessel of Love',
   '25/46/10/15': 'Right Angle Cross of the Sleeping Phoenix',
   '46/25/15/10': 'Right Angle Cross of the Sleeping Phoenix',
   '29/30/20/34': 'Right Angle Cross of the Unexpected',
   '30/29/34/20': 'Right Angle Cross of the Unexpected',
+  '20/34/29/30': 'Right Angle Cross of the Unexpected',
+  '34/20/30/29': 'Right Angle Cross of the Unexpected',
 }
 
-function getIncarnationCross(pSunGate: number, pEarthGate: number, dSunGate: number, dEarthGate: number): string {
+export function getIncarnationCross(pSunGate: number, pEarthGate: number, dSunGate: number, dEarthGate: number): string {
   const key = `${pSunGate}/${pEarthGate}/${dSunGate}/${dEarthGate}`
   return CROSS_NAMES[key] || `Cross of Gates ${pSunGate}/${pEarthGate} | ${dSunGate}/${dEarthGate}`
 }

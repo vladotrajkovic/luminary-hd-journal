@@ -4,7 +4,7 @@ import { useRouter } from 'next/router'
 import Layout from '../../components/layout/Layout'
 import BodyGraph from '../../components/chart/BodyGraph'
 import { supabase } from '../../lib/supabase'
-import { HDChart, ALL_CHANNELS, CENTER_GATES } from '../../lib/hdCalculator'
+import { HDChart, ALL_CHANNELS, CENTER_GATES, getIncarnationCross } from '../../lib/hdCalculator'
 import { HD_TYPES, HD_AUTHORITIES, GATES_64 } from '../../lib/hdData'
 import type { Center } from '../../lib/hdCalculator'
 
@@ -86,7 +86,11 @@ function buildChartFromActivations(activations: any[]): HDChart {
   const earthAct = activations.find((a: any) => a.planet === 'earth')
   const dSun = sunAct?.design
   const dEarth = earthAct?.design
-  const incarnationCross = `Cross of Gates ${sunPos?.gate ?? '?'}/${earthAct?.personality?.gate ?? '?'} | ${dSun?.gate ?? '?'}/${dEarth?.gate ?? '?'}`
+  const pSunGate = sunPos?.gate ?? 0
+  const pEarthGate = earthAct?.personality?.gate ?? 0
+  const dSunGate = dSun?.gate ?? 0
+  const dEarthGate = dEarth?.gate ?? 0
+  const incarnationCross = getIncarnationCross(pSunGate, pEarthGate, dSunGate, dEarthGate)
 
   return {
     type, authority, profile, definition, incarnationCross,
