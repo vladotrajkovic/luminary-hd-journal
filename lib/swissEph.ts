@@ -6,7 +6,7 @@
 
 // swisseph is a native C extension — works on Railway, not on Vercel serverless
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const swe = require('swisseph')
+const swe = require('swisseph-v2')
 
 export interface PlanetPositions {
   sun:       number
