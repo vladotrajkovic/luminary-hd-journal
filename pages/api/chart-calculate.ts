@@ -1,11 +1,10 @@
 /**
  * /api/chart-calculate
- * Computes planetary positions using sweph-wasm (Swiss Ephemeris, WebAssembly).
- * No external API, no API key, no rate limits.
+ * Server-side API route that calls the Astrologer API (RapidAPI)
+ * for planetary positions, then applies HD gate mapping.
  */
 
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { computeAllPlanets, dateToJD, PlanetPositions } from '../../lib/swissEph'
 
 const GATE_WHEEL: number[] = [
   41, 19, 13, 49, 30, 55, 37, 63, 22, 36, 25, 17, 21, 51, 42, 3,
@@ -24,6 +23,55 @@ function longitudeToGateLine(lon: number): { gate: number; line: number } {
   return { gate: GATE_WHEEL[gateIndex], line }
 }
 
+const PLANET_MAP: Record<string, string> = {
+  sun: 'Sun', moon: 'Moon', mercury: 'Mercury', venus: 'Venus',
+  mars: 'Mars', jupiter: 'Jupiter', saturn: 'Saturn', uranus: 'Uranus',
+  neptune: 'Neptune', pluto: 'Pluto', northNode: 'Mean_Node',
+}
+
+async function getPlanetaryPositions(
+  year: number, month: number, day: number,
+  hour: number, minute: number,
+  latitude: number, longitude: number, timezone: string, city: string = 'Unknown'
+): Promise<Record<string, number>> {
+  const apiKey = process.env.RAPIDAPI_KEY
+  if (!apiKey) throw new Error('RAPIDAPI_KEY not configured')
+
+  const res = await fetch('https://astrologer.p.rapidapi.com/api/v5/chart-data/birth-chart', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-RapidAPI-Host': 'astrologer.p.rapidapi.com',
+      'X-RapidAPI-Key': apiKey,
+    },
+    body: JSON.stringify({
+      subject: { name: 'Chart', year, month, day, hour, minute, longitude, latitude, timezone, city }
+    }),
+  })
+
+  if (!res.ok) throw new Error(`Astrologer API error ${res.status}: ${await res.text()}`)
+
+  const data = await res.json()
+  const subject = data?.chart_data?.subject || data?.subject
+  if (!subject) throw new Error('Unexpected API response format')
+
+  const planets: Record<string, number> = {}
+  for (const [ourName, apiName] of Object.entries(PLANET_MAP)) {
+    const keysToTry = ourName === 'northNode'
+      ? ['mean_node', 'true_node', 'north_node', 'meannode', 'node']
+      : [apiName.toLowerCase()]
+    for (const key of keysToTry) {
+      const pd = subject[key]
+      if (pd && typeof pd.abs_pos === 'number') { planets[ourName] = pd.abs_pos; break }
+    }
+  }
+
+  if (planets.sun !== undefined) planets.earth = (planets.sun + 180) % 360
+  if (planets.northNode !== undefined) planets.southNode = (planets.northNode + 180) % 360
+
+  return planets
+}
+
 function getUTCOffset(date: Date, tz: string): number {
   const fmt = (timeZone: string) =>
     new Intl.DateTimeFormat('en-CA', {
@@ -35,78 +83,60 @@ function getUTCOffset(date: Date, tz: string): number {
   return (localDate.getTime() - utcDate.getTime()) / 60000
 }
 
-export default function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' })
-  }
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
   try {
-    const { birthDate, birthTime, latitude, longitude, timezone } = req.body
-
-    if (!birthDate || !latitude || !longitude || !timezone) {
+    const { birthDate, birthTime, latitude, longitude, timezone, city } = req.body
+    if (!birthDate || !latitude || !longitude || !timezone)
       return res.status(400).json({ error: 'Missing required fields' })
-    }
 
-    const [year, month, day] = (birthDate as string).split('-').map(Number)
-    const [hour, minute]     = birthTime
-      ? (birthTime as string).split(':').map(Number)
-      : [12, 0]
+    const [year, month, day] = birthDate.split('-').map(Number)
+    const [hour, minute] = birthTime ? birthTime.split(':').map(Number) : [12, 0]
 
-    // Convert local birth time → UTC
     const birthLocalMs   = Date.UTC(year, month - 1, day, hour, minute)
     const birthOffsetMin = getUTCOffset(new Date(birthLocalMs), timezone)
     const birthUTC       = new Date(birthLocalMs - birthOffsetMin * 60000)
 
-    // Design = 91 calendar days before birth (Jovian Archive validated)
     const designUTC = new Date(birthUTC.getTime() - 91 * 24 * 60 * 60 * 1000)
+    const designOffsetMin = getUTCOffset(designUTC, timezone)
+    const designLocal = new Date(designUTC.getTime() + designOffsetMin * 60000)
 
-    const pJD = dateToJD(
-      birthUTC.getUTCFullYear(), birthUTC.getUTCMonth() + 1, birthUTC.getUTCDate(),
-      birthUTC.getUTCHours(), birthUTC.getUTCMinutes()
+    const personalityPositions = await getPlanetaryPositions(
+      year, month, day, hour, minute, latitude, longitude, timezone, city || 'Unknown'
     )
-    const dJD = dateToJD(
-      designUTC.getUTCFullYear(), designUTC.getUTCMonth() + 1, designUTC.getUTCDate(),
-      designUTC.getUTCHours(), designUTC.getUTCMinutes()
+    await new Promise(resolve => setTimeout(resolve, 1100))
+    const designPositions = await getPlanetaryPositions(
+      designLocal.getUTCFullYear(), designLocal.getUTCMonth() + 1, designLocal.getUTCDate(),
+      designLocal.getUTCHours(), designLocal.getUTCMinutes(),
+      latitude, longitude, timezone, city || 'Unknown'
     )
 
-    // Compute both moments in parallel
-    const pPos = computeAllPlanets(pJD)
-    const dPos = computeAllPlanets(dJD)
-
-    const planets: (keyof PlanetPositions)[] = [
-      'sun', 'earth', 'moon', 'northNode', 'southNode',
-      'mercury', 'venus', 'mars', 'jupiter', 'saturn',
-      'uranus', 'neptune', 'pluto',
-    ]
-
+    const planets = ['sun','earth','moon','northNode','southNode','mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto']
     const activations = planets.map(planet => ({
       planet,
-      personality: { ...longitudeToGateLine(pPos[planet]), longitude: pPos[planet] },
-      design:      { ...longitudeToGateLine(dPos[planet]),  longitude: dPos[planet]  },
+      personality: { ...longitudeToGateLine(personalityPositions[planet] ?? 0), longitude: personalityPositions[planet] ?? 0 },
+      design:      { ...longitudeToGateLine(designPositions[planet] ?? 0),       longitude: designPositions[planet] ?? 0 },
     }))
 
     return res.status(200).json({
       activations,
-      personalityPositions: pPos,
-      designPositions: dPos,
+      personalityPositions,
+      designPositions,
       designDate: designUTC.toISOString(),
-      engine: 'vsop87-builtin',
+      engine: 'astrologer-api',
       debug: {
-        birthUTC:    birthUTC.toISOString(),
-        designUTC:   designUTC.toISOString(),
-        personalityJD: pJD,
-        designJD:      dJD,
-        sunLongitudes:    { personality: pPos.sun,      design: dPos.sun      },
-        moonLongitudes:   { personality: pPos.moon,     design: dPos.moon     },
+        birthUTC: birthUTC.toISOString(),
+        designUTC: designUTC.toISOString(),
+        sunLongitudes: { personality: personalityPositions.sun, design: designPositions.sun },
         nodePositions: {
-          personalityNorthNode: pPos.northNode, personalitySouthNode: pPos.southNode,
-          designNorthNode:      dPos.northNode, designSouthNode:      dPos.southNode,
+          personalityNorthNode: personalityPositions.northNode, personalitySouthNode: personalityPositions.southNode,
+          designNorthNode: designPositions.northNode, designSouthNode: designPositions.southNode,
         },
-        mercuryPositions: { personality: pPos.mercury, design: dPos.mercury },
-        saturnPositions:  { personality: pPos.saturn,  design: dPos.saturn  },
+        mercuryPositions: { personality: personalityPositions.mercury, design: designPositions.mercury },
+        saturnPositions:  { personality: personalityPositions.saturn,  design: designPositions.saturn  },
       },
     })
-
   } catch (err: any) {
     console.error('Chart calculation error:', err)
     return res.status(500).json({ error: err.message || 'Calculation failed' })
