@@ -9,16 +9,15 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@supabase/ssr": "^0.5.0",
-    "@supabase/supabase-js": "^2.49.0",
-    "date-fns": "^3.6.0",
-    "framer-motion": "^11.1.9",
-    "lucide-react": "^0.378.0",
     "next": "^15.1.0",
     "react": "^18",
     "react-dom": "^18",
+    "@supabase/supabase-js": "^2.49.0",
+    "@supabase/ssr": "^0.5.0",
+    "date-fns": "^3.6.0",
+    "framer-motion": "^11.1.9",
+    "lucide-react": "^0.378.0",
     "react-hook-form": "^7.51.4",
-    "swisseph": "^0.5.17",
     "zustand": "^4.5.2"
   },
   "devDependencies": {
