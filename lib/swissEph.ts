@@ -141,7 +141,7 @@ export function computeAllPlanets(jd: number): PlanetPositions {
   const northNode = calcPlanet(jd, SE_MEAN_NODE, 'NorthNode')
 
   const src = FLAG === SEFLG_SWIEPH ? 'SE1' : 'Moshier'
-  console.log(`[swisseph] [${src}] jd=${jd.toFixed(4)} ☉=${sun.toFixed(4)} ☽=${moon.toFixed(4)} ♂=${mars.toFixed(4)} ♃=${jupiter.toFixed(4)} ☿=${mercury.toFixed(4)}`)
+  console.log(`[swisseph] [${src}] jd=${jd.toFixed(4)} ☉=${sun.toFixed(4)} ☽=${moon.toFixed(4)} ♂=${mars.toFixed(4)} ♃=${jupiter.toFixed(4)} ☿=${mercury.toFixed(4)} ♄=${saturn.toFixed(4)} ⛢=${uranus.toFixed(4)}`)
 
   return {
     sun,
