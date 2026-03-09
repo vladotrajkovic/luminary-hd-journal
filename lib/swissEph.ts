@@ -121,6 +121,11 @@ function calcPlanet(jd: number, planetId: number, label: string): number {
   return 0
 }
 
+// ── Compute just the sun (cheap — used for 88° arc design iteration) ───────
+export function computeSunLongitude(jd: number): number {
+  return calcPlanet(jd, SE_SUN, 'Sun')
+}
+
 // ── Compute all planets ────────────────────────────────────────────────────
 export function computeAllPlanets(jd: number): PlanetPositions {
   const sun       = calcPlanet(jd, SE_SUN,       'Sun')
