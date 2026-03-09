@@ -350,22 +350,46 @@ function getDefinedCenters(activeGates: number[]): Center[] {
 }
 
 // ── DETERMINE TYPE ─────────────────────────────────────────
-function determineType(definedCenters: Center[]): string {
+// "Motor connected to Throat" means they are in the SAME connected component.
+// Simply checking if both centers are defined is WRONG for Split Definitions.
+function determineType(definedCenters: Center[], activeChannels: Channel[]): string {
+  if (definedCenters.length === 0) return 'Reflector'
+
+  // Build connected component map
+  const graph: Record<string, Set<string>> = {}
+  definedCenters.forEach(c => { graph[c] = new Set() })
+  activeChannels.forEach(ch => {
+    const [c1, c2] = ch.centers
+    if (definedCenters.includes(c1) && definedCenters.includes(c2)) {
+      graph[c1].add(c2); graph[c2].add(c1)
+    }
+  })
+  const compId: Record<string, number> = {}
+  let comp = 0
+  definedCenters.forEach(c => {
+    if (!(c in compId)) {
+      const q = [c]
+      while (q.length) {
+        const n = q.shift()!
+        if (n in compId) continue
+        compId[n] = comp
+        graph[n]?.forEach(nb => { if (!(nb in compId)) q.push(nb as Center) })
+      }
+      comp++
+    }
+  })
+
   const hasSacral = definedCenters.includes('Sacral')
   const hasThroat = definedCenters.includes('Throat')
-  const hasMotorToThroat = (
-    (definedCenters.includes('Heart') && definedCenters.includes('Throat')) ||
-    (definedCenters.includes('SolarPlexus') && definedCenters.includes('Throat')) ||
-    (definedCenters.includes('Root') && definedCenters.includes('Throat')) ||
-    (definedCenters.includes('Sacral') && definedCenters.includes('Throat'))
+  const throatComp = compId['Throat'] ?? -1
+  const MOTORS: Center[] = ['Sacral', 'Heart', 'SolarPlexus', 'Root']
+  const motorToThroat = hasThroat && MOTORS.some(m =>
+    definedCenters.includes(m) && compId[m] === throatComp
   )
 
-  if (definedCenters.length === 0) return 'Reflector'
-  if (!hasSacral && !hasThroat) return 'Projector'
-  if (!hasSacral && hasThroat && hasMotorToThroat) return 'Manifestor'
-  if (hasSacral && hasThroat && hasMotorToThroat) return 'Manifesting Generator'
-  if (hasSacral && !hasMotorToThroat) return 'Generator'
+  if (hasSacral && motorToThroat) return 'Manifesting Generator'
   if (hasSacral) return 'Generator'
+  if (!hasSacral && motorToThroat) return 'Manifestor'
   return 'Projector'
 }
 
@@ -526,7 +550,7 @@ export function calculateHDChart(birthDate: Date): HDChart {
   const openCenters = allCenters.filter(c => !definedCenters.includes(c))
 
   // Determine type, authority, profile, definition
-  const type = determineType(definedCenters)
+  const type = determineType(definedCenters, activeChannels)
   const authority = determineAuthority(definedCenters, type)
 
   const pSunActivation = pActivations.find(a => a.planet === 'sun')!
