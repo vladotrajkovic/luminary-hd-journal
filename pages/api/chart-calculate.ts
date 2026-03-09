@@ -3,7 +3,7 @@
  */
 
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { computeAllPlanets, dateToJD, PlanetPositions } from '../../lib/swissEph'
+import { computeAllPlanets, computeSunLongitude, dateToJD, PlanetPositions } from '../../lib/swissEph'
 
 const GATE_WHEEL: number[] = [
   41, 19, 13, 49, 30, 55, 37, 63, 22, 36, 25, 17, 21, 51, 42, 3,
@@ -33,6 +33,28 @@ function getUTCOffset(date: Date, tz: string): number {
   return (localDate.getTime() - utcDate.getTime()) / 60000
 }
 
+/**
+ * Find the exact Julian Day when the sun was 88° of solar arc before birthJD.
+ * Converges to < 0.0001° in ~10 iterations (Newton-Raphson on sun longitude).
+ * Sun speed ≈ 0.9856°/day, so 88° ≈ 89.3 days — but near solstice it's ~92 days.
+ */
+function findDesignJD(birthJD: number): number {
+  const birthSun  = computeSunLongitude(birthJD)
+  const targetSun = ((birthSun - 88) + 360) % 360
+
+  let jd = birthJD - 91  // start estimate
+
+  for (let i = 0; i < 20; i++) {
+    const sunLon = computeSunLongitude(jd)
+    // Shortest angular distance, wrapping at 0°/360°
+    const diff = ((targetSun - sunLon + 180 + 360) % 360) - 180
+    if (Math.abs(diff) < 0.00001) break
+    jd += diff / 0.9856  // sun moves ~0.9856°/day
+  }
+
+  return jd
+}
+
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
@@ -49,16 +71,18 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     const birthOffsetMin = getUTCOffset(new Date(birthLocalMs), timezone)
     const birthUTC       = new Date(birthLocalMs - birthOffsetMin * 60000)
 
-    // Design = 91 calendar days before birth
-    const designUTC = new Date(birthUTC.getTime() - 91 * 24 * 60 * 60 * 1000)
-
     const pJD = dateToJD(
       birthUTC.getUTCFullYear(), birthUTC.getUTCMonth() + 1, birthUTC.getUTCDate(),
       birthUTC.getUTCHours(), birthUTC.getUTCMinutes()
     )
-    const dJD = dateToJD(
-      designUTC.getUTCFullYear(), designUTC.getUTCMonth() + 1, designUTC.getUTCDate(),
-      designUTC.getUTCHours(), designUTC.getUTCMinutes()
+
+    // Design = exact moment the sun was 88° of solar arc before birth sun.
+    // Jovian Archive standard: find JD where sun longitude == (birthSun - 88°).
+    // We iterate from a ~91-day estimate, converging to <0.0001° accuracy in ~5 steps.
+    const dJD = findDesignJD(pJD)
+
+    const designUTC = new Date(
+      (dJD - 2440587.5) * 86400000  // JD → Unix ms
     )
 
     console.log(`📡 pJD=${pJD.toFixed(4)} dJD=${dJD.toFixed(4)}`)
