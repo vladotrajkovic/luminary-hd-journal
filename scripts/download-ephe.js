@@ -1,27 +1,34 @@
 /**
  * scripts/download-ephe.js
  *
- * Downloads full Swiss Ephemeris SE1 files from the official Astrodienst server.
- * Full files (~18MB) are significantly more accurate than the compressed versions
- * bundled in the swisseph-v2 npm package (~2MB).
+ * Downloads full Swiss Ephemeris SE1 files from the official Astrodienst GitHub repo.
+ * (github.com/aloistr/swisseph) — the authoritative source.
  *
- * Strategy:
- *   1. Try downloading sepl_18.se1 + semo_18.se1 from astro.com/ftp/swisseph/ephe/
- *   2. Verify downloaded files are full-size (>5MB each)
- *   3. If download fails, fall back to npm package files
- *   4. Small helper files always come from npm package
+ * Full files: sepl_18.se1 ~8MB, semo_18.se1 ~7MB
+ * These give ~0.001° accuracy vs ~2-5° errors from the compressed npm package files.
+ *
+ * Download order (most reliable → least):
+ *   1. GitHub raw (raw.githubusercontent.com) — CDN, very reliable
+ *   2. Astrodienst FTP (astro.com/ftp/swisseph/ephe/) — official source
+ *   3. npm package fallback — always works, lower accuracy
  */
 
 const fs    = require('fs')
 const path  = require('path')
 const https = require('https')
 
-const EPHE_DIR  = path.join(process.cwd(), 'ephe')
-const NPM_EPHE  = path.join(process.cwd(), 'node_modules', 'swisseph-v2', 'ephe')
-const BASE_URL  = 'https://www.astro.com/ftp/swisseph/ephe/'
-const MIN_FULL_SIZE = 5 * 1024 * 1024  // 5MB — full SE1 files are 7-9MB each
+const EPHE_DIR       = path.join(process.cwd(), 'ephe')
+const NPM_EPHE       = path.join(process.cwd(), 'node_modules', 'swisseph-v2', 'ephe')
+const MIN_FULL_SIZE  = 5 * 1024 * 1024  // 5MB minimum for a full SE1 file
+
+// Official GitHub repo raw URLs
+const GITHUB_BASE = 'https://raw.githubusercontent.com/aloistr/swisseph/master/ephe/'
+// FTP fallback
+const FTP_BASE    = 'https://www.astro.com/ftp/swisseph/ephe/'
 
 fs.mkdirSync(EPHE_DIR, { recursive: true })
+
+// ── helpers ────────────────────────────────────────────────────────────────
 
 function download(url, dest) {
   return new Promise((resolve, reject) => {
@@ -29,35 +36,65 @@ function download(url, dest) {
     let received = 0
 
     function doRequest(reqUrl) {
-      https.get(reqUrl, (res) => {
+      https.get(reqUrl, { timeout: 60000 }, (res) => {
         if (res.statusCode === 301 || res.statusCode === 302) {
           return doRequest(res.headers.location)
         }
         if (res.statusCode !== 200) {
           file.close()
-          fs.unlink(dest, () => {})
-          return reject(new Error(`HTTP ${res.statusCode} for ${reqUrl}`))
+          try { fs.unlinkSync(dest) } catch {}
+          return reject(new Error(`HTTP ${res.statusCode}`))
         }
         res.on('data', chunk => {
           received += chunk.length
           if (received % (1024 * 1024) < chunk.length) {
-            process.stdout.write(`\r    ${(received / 1024 / 1024).toFixed(1)} MB received...`)
+            process.stdout.write(`\r    ${(received / 1024 / 1024).toFixed(1)} MB...`)
           }
         })
         res.pipe(file)
         file.on('finish', () => {
-          process.stdout.write('\r')
+          process.stdout.write('\r                          \r')
           file.close()
           resolve(received)
         })
-      }).on('error', (err) => {
+      }).on('error', err => {
         file.close()
-        fs.unlink(dest, () => {})
+        try { fs.unlinkSync(dest) } catch {}
         reject(err)
       })
     }
     doRequest(url)
   })
+}
+
+async function tryDownload(name) {
+  const dest = path.join(EPHE_DIR, name)
+
+  // Already have a full-size file?
+  if (fs.existsSync(dest) && fs.statSync(dest).size >= MIN_FULL_SIZE) {
+    const kb = (fs.statSync(dest).size / 1024).toFixed(0)
+    console.log(`  ✅ ${name} (${kb} KB) — already present`)
+    return true
+  }
+
+  // Try GitHub first
+  for (const [label, base] of [['GitHub', GITHUB_BASE], ['astro.com FTP', FTP_BASE]]) {
+    console.log(`  ⬇️  ${name} — trying ${label}...`)
+    try {
+      const bytes = await download(base + name, dest)
+      const kb = (bytes / 1024).toFixed(0)
+      if (bytes >= MIN_FULL_SIZE) {
+        console.log(`  ✅ ${name} (${kb} KB) — full file from ${label} ✨`)
+        return true
+      } else {
+        console.warn(`  ⚠️  Only ${kb} KB from ${label} — trying next source...`)
+        try { fs.unlinkSync(dest) } catch {}
+      }
+    } catch (err) {
+      console.warn(`  ⚠️  ${label} failed: ${err.message}`)
+    }
+  }
+  return false
 }
 
 function copyFromNpm(filename) {
@@ -66,71 +103,53 @@ function copyFromNpm(filename) {
   if (fs.existsSync(src)) {
     fs.copyFileSync(src, dest)
     const kb = (fs.statSync(dest).size / 1024).toFixed(0)
-    console.log(`  📦 ${filename} (${kb} KB) — from npm package`)
+    console.log(`  📦 ${filename} (${kb} KB) — npm package fallback`)
     return true
   }
+  console.warn(`  ❌ ${filename} — not found in npm package either`)
   return false
 }
 
-function sizeKB(filepath) {
-  return fs.existsSync(filepath) ? (fs.statSync(filepath).size / 1024).toFixed(0) : 0
-}
+// ── main ───────────────────────────────────────────────────────────────────
 
 async function main() {
-  console.log('🔭 Setting up Swiss Ephemeris data files...')
+  console.log('🔭 Swiss Ephemeris setup — fetching full accuracy files...')
+  console.log('   Source: github.com/aloistr/swisseph (official Astrodienst repo)\n')
 
-  const LARGE_FILES = [
-    { name: 'sepl_18.se1', desc: 'planets (Sun→Pluto, nodes)' },
-    { name: 'semo_18.se1', desc: 'Moon' },
-  ]
-  const SMALL_FILES = ['seas_18.se1', 'seleapsec.txt', 'sefstars.txt', 'seorbel.txt']
+  const LARGE = ['sepl_18.se1', 'semo_18.se1']
+  const SMALL  = ['seas_18.se1', 'seleapsec.txt', 'sefstars.txt', 'seorbel.txt']
 
-  let fullFilesOk = 0
+  let fullCount = 0
 
-  for (const { name, desc } of LARGE_FILES) {
-    const dest    = path.join(EPHE_DIR, name)
-    const already = fs.existsSync(dest) && fs.statSync(dest).size > MIN_FULL_SIZE
-
-    if (already) {
-      console.log(`  ✅ ${name} (${sizeKB(dest)} KB) — already present`)
-      fullFilesOk++
-      continue
-    }
-
-    console.log(`  ⬇️  Downloading ${name} (${desc}) from astro.com...`)
-    try {
-      const bytes = await download(BASE_URL + name, dest)
-      const kb    = (bytes / 1024).toFixed(0)
-      if (bytes >= MIN_FULL_SIZE) {
-        console.log(`  ✅ ${name} (${kb} KB) — full SE1 file ✨`)
-        fullFilesOk++
-      } else {
-        console.warn(`  ⚠️  ${name} only ${kb} KB — falling back to npm version`)
-        copyFromNpm(name)
-      }
-    } catch (err) {
-      console.warn(`  ⚠️  Download failed (${err.message}) — falling back to npm version`)
+  for (const name of LARGE) {
+    const ok = await tryDownload(name)
+    if (ok) {
+      fullCount++
+    } else {
+      console.log(`  📦 Falling back to npm package for ${name}`)
       copyFromNpm(name)
     }
   }
 
-  for (const name of SMALL_FILES) {
+  for (const name of SMALL) {
     const dest = path.join(EPHE_DIR, name)
     if (!fs.existsSync(dest)) copyFromNpm(name)
   }
 
-  if (fullFilesOk === 2) {
-    const pl = sizeKB(path.join(EPHE_DIR, 'sepl_18.se1'))
-    const mo = sizeKB(path.join(EPHE_DIR, 'semo_18.se1'))
-    console.log(`\n🌟 Full Swiss Ephemeris ready! (sepl=${pl}KB semo=${mo}KB)`)
-    console.log('   Accuracy: ~0.001° — all planet gates will match Jovian Archive ✨')
+  console.log('')
+  if (fullCount === 2) {
+    const pl = (fs.statSync(path.join(EPHE_DIR, 'sepl_18.se1')).size / 1024).toFixed(0)
+    const mo = (fs.statSync(path.join(EPHE_DIR, 'semo_18.se1')).size / 1024).toFixed(0)
+    console.log(`🌟 Full Swiss Ephemeris ready! sepl=${pl}KB  semo=${mo}KB`)
+    console.log('   All planet gates will match Jovian Archive ✨')
+  } else if (fullCount === 1) {
+    console.warn('⚠️  Only one full SE1 file — partial accuracy improvement')
   } else {
-    console.warn('\n⚠️  Using npm package SE1 files (reduced accuracy)')
-    console.warn('   Mercury, Mars, Jupiter, Pluto, Saturn gates may be 1-2 off')
+    console.warn('⚠️  Using npm package files — limited accuracy (some gates may differ)')
   }
 }
 
 main().catch(err => {
-  console.error('❌ download-ephe.js error:', err.message)
-  process.exit(0)
+  console.error('❌ download-ephe.js crashed:', err.message)
+  process.exit(0) // non-fatal — Moshier fallback will still work
 })
