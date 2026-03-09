@@ -29,20 +29,47 @@ function buildChartFromActivations(activations: any[]): HDChart {
   const allCenters: Center[] = ['Head','Ajna','Throat','G','Heart','Sacral','SolarPlexus','Spleen','Root']
   const openCenters = allCenters.filter(c => !definedCenters.includes(c))
 
-  // Type
+  // Build connectivity graph (needed for type AND definition)
+  const graph: Record<string, Set<string>> = {}
+  definedCenters.forEach(c => { graph[c] = new Set() })
+  activeChannels.forEach(ch => {
+    const [c1, c2] = ch.centers
+    if (definedCenters.includes(c1) && definedCenters.includes(c2)) {
+      graph[c1]?.add(c2); graph[c2]?.add(c1)
+    }
+  })
+
+  // Find connected components and assign each center to a component id
+  const componentId: Record<string, number> = {}
+  let components = 0
+  definedCenters.forEach(c => {
+    if (!(c in componentId)) {
+      const q = [c]
+      while (q.length) {
+        const n = q.shift()!
+        if (n in componentId) continue
+        componentId[n] = components
+        graph[n]?.forEach(nb => { if (!(nb in componentId)) q.push(nb as Center) })
+      }
+      components++
+    }
+  })
+
+  // Type — "motor connected to Throat" means Throat is in the SAME component as a motor
+  // Motors: Sacral, Heart, SolarPlexus, Root
+  const MOTORS: Center[] = ['Sacral', 'Heart', 'SolarPlexus', 'Root']
   const hasSacral = definedCenters.includes('Sacral')
   const hasThroat = definedCenters.includes('Throat')
-  const motorToThroat = (
-    (definedCenters.includes('Heart') && hasThroat) ||
-    (definedCenters.includes('SolarPlexus') && hasThroat) ||
-    (definedCenters.includes('Root') && hasThroat) ||
-    (hasSacral && hasThroat)
+  const throatComp = componentId['Throat'] ?? -1
+  const motorToThroat = hasThroat && MOTORS.some(m =>
+    definedCenters.includes(m) && componentId[m] === throatComp
   )
+
   let type = 'Projector'
   if (definedCenters.length === 0) type = 'Reflector'
-  else if (hasSacral && hasThroat && motorToThroat) type = 'Manifesting Generator'
+  else if (hasSacral && motorToThroat) type = 'Manifesting Generator'
   else if (hasSacral) type = 'Generator'
-  else if (!hasSacral && hasThroat && motorToThroat) type = 'Manifestor'
+  else if (!hasSacral && motorToThroat) type = 'Manifestor'
 
   // Authority
   let authority = 'Mental/Environment'
@@ -57,29 +84,7 @@ function buildChartFromActivations(activations: any[]): HDChart {
   const sunAct = activations.find((a: any) => a.planet === 'sun')
   const profile = sunAct ? `${sunAct.personality.line}/${sunAct.design.line}` : '?/?'
 
-  // Definition
-  const visited = new Set<string>()
-  let components = 0
-  const graph: Record<string, Set<string>> = {}
-  definedCenters.forEach(c => { graph[c] = new Set() })
-  activeChannels.forEach(ch => {
-    const [c1, c2] = ch.centers
-    if (definedCenters.includes(c1) && definedCenters.includes(c2)) {
-      graph[c1]?.add(c2); graph[c2]?.add(c1)
-    }
-  })
-  definedCenters.forEach(c => {
-    if (!visited.has(c)) {
-      components++
-      const q = [c]
-      while (q.length) {
-        const n = q.shift()!
-        if (visited.has(n)) continue
-        visited.add(n)
-        graph[n]?.forEach(nb => { if (!visited.has(nb)) q.push(nb as Center) })
-      }
-    }
-  })
+  // Definition (from component count already computed above)
   const definition = ['','Single','Split','Triple Split','Quadruple Split'][Math.min(components, 4)] || 'Single'
 
   const sunPos = sunAct?.personality
