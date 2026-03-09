@@ -348,11 +348,7 @@ export default function ChartGenerator() {
             </p>
           </div>
 
-          <div style={{ background: 'rgba(139,92,246,.07)', border: '1px solid rgba(139,92,246,.2)', borderRadius: 10, padding: '10px 18px', marginBottom: 20 }}>
-            <p style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 13, color: 'rgba(139,92,246,.75)' }}>
-              ✦ Planet line numbers may occasionally differ from other HD software by ±1 on boundary cases.
-            </p>
-          </div>
+
           {calcError && (
             <div style={{ background: 'rgba(248,113,113,.1)', border: '1px solid rgba(248,113,113,.3)', borderRadius: 10, padding: '12px 18px', marginBottom: 16 }}>
               <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 15, color: '#F87171' }}>{calcError}</p>
@@ -612,6 +608,9 @@ export default function ChartGenerator() {
                     )
                   })}
                 </div>
+                <p style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 13, color: 'rgba(167,139,250,.4)', marginTop: 16, textAlign: 'center' }}>
+                  ✦ Planet line numbers may occasionally differ from other HD software by ±1 on boundary cases.
+                </p>
               </div>
             )}
 
