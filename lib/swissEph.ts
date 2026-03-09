@@ -1,12 +1,10 @@
 /**
  * lib/swissEph.ts — Swiss Ephemeris via swisseph-v2
  *
- * Looks for SE1 data files in multiple locations:
- *  1. ./ephe/  (downloaded by scripts/download-ephe.js at build time)
- *  2. node_modules/swisseph-v2/ephe/ (may be bundled with package)
- *  3. Falls back to Moshier if no valid files found
+ * Uses SE1 data files from ./ephe/ (copied from swisseph-v2 npm package
+ * during build by scripts/download-ephe.js).
  *
- * ALL constants are hardcoded numerics — never trust swe.SEFLG_* exports.
+ * ALL numeric constants are hardcoded — never trust swe.SEFLG_* exports.
  */
 
 import path from 'path'
@@ -28,46 +26,43 @@ const SE_NEPTUNE   = 8
 const SE_PLUTO     = 9
 const SE_MEAN_NODE = 10
 const SE_GREG_CAL  = 1
-const SEFLG_SWIEPH = 2   // Full Swiss Ephemeris (requires SE1 files)
-const SEFLG_MOSEPH = 4   // Moshier — no files, ~1 arcmin accuracy
+const SEFLG_SWIEPH = 2   // Full Swiss Ephemeris (SE1 data files)
+const SEFLG_MOSEPH = 4   // Moshier fallback — no files, ~1 arcmin accuracy
 
-// ── Find and set ephemeris path ────────────────────────────────────────────
+// ── Find SE1 files and set ephemeris path ──────────────────────────────────
 let FLAG = SEFLG_MOSEPH
 let epheSource = 'Moshier (fallback)'
 
-function isValidEpheDir(dir: string): boolean {
+function hasRequiredFiles(dir: string): boolean {
   try {
-    const planets = path.join(dir, 'sepl_18.se1')
-    const moon    = path.join(dir, 'semo_18.se1')
-    const MIN = 5 * 1024 * 1024  // Must be ≥5MB to be real SE1 data
     return (
-      fs.existsSync(planets) && fs.statSync(planets).size >= MIN &&
-      fs.existsSync(moon)    && fs.statSync(moon).size    >= MIN
+      fs.existsSync(path.join(dir, 'sepl_18.se1')) &&
+      fs.existsSync(path.join(dir, 'semo_18.se1'))
     )
   } catch { return false }
 }
 
-const ephePaths = [
-  path.join(process.cwd(), 'ephe'),
-  path.join(process.cwd(), 'node_modules', 'swisseph-v2', 'ephe'),
+const candidatePaths = [
+  path.join(process.cwd(), 'ephe'),                                       // copied at build time
+  path.join(process.cwd(), 'node_modules', 'swisseph-v2', 'ephe'),        // npm bundle direct
   path.join(process.cwd(), 'node_modules', 'swisseph-v2', 'swisseph', 'ephe'),
   '/app/ephe',
 ]
 
-for (const dir of ephePaths) {
-  if (isValidEpheDir(dir)) {
+for (const dir of candidatePaths) {
+  if (hasRequiredFiles(dir)) {
     try {
       swe.swe_set_ephe_path(dir)
       FLAG = SEFLG_SWIEPH
-      const pSize = fs.statSync(path.join(dir, 'sepl_18.se1')).size
-      const mSize = fs.statSync(path.join(dir, 'semo_18.se1')).size
-      epheSource = `SE1 files at ${dir} (${(pSize/1e6).toFixed(1)}MB + ${(mSize/1e6).toFixed(1)}MB)`
+      const pSz = fs.statSync(path.join(dir, 'sepl_18.se1')).size
+      const mSz = fs.statSync(path.join(dir, 'semo_18.se1')).size
+      epheSource = `SE1 files at ${dir} (${(pSz/1024).toFixed(0)}KB + ${(mSz/1024).toFixed(0)}KB)`
       break
-    } catch (_) { /* try next */ }
+    } catch (_) { /* try next path */ }
   }
 }
 
-console.log(`[swisseph] Ephemeris: ${FLAG === SEFLG_SWIEPH ? '✅' : '⚠️ '} ${epheSource}`)
+console.log(`[swisseph] ${FLAG === SEFLG_SWIEPH ? '✅' : '⚠️ '} ${epheSource}`)
 
 // ── Types ──────────────────────────────────────────────────────────────────
 export interface PlanetPositions {
@@ -97,7 +92,7 @@ export function dateToJD(
     if (typeof jd === 'number' && jd > 0) return jd
   } catch (_) { /* fall through */ }
 
-  // Manual JDN formula
+  // Manual JDN formula (always works)
   const a = Math.floor((14 - month) / 12)
   const y = year + 4800 - a
   const m = month + 12 * a - 3
@@ -109,7 +104,7 @@ export function dateToJD(
 
 // ── Calculate one planet ───────────────────────────────────────────────────
 function calcPlanet(jd: number, planetId: number, label: string): number {
-  const tryFlag = (flag: number) => {
+  const tryFlag = (flag: number): number | null => {
     try {
       const r = swe.swe_calc_ut(jd, planetId, flag)
       if (r && typeof r.longitude === 'number' && r.longitude !== 0) return r.longitude
@@ -122,7 +117,7 @@ function calcPlanet(jd: number, planetId: number, label: string): number {
   const result = tryFlag(FLAG) ?? tryFlag(SEFLG_MOSEPH)
   if (result !== null) return result
 
-  console.warn(`[swisseph] ${label} (id=${planetId}): failed to compute longitude`)
+  console.warn(`[swisseph] ${label} (id=${planetId}): could not compute longitude`)
   return 0
 }
 
@@ -141,7 +136,7 @@ export function computeAllPlanets(jd: number): PlanetPositions {
   const northNode = calcPlanet(jd, SE_MEAN_NODE, 'NorthNode')
 
   const src = FLAG === SEFLG_SWIEPH ? 'SE1' : 'Moshier'
-  console.log(`[swisseph] [${src}] jd=${jd.toFixed(4)} ☉=${sun.toFixed(4)} ☽=${moon.toFixed(4)} ♂=${mars.toFixed(4)} ♃=${jupiter.toFixed(4)} ☿=${mercury.toFixed(4)} ♄=${saturn.toFixed(4)} ♅=${uranus.toFixed(4)}`)
+  console.log(`[swisseph] [${src}] jd=${jd.toFixed(4)} ☉=${sun.toFixed(4)} ☽=${moon.toFixed(4)} ♂=${mars.toFixed(4)} ♃=${jupiter.toFixed(4)} ☿=${mercury.toFixed(4)}`)
 
   return {
     sun,
