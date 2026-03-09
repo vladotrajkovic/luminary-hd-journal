@@ -141,7 +141,7 @@ export default function ChartGenerator() {
   const [activeTab, setActiveTab] = useState<'graph' | 'activations' | 'channels'>('graph')
   const [calculating, setCalculating] = useState(false)
   const [calcError, setCalcError] = useState('')
-  const [debugInfo, setDebugInfo] = useState<any>(null)
+
   const [profileOverride, setProfileOverride] = useState('')
   const searchTimeout = useRef<any>(null)
 
@@ -200,7 +200,7 @@ export default function ChartGenerator() {
       // Build HDChart from API activations
       const result = buildChartFromActivations(data.activations)
       setChart(result)
-      setDebugInfo(data.debug)
+
       setActiveTab('graph')
     } catch (err: any) {
       setCalcError(err.message || 'Failed to calculate chart. Please try again.')
@@ -339,21 +339,20 @@ export default function ChartGenerator() {
             </div>
           </div>
 
-          <div style={{ background: 'rgba(212,175,55,.07)', border: '1px solid rgba(212,175,55,.2)', borderRadius: 10, padding: '12px 18px', marginBottom: 20 }}>
-            <p style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 15, color: 'rgba(212,175,55,.8)' }}>
+          <div style={{ background: 'rgba(212,175,55,.07)', border: '1px solid rgba(212,175,55,.2)', borderRadius: 10, padding: '12px 18px', marginBottom: 12 }}>
+            <p style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 15, color: 'rgba(212,175,55,.8)', marginBottom: 6 }}>
               ✦ Birth city resolves the exact timezone so your time is accurately converted to UTC for planetary calculations.
+            </p>
+            <p style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 15, color: 'rgba(212,175,55,.8)' }}>
+              ✦ Please enter your birth time in your <strong>local time</strong> — the timezone is applied automatically based on your birth city.
             </p>
           </div>
 
-          {debugInfo && (
-            <div style={{ background: 'rgba(45,212,191,.07)', border: '1px solid rgba(45,212,191,.2)', borderRadius: 10, padding: '12px 18px', marginBottom: 16, fontFamily: 'monospace', fontSize: 12, color: 'rgba(45,212,191,.9)' }}>
-              <div>📡 API received: {JSON.stringify(debugInfo.inputReceived)}</div>
-              <div>🌟 Sent Personality: {JSON.stringify(debugInfo.sentToAPI?.personality)}</div>
-              <div>🔴 Sent Design: {JSON.stringify(debugInfo.sentToAPI?.design)}</div>
-              <div>☉ P.Sun longitude: {debugInfo.sunLongitudes?.personality?.toFixed(4)}°</div>
-              <div>☉ D.Sun longitude: {debugInfo.sunLongitudes?.design?.toFixed(4)}°</div>
-            </div>
-          )}
+          <div style={{ background: 'rgba(139,92,246,.07)', border: '1px solid rgba(139,92,246,.2)', borderRadius: 10, padding: '10px 18px', marginBottom: 20 }}>
+            <p style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 13, color: 'rgba(139,92,246,.75)' }}>
+              ✦ Planet line numbers may occasionally differ from other HD software by ±1 on boundary cases.
+            </p>
+          </div>
           {calcError && (
             <div style={{ background: 'rgba(248,113,113,.1)', border: '1px solid rgba(248,113,113,.3)', borderRadius: 10, padding: '12px 18px', marginBottom: 16 }}>
               <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 15, color: '#F87171' }}>{calcError}</p>
