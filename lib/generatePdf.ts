@@ -217,7 +217,7 @@ export async function generateHDReportPdf(data: ReportData): Promise<void> {
   doc.setFont('times', 'normal')
   doc.setFontSize(16)
   doc.setTextColor(...C.divider)
-  const star = '✦'
+  const star = '* * *'
   doc.text(star, (PAGE_W - doc.getTextWidth(star)) / 2, 108)
 
   // Name
