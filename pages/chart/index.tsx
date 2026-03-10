@@ -133,7 +133,7 @@ export default function ChartGenerator() {
   const [birthTime, setBirthTime] = useState('')
   const [birthPlace, setBirthPlace] = useState('')
   const [placeResults, setPlaceResults] = useState<any[]>([])
-  const [selectedPlace, setSelectedPlace] = useState<{ name: string; timezone: string; lat: number; lon: number } | null>(null)
+  const [selectedPlace, setSelectedPlace] = useState<{ name: string; city: string; country: string; timezone: string; lat: number; lon: number } | null>(null)
   const [searchingPlace, setSearchingPlace] = useState(false)
   const [chart, setChart] = useState<HDChart | null>(null)
   const [saving, setSaving] = useState(false)
@@ -168,7 +168,7 @@ export default function ChartGenerator() {
 
   const selectPlace = (place: any) => {
     const timezone = place.timezone || 'UTC'
-    setSelectedPlace({ name: `${place.name}, ${place.country}`, timezone, lat: place.latitude, lon: place.longitude })
+    setSelectedPlace({ name: `${place.name}, ${place.country}`, city: place.name, country: place.country, timezone, lat: place.latitude, lon: place.longitude })
     setBirthPlace(`${place.name}, ${place.country}`)
     setPlaceResults([])
   }
@@ -226,6 +226,8 @@ export default function ChartGenerator() {
       birth_date: birthDate,
       birth_time: birthTime || null,
       birth_place: selectedPlace?.name || birthPlace || null,
+      birth_city: selectedPlace?.city || null,
+      birth_country: selectedPlace?.country || null,
     }).eq('id', session.user.id)
 
     setSaved(true)
@@ -271,7 +273,7 @@ export default function ChartGenerator() {
             </div>
             <div>
               <label style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, letterSpacing: '.1em', color: 'rgba(167,139,250,.7)', textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>
-                Birth Time
+                Birth Time (Local) *
               </label>
               <input
                 type="time"
@@ -340,11 +342,8 @@ export default function ChartGenerator() {
           </div>
 
           <div style={{ background: 'rgba(212,175,55,.07)', border: '1px solid rgba(212,175,55,.2)', borderRadius: 10, padding: '12px 18px', marginBottom: 12 }}>
-            <p style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 15, color: 'rgba(212,175,55,.8)', marginBottom: 6 }}>
-              ✦ Birth city resolves the exact timezone so your time is accurately converted to UTC for planetary calculations.
-            </p>
             <p style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 15, color: 'rgba(212,175,55,.8)' }}>
-              ✦ Please enter your birth time in your <strong>local time</strong> — the timezone is applied automatically based on your birth city.
+              ✦ Birth city resolves the exact timezone so your time is accurately converted to UTC for planetary calculations.
             </p>
           </div>
 
@@ -609,7 +608,7 @@ export default function ChartGenerator() {
                   })}
                 </div>
                 <p style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 13, color: 'rgba(167,139,250,.4)', marginTop: 16, textAlign: 'center' }}>
-                  ✦ Planet line numbers may occasionally differ from other HD software by ±1 on boundary cases.
+                  ✦ Planet line numbers may occasionally differ from other HD software by ±1 on boundary cases — your type, profile, channels and defined centers are unaffected.
                 </p>
               </div>
             )}
