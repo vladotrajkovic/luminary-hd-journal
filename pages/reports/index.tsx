@@ -316,7 +316,7 @@ export default function ReportPage() {
               ✦
             </div>
             <p style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 20, color: 'rgba(196,181,253,0.6)', marginBottom: 32, maxWidth: 480, margin: '0 auto 32px' }}>
-              Claude will weave your Type, Authority, Profile, Centers and Channels into a personalised, flowing reading — unique to your exact chart.
+              Your chart holds a story unlike any other. Luminary will weave your Type, Authority, Profile, Centers and Channels into a personalised, flowing reading — written just for you.
             </p>
             <button
               onClick={generateReport}
