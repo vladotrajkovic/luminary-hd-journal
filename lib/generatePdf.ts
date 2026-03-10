@@ -241,7 +241,7 @@ export async function generateHDReportPdf(data: ReportData): Promise<void> {
     { label: 'Definition',value: data.profile?.hd_definition || '—' },
   ].filter(s => s.value !== '—')
 
-  const statY = 148
+  const statY = 185
   const colW = TEXT_W / stats.length
   stats.forEach((stat, i) => {
     const cx = MARGIN_L + colW * i + colW / 2
@@ -264,7 +264,7 @@ export async function generateHDReportPdf(data: ReportData): Promise<void> {
     doc.setFontSize(11)
     doc.setTextColor(...C.subtext)
     const cross = `Incarnation Cross: ${data.profile.hd_incarnation_cross}`
-    doc.text(cross, (PAGE_W - doc.getTextWidth(cross)) / 2, statY + 22)
+    doc.text(cross, (PAGE_W - doc.getTextWidth(cross)) / 2, statY + 26)
   }
 
   // Date generated
