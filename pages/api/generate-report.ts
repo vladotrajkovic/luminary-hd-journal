@@ -77,7 +77,16 @@ ${activeChannels.length > 0
 </section_channels>
 
 <section_final>
-Write a warm, personal, 2-3 paragraph closing note. Weave together the key themes from their chart — their type, authority, profile, and channels — into a unified message about their unique path. End with an empowering reminder about the experiment of living their design. Address them personally by name if provided.
+Write the closing "Final Note" in three parts — do not use headers, let it flow naturally:
+
+PART 1 — Opening (1 paragraph): Begin with a warm, grounding statement about what this chart is really for. Remind them that it is not here to tell them what to do — it is here to remind them of what is already true inside them.
+
+PART 2 — Personal Summary (exactly 3 bullet points using "- " dash format): Write three short, specific, personal reminders drawn directly from their chart. Each should be one or two sentences. Cover:
+  - Their Type and what it means for how they move through life (e.g. "You are a ${type} — designed to [strategy]. Your power is in [key quality].")
+  - Their Profile (${profile}) and what it means for how they need to live and connect
+  - A key gift or theme from their defined centers or active channels — something that may feel "normal" to them but is truly special
+
+PART 3 — Closing (3 paragraphs): Write a flowing, poetic closing. Remind them this is not about fixing anything — it is about remembering their natural flow and trusting their own rhythm. Encourage them to take their time, come back to their chart, reflect, experiment, and notice how their body speaks to them. End with a final sentence about how Human Design, with time and curiosity, can become a beautiful ally on their path — helping them make decisions with clarity, relate to others with ease, and live life in a way that feels true to who they really are.
 </section_final>`
 
   try {
