@@ -129,9 +129,7 @@ export default function ProfileSetup() {
               <input className="input-cosmic" value={form.birth_country} onChange={e => update('birth_country', e.target.value)} placeholder="Country" />
             </div>
           </div>
-          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 14, color: 'rgba(167,139,250,0.4)', marginTop: 16 }}>
-            * Use a free chart calculator at mybodygraph.com or jovianarchive.com to get your Human Design chart, then enter the results below.
-          </p>
+
         </div>
 
         {/* Core HD Data */}
