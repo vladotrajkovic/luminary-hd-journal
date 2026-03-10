@@ -65,36 +65,44 @@ function buildChartFromActivations(activations: any[]): HDChart {
     definedCenters.includes(m) && componentId[m] === throatComp
   )
 
-  let type = 'Projector'
+  let type: string
   if (definedCenters.length === 0) type = 'Reflector'
   else if (hasSacral && motorToThroat) type = 'Manifesting Generator'
   else if (hasSacral) type = 'Generator'
   else if (!hasSacral && motorToThroat) type = 'Manifestor'
+  else type = 'Projector'
 
   // Authority
-  let authority = 'Mental/Environment'
+  let authority: string
   if (type === 'Reflector') authority = 'Lunar'
   else if (definedCenters.includes('SolarPlexus')) authority = 'Emotional/Solar Plexus'
   else if (definedCenters.includes('Sacral')) authority = 'Sacral'
   else if (definedCenters.includes('Spleen')) authority = 'Splenic'
   else if (definedCenters.includes('Heart')) authority = 'Ego/Heart'
   else if (definedCenters.includes('G')) authority = 'G Center/Self'
+  else authority = 'Mental/Environment'
 
-  // Profile
+  // Profile from sun activations
   const sunAct = activations.find((a: any) => a.planet === 'sun')
   const profile = sunAct ? `${sunAct.personality.line}/${sunAct.design.line}` : '?/?'
 
-  // Definition (from component count already computed above)
-  const definition = ['','Single','Split','Triple Split','Quadruple Split'][Math.min(components, 4)] || 'Single'
+  // Definition
+  let definition: string
+  if (definedCenters.length === 0) definition = 'No Definition (Reflector)'
+  else if (components === 1) definition = 'Single Definition'
+  else if (components === 2) definition = 'Split Definition'
+  else if (components === 3) definition = 'Triple Split'
+  else definition = 'Quadruple Split'
 
-  const sunPos = sunAct?.personality
-  const earthAct = activations.find((a: any) => a.planet === 'earth')
-  const dSun = sunAct?.design
-  const dEarth = earthAct?.design
-  const pSunGate = sunPos?.gate ?? 0
-  const pEarthGate = earthAct?.personality?.gate ?? 0
-  const dSunGate = dSun?.gate ?? 0
-  const dEarthGate = dEarth?.gate ?? 0
+  // Incarnation cross
+  const pSun   = activations.find((a: any) => a.planet === 'sun')
+  const pEarth = activations.find((a: any) => a.planet === 'earth')
+  const dSun   = activations.find((a: any) => a.planet === 'sun')
+  const dEarth = activations.find((a: any) => a.planet === 'earth')
+  const pSunGate   = pSun?.personality?.gate ?? 0
+  const pEarthGate = pEarth?.personality?.gate ?? 0
+  const dSunGate   = dSun?.design?.gate ?? 0
+  const dEarthGate = dEarth?.design?.gate ?? 0
   const incarnationCross = getIncarnationCross(pSunGate, pEarthGate, dSunGate, dEarthGate)
 
   return {
@@ -141,7 +149,6 @@ export default function ChartGenerator() {
   const [activeTab, setActiveTab] = useState<'graph' | 'activations' | 'channels'>('graph')
   const [calculating, setCalculating] = useState(false)
   const [calcError, setCalcError] = useState('')
-
   const [profileOverride, setProfileOverride] = useState('')
   const searchTimeout = useRef<any>(null)
 
@@ -200,7 +207,6 @@ export default function ChartGenerator() {
       // Build HDChart from API activations
       const result = buildChartFromActivations(data.activations)
       setChart(result)
-
       setActiveTab('graph')
     } catch (err: any) {
       setCalcError(err.message || 'Failed to calculate chart. Please try again.')
@@ -233,6 +239,13 @@ export default function ChartGenerator() {
     setSaved(true)
     setSaving(false)
     setTimeout(() => router.push('/profile'), 1500)
+  }
+
+  // ── NEW: Navigate to report page with chart data ──────────
+  const handleGenerateReport = () => {
+    if (!chart) return
+    sessionStorage.setItem('luminary_chart_report', JSON.stringify(chart))
+    router.push('/reports')
   }
 
   const typeInfo = chart ? HD_TYPES[chart.type as keyof typeof HD_TYPES] : null
@@ -289,64 +302,53 @@ export default function ChartGenerator() {
               <input
                 type="text"
                 className="input-cosmic"
-                placeholder="e.g. London, New York, Tokyo"
+                placeholder="e.g. London, New York..."
                 value={birthPlace}
                 onChange={e => handlePlaceInput(e.target.value)}
-                autoComplete="off"
               />
-              {/* City search dropdown */}
+              {/* Autocomplete dropdown */}
               {placeResults.length > 0 && (
                 <div style={{
-                  position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 100,
-                  background: 'rgba(15,10,46,0.98)', border: '1px solid rgba(123,79,212,.4)',
-                  borderRadius: 10, marginTop: 4, overflow: 'hidden',
-                  boxShadow: '0 8px 32px rgba(0,0,0,.6)'
+                  position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50,
+                  background: 'rgba(15,10,46,0.97)', border: '1px solid rgba(123,79,212,.4)',
+                  borderRadius: 8, marginTop: 4, overflow: 'hidden',
+                  backdropFilter: 'blur(12px)'
                 }}>
-                  {placeResults.map((place: any, i: number) => (
-                    <div
+                  {placeResults.map((place, i) => (
+                    <button
                       key={i}
                       onClick={() => selectPlace(place)}
                       style={{
-                        padding: '11px 16px', cursor: 'pointer',
-                        borderBottom: i < placeResults.length - 1 ? '1px solid rgba(123,79,212,.1)' : 'none',
+                        display: 'block', width: '100%', textAlign: 'left',
+                        padding: '10px 16px', background: 'none', border: 'none',
+                        cursor: 'pointer', borderBottom: '1px solid rgba(167,139,250,.08)',
                         transition: 'background .15s'
                       }}
                       onMouseEnter={e => (e.currentTarget.style.background = 'rgba(123,79,212,.2)')}
-                      onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                      onMouseLeave={e => (e.currentTarget.style.background = 'none')}
                     >
-                      <div style={{ fontFamily: 'Cinzel, serif', fontSize: 13, color: '#EDE9FE' }}>
-                        {place.name}{place.admin1 ? `, ${place.admin1}` : ''}
-                      </div>
-                      <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(167,139,250,.5)', marginTop: 2 }}>
-                        {place.country} · {place.timezone}
-                      </div>
-                    </div>
+                      <span style={{ fontFamily: 'Cinzel, serif', fontSize: 13, color: '#EDE9FE' }}>
+                        {place.name}
+                      </span>
+                      <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(167,139,250,.5)', marginLeft: 8 }}>
+                        {place.admin1 ? `${place.admin1}, ` : ''}{place.country}
+                      </span>
+                    </button>
                   ))}
                 </div>
               )}
-              {/* Selected place confirmation */}
-              {selectedPlace && (
-                <div style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span style={{ color: '#2DD4BF', fontSize: 12 }}>✓</span>
-                  <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(45,212,191,.8)' }}>
-                    {selectedPlace.timezone}
-                  </span>
-                </div>
-              )}
               {searchingPlace && (
-                <div style={{ marginTop: 6, fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(167,139,250,.5)' }}>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(167,139,250,.4)', marginTop: 6 }}>
                   Searching...
-                </div>
+                </p>
+              )}
+              {selectedPlace && (
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: '#2DD4BF', marginTop: 6 }}>
+                  ✓ {selectedPlace.timezone}
+                </p>
               )}
             </div>
           </div>
-
-          <div style={{ background: 'rgba(212,175,55,.07)', border: '1px solid rgba(212,175,55,.2)', borderRadius: 10, padding: '12px 18px', marginBottom: 12 }}>
-            <p style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 15, color: 'rgba(212,175,55,.8)' }}>
-              ✦ Birth city resolves the exact timezone so your time is accurately converted to UTC for planetary calculations.
-            </p>
-          </div>
-
 
           {calcError && (
             <div style={{ background: 'rgba(248,113,113,.1)', border: '1px solid rgba(248,113,113,.3)', borderRadius: 10, padding: '12px 18px', marginBottom: 16 }}>
@@ -380,7 +382,9 @@ export default function ChartGenerator() {
                     {chart.authority} Authority · Profile {chart.profile}
                   </p>
                 </div>
-                <div style={{ display: 'flex', gap: 12 }}>
+
+                {/* ── Action Buttons ── */}
+                <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
                   <button
                     className="btn-cosmic"
                     onClick={handleSaveToProfile}
@@ -388,6 +392,13 @@ export default function ChartGenerator() {
                     style={{ fontSize: 12 }}
                   >
                     {saving ? 'Saving...' : saved ? '✓ Saved to Profile!' : '✦ Save to My Chart'}
+                  </button>
+                  <button
+                    className="btn-ghost"
+                    onClick={handleGenerateReport}
+                    style={{ fontSize: 12 }}
+                  >
+                    ✧ Generate Report
                   </button>
                 </div>
               </div>
@@ -524,19 +535,19 @@ export default function ChartGenerator() {
                         return (
                           <div key={center} style={{
                             padding: '12px 16px', borderRadius: 10,
-                            background: isDefined ? 'rgba(123,79,212,.15)' : 'rgba(15,10,46,.4)',
-                            border: `1px solid ${isDefined ? 'rgba(123,79,212,.4)' : 'rgba(167,139,250,.1)'}`,
+                            background: isDefined ? 'rgba(123,79,212,.2)' : 'rgba(45,212,191,.05)',
+                            border: `1px solid ${isDefined ? 'rgba(123,79,212,.4)' : 'rgba(45,212,191,.15)'}`,
                             display: 'flex', justifyContent: 'space-between', alignItems: 'center'
                           }}>
                             <span style={{ fontFamily: 'Cinzel, serif', fontSize: 13, color: isDefined ? '#EDE9FE' : 'rgba(167,139,250,.5)' }}>
-                              {center === 'SolarPlexus' ? 'Solar Plexus' : center}
+                              {center}
                             </span>
                             <span style={{
-                              fontFamily: 'Inter, sans-serif', fontSize: 10, padding: '3px 10px', borderRadius: 10,
+                              fontFamily: 'Inter, sans-serif', fontSize: 10, padding: '3px 10px',
+                              borderRadius: 20, letterSpacing: '.05em', textTransform: 'uppercase',
                               background: isDefined ? 'rgba(123,79,212,.3)' : 'rgba(45,212,191,.1)',
                               border: `1px solid ${isDefined ? 'rgba(123,79,212,.5)' : 'rgba(45,212,191,.3)'}`,
                               color: isDefined ? '#C4B5FD' : '#5EEAD4',
-                              letterSpacing: '.05em'
                             }}>
                               {isDefined ? 'DEFINED' : 'OPEN'}
                             </span>
@@ -641,84 +652,27 @@ export default function ChartGenerator() {
                               <span style={{
                                 fontFamily: 'Inter, sans-serif', fontSize: 10, padding: '3px 10px',
                                 background: 'rgba(167,139,250,.15)', border: '1px solid rgba(167,139,250,.3)',
-                                borderRadius: 10, color: '#A78BFA', letterSpacing: '.05em'
-                              }}>
-                                {channel.centers[0]} → {channel.centers[1]}
-                              </span>
-                              <span style={{
-                                fontFamily: 'Inter, sans-serif', fontSize: 10, padding: '3px 10px',
-                                background: 'rgba(45,212,191,.08)', border: '1px solid rgba(45,212,191,.2)',
-                                borderRadius: 10, color: '#2DD4BF', letterSpacing: '.05em'
+                                borderRadius: 20, color: '#C4B5FD', letterSpacing: '.05em'
                               }}>
                                 {channel.type}
                               </span>
+                              <span style={{
+                                fontFamily: 'Inter, sans-serif', fontSize: 10, padding: '3px 10px',
+                                background: 'rgba(45,212,191,.1)', border: '1px solid rgba(45,212,191,.25)',
+                                borderRadius: 20, color: '#5EEAD4', letterSpacing: '.05em'
+                              }}>
+                                {channel.centers[0]} → {channel.centers[1]}
+                              </span>
                             </div>
-                          </div>
-                          <div style={{ display: 'flex', gap: 6 }}>
-                            {channel.gates.map(g => {
-                              const gateInfo = GATES_64[String(g)]
-                              return (
-                                <div key={g} style={{
-                                  padding: '8px 12px', background: 'rgba(212,175,55,.07)',
-                                  border: '1px solid rgba(212,175,55,.2)', borderRadius: 8, textAlign: 'center'
-                                }}>
-                                  <div style={{ fontFamily: 'Cinzel, serif', fontSize: 18, color: '#D4AF37' }}>{g}</div>
-                                  <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(212,175,55,.6)', marginTop: 2 }}>
-                                    {gateInfo?.keyword}
-                                  </div>
-                                </div>
-                              )
-                            })}
                           </div>
                         </div>
                       </div>
                     ))}
                   </div>
                 )}
-
-                {/* Hanging gates */}
-                <div style={{ marginTop: 28 }}>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, letterSpacing: '.12em', color: 'rgba(167,139,250,.5)', textTransform: 'uppercase', marginBottom: 14 }}>
-                    All Active Gates
-                  </p>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                    {chart.allGates.sort((a, b) => a - b).map(g => {
-                      const isPersonality = chart.allPersonalityGates.includes(g)
-                      const isDesign = chart.allDesignGates.includes(g)
-                      const both = isPersonality && isDesign
-                      const gateInfo = GATES_64[String(g)]
-                      return (
-                        <div key={g} style={{
-                          padding: '8px 14px', borderRadius: 10,
-                          background: both ? 'rgba(123,79,212,.25)' : isPersonality ? 'rgba(167,139,250,.12)' : 'rgba(248,113,113,.1)',
-                          border: `1px solid ${both ? 'rgba(123,79,212,.5)' : isPersonality ? 'rgba(167,139,250,.3)' : 'rgba(248,113,113,.25)'}`,
-                          textAlign: 'center', minWidth: 56
-                        }}>
-                          <div style={{ fontFamily: 'Cinzel, serif', fontSize: 18, color: both ? '#C4B5FD' : isPersonality ? '#A78BFA' : '#F87171' }}>{g}</div>
-                          <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, color: 'rgba(167,139,250,.5)', marginTop: 2, letterSpacing: '.04em' }}>
-                            {gateInfo?.keyword}
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                  <div style={{ display: 'flex', gap: 16, marginTop: 14 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <div style={{ width: 12, height: 12, background: 'rgba(167,139,250,.2)', border: '1px solid rgba(167,139,250,.4)', borderRadius: 3 }} />
-                      <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(167,139,250,.5)' }}>Personality (Conscious)</span>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <div style={{ width: 12, height: 12, background: 'rgba(248,113,113,.1)', border: '1px solid rgba(248,113,113,.3)', borderRadius: 3 }} />
-                      <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(167,139,250,.5)' }}>Design (Unconscious)</span>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <div style={{ width: 12, height: 12, background: 'rgba(123,79,212,.25)', border: '1px solid rgba(123,79,212,.5)', borderRadius: 3 }} />
-                      <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(167,139,250,.5)' }}>Both</span>
-                    </div>
-                  </div>
-                </div>
               </div>
             )}
+
           </div>
         )}
       </Layout>
