@@ -3,16 +3,17 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/router'
 import Layout from '../../components/layout/Layout'
 import { supabase } from '../../lib/supabase'
+import { generateHDReportPdf } from '../../lib/generatePdf'
 
 // ── SECTION CONFIG ─────────────────────────────────────────
 const SECTIONS = [
-  { key: 'intro',    tag: 'section_intro',    label: 'Introduction',       icon: '✦', color: '#A78BFA' },
-  { key: 'type',     tag: 'section_type',     label: 'Your Type',          icon: '◈', color: '#D4AF37' },
-  { key: 'authority',tag: 'section_authority',label: 'Your Authority',     icon: '◎', color: '#2DD4BF' },
-  { key: 'profile',  tag: 'section_profile',  label: 'Your Profile',       icon: '⬡', color: '#F9A8D4' },
-  { key: 'centers',  tag: 'section_centers',  label: 'The Nine Centers',   icon: '◯', color: '#A78BFA' },
-  { key: 'channels', tag: 'section_channels', label: 'Your Channels',      icon: '◇', color: '#FCD34D' },
-  { key: 'final',    tag: 'section_final',    label: 'Your Path Forward',  icon: '✧', color: '#C4B5FD' },
+  { key: 'intro',     tag: 'section_intro',     label: 'Introduction',      icon: '✦', color: '#A78BFA' },
+  { key: 'type',      tag: 'section_type',      label: 'Your Type',         icon: '◈', color: '#D4AF37' },
+  { key: 'authority', tag: 'section_authority', label: 'Your Authority',    icon: '◎', color: '#2DD4BF' },
+  { key: 'profile',   tag: 'section_profile',   label: 'Your Profile',      icon: '⬡', color: '#F9A8D4' },
+  { key: 'centers',   tag: 'section_centers',   label: 'The Nine Centers',  icon: '◯', color: '#A78BFA' },
+  { key: 'channels',  tag: 'section_channels',  label: 'Your Channels',     icon: '◇', color: '#FCD34D' },
+  { key: 'final',     tag: 'section_final',     label: 'Your Path Forward', icon: '✧', color: '#C4B5FD' },
 ]
 
 // Parse streaming text into sections using XML-like tags
@@ -141,6 +142,7 @@ export default function ReportPage() {
   const [sections, setSections] = useState<Record<string, string>>({})
   const [done, setDone] = useState(false)
   const [error, setError] = useState('')
+  const [exporting, setExporting] = useState(false)
   const rawRef = useRef('')
 
   useEffect(() => {
@@ -149,6 +151,18 @@ export default function ReportPage() {
       if (!session) { router.push('/auth/login'); return }
       const { data } = await supabase.from('profiles').select('*').eq('id', session.user.id).single()
       setProfile(data)
+
+      // Check if fresh chart data was passed from Chart Generator via sessionStorage
+      const stored = typeof window !== 'undefined' ? sessionStorage.getItem('luminary_chart_report') : null
+      if (stored) {
+        sessionStorage.removeItem('luminary_chart_report')
+        try {
+          const parsed = JSON.parse(stored)
+          setChartData(parsed)
+          setLoading(false)
+          return
+        } catch { /* fall through to profile data */ }
+      }
 
       // Build chart data from profile
       if (data) {
@@ -221,6 +235,17 @@ export default function ReportPage() {
     }
   }
 
+  const handleExportPdf = async () => {
+    setExporting(true)
+    try {
+      await generateHDReportPdf({ sections, profile })
+    } catch (e) {
+      console.error('PDF export failed', e)
+    } finally {
+      setExporting(false)
+    }
+  }
+
   const hasReport = Object.keys(sections).length > 0
 
   if (loading) {
@@ -252,35 +277,30 @@ export default function ReportPage() {
 
         {/* ── Header ── */}
         <div style={{ marginBottom: 40 }}>
-          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, letterSpacing: '0.2em', color: 'rgba(167,139,250,0.5)', textTransform: 'uppercase', marginBottom: 8 }}>
-            AI-Powered Reading
+          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, letterSpacing: '0.15em', color: 'rgba(167,139,250,0.5)', textTransform: 'uppercase', marginBottom: 8 }}>
+            Your Personal Reading
           </p>
-          <h1 style={{ fontFamily: 'Cinzel, serif', fontSize: 36, color: '#EDE9FE', letterSpacing: '0.05em', marginBottom: 8 }}>
-            Your Human Design Report
+          <h1 style={{ fontFamily: 'Cinzel, serif', fontSize: 32, color: '#EDE9FE', letterSpacing: '0.05em' }}>
+            Human Design Report
           </h1>
-          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 19, color: 'rgba(196,181,253,0.55)' }}>
-            A personalised reading of your unique energetic blueprint
+          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 18, color: 'rgba(196,181,253,0.55)', marginTop: 8 }}>
+            Your complete reading, woven from the stars at the moment of your birth
           </p>
         </div>
 
-        {/* ── Chart Summary Banner ── */}
-        {profile && (
+        {/* ── Chart Summary ── */}
+        {profile && (profile.hd_type || profile.hd_authority) && (
           <div style={{
-            ...S.card,
-            background: 'linear-gradient(135deg, rgba(45,27,105,0.5) 0%, rgba(15,10,46,0.7) 100%)',
-            borderColor: 'rgba(212,175,55,0.2)',
-            marginBottom: 32,
-            display: 'flex', flexWrap: 'wrap', gap: 24, alignItems: 'center',
+            display: 'flex', gap: 28, flexWrap: 'wrap',
+            background: 'rgba(45,27,105,0.2)', borderRadius: 12,
+            padding: '20px 28px', marginBottom: 32,
+            border: '1px solid rgba(123,79,212,0.2)',
           }}>
-            <div style={{ flex: 1, minWidth: 200 }}>
-              <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, letterSpacing: '0.15em', color: 'rgba(167,139,250,0.5)', textTransform: 'uppercase', marginBottom: 6 }}>Reading For</p>
-              <p style={{ fontFamily: 'Cinzel, serif', fontSize: 22, color: '#EDE9FE' }}>{profile.full_name || 'Your Chart'}</p>
-            </div>
             {[
-              { label: 'Type', value: profile.hd_type, color: '#A78BFA' },
-              { label: 'Authority', value: profile.hd_authority, color: '#2DD4BF' },
-              { label: 'Profile', value: profile.hd_profile, color: '#D4AF37' },
-              { label: 'Definition', value: profile.hd_definition, color: '#F9A8D4' },
+              { label: 'Type',      value: profile.hd_type,      color: '#A78BFA' },
+              { label: 'Authority', value: profile.hd_authority,  color: '#2DD4BF' },
+              { label: 'Profile',   value: profile.hd_profile,    color: '#D4AF37' },
+              { label: 'Definition',value: profile.hd_definition, color: '#F9A8D4' },
             ].filter(i => i.value).map(item => (
               <div key={item.label} style={{ textAlign: 'center' }}>
                 <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, letterSpacing: '0.15em', color: 'rgba(167,139,250,0.45)', textTransform: 'uppercase', marginBottom: 4 }}>{item.label}</p>
@@ -315,8 +335,8 @@ export default function ReportPage() {
             }}>
               ✦
             </div>
-            <p style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 20, color: 'rgba(196,181,253,0.6)', marginBottom: 32, maxWidth: 480, margin: '0 auto 32px' }}>
-              Your chart holds a story unlike any other. Luminary will weave your Type, Authority, Profile, Centers and Channels into a personalised, flowing reading — written just for you.
+            <p style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 20, color: 'rgba(196,181,253,0.6)', maxWidth: 480, margin: '0 auto 32px' }}>
+              Luminary will weave your Type, Authority, Profile, Centers and Channels into a personalised, flowing reading — written just for you.
             </p>
             <button
               onClick={generateReport}
@@ -379,10 +399,8 @@ export default function ReportPage() {
               const content = sections[section.key]
               if (!content && !generating) return null
               if (!content) {
-                // Still waiting for this section
                 return <SkeletonCard key={section.key} label={section.label} icon={section.icon} color={section.color} />
               }
-              // Determine if this specific section is still streaming
               const nextSectionIdx = SECTIONS.findIndex(s => s.key === section.key) + 1
               const nextSection = SECTIONS[nextSectionIdx]
               const isCurrentlyStreaming = generating && nextSection && !sections[nextSection.key]
@@ -397,7 +415,7 @@ export default function ReportPage() {
               )
             })}
 
-            {/* Re-generate & actions (shown after completion) */}
+            {/* ── Completion actions ── */}
             {done && hasReport && (
               <div className="report-section" style={{
                 ...S.card,
@@ -409,15 +427,16 @@ export default function ReportPage() {
                   ✦ Your Reading is Complete ✦
                 </p>
                 <p style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 18, color: 'rgba(196,181,253,0.5)', marginBottom: 28 }}>
-                  Save this page or print it for your records. Come back when you're ready to dive deeper.
+                  Download your report as a beautifully formatted PDF, or come back to regenerate it any time.
                 </p>
                 <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
                   <button
-                    onClick={() => window.print()}
-                    className="btn-ghost"
-                    style={{ fontSize: 12, padding: '10px 28px' }}
+                    onClick={handleExportPdf}
+                    disabled={exporting}
+                    className="btn-cosmic"
+                    style={{ fontSize: 12, padding: '10px 28px', opacity: exporting ? 0.6 : 1 }}
                   >
-                    ◎ Print / Save as PDF
+                    {exporting ? '⧗ Generating PDF...' : '↓ Download PDF Report'}
                   </button>
                   <button
                     onClick={() => {
