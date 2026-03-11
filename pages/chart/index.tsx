@@ -215,7 +215,7 @@ export default function ChartGenerator() {
     }
   }
 
-  onst handleSaveToProfile = async () => {
+  const handleSaveToProfile = async () => {
     if (!chart) return
     setSaving(true)
     const { data: { session } } = await supabase.auth.getSession()
