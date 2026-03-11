@@ -442,11 +442,11 @@ export async function calculateHDChart(
   const designJD = dateToJulian(designDate)
 
   // Import swisseph calculation
-  const { getPlanetPositions } = await import('./swissEph')
+  const { computeAllPlanets } = await import('./swissEph')
 
   const [pPositions, dPositions] = await Promise.all([
-    getPlanetPositions(birthJD),
-    getPlanetPositions(designJD),
+    computeAllPlanets(birthJD),
+    computeAllPlanets(designJD),
   ])
 
   const pSunLon   = pPositions.sun
