@@ -147,7 +147,7 @@ export default function MyChart() {
 
   // Reconstruct chart structures from stored profile data
   const gates: number[] = (profile?.active_gates || []).map(Number)
-  const uniqueGates = [...new Set(gates)].sort((a, b) => a - b)
+  const uniqueGates = Array.from(new Set(gates)).sort((a, b) => a - b)
   const definedCenters: string[] = profile?.defined_centers || []
   const openCenters = ALL_CENTER_NAMES.filter(c => !definedCenters.includes(c))
   const activeChannels = ALL_CHANNELS.filter(ch =>
