@@ -215,7 +215,7 @@ export default function ChartGenerator() {
     }
   }
 
-  const handleSaveToProfile = async () => {
+  onst handleSaveToProfile = async () => {
     if (!chart) return
     setSaving(true)
     const { data: { session } } = await supabase.auth.getSession()
@@ -229,6 +229,7 @@ export default function ChartGenerator() {
       hd_incarnation_cross: chart.incarnationCross,
       defined_centers: chart.definedCenters,
       active_gates: chart.allGates.map(String),
+      planet_activations: chart.personalityActivations,   // ← NEW
       birth_date: birthDate,
       birth_time: birthTime || null,
       birth_place: selectedPlace?.name || birthPlace || null,
