@@ -119,11 +119,11 @@ export async function calculateHDChart(
   const designJD = dateToJulian(designDate)
 
   // Dynamic import keeps swisseph-v2 out of the client bundle
-  const { getPlanetPositions } = await import('./swissEph')
+  const { computeAllPlanets } = await import('./swissEph')
 
   const [pPositions, dPositions] = await Promise.all([
-    getPlanetPositions(birthJD),
-    getPlanetPositions(designJD),
+    computeAllPlanets(birthJD),
+    computeAllPlanets(designJD),
   ])
 
   const pSunLon   = pPositions.sun
