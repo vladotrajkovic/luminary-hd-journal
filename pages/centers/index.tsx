@@ -4,12 +4,20 @@ import Layout from '../../components/layout/Layout'
 import { supabase } from '../../lib/supabase'
 import { HD_CENTERS } from '../../lib/hdData'
 
+// Maps HD_CENTERS display names → internal DB keys stored in profile.defined_centers
+// HD_CENTERS uses human-readable names; the DB stores internal Center keys
+const CENTER_NAME_TO_KEY: Record<string, string> = {
+  'Solar Plexus': 'SolarPlexus',
+  'G Center':     'G',
+  'Heart/Ego':    'Heart',
+}
+
 export default function Centers() {
-  const [profile, setProfile] = useState<any>(null)
+  const [profile, setProfile]       = useState<any>(null)
   const [reflections, setReflections] = useState<any[]>([])
-  const [selected, setSelected] = useState<string | null>(null)
-  const [notes, setNotes] = useState<Record<string, string>>({})
-  const [saving, setSaving] = useState(false)
+  const [selected, setSelected]     = useState<string | null>(null)
+  const [notes, setNotes]           = useState<Record<string, string>>({})
+  const [saving, setSaving]         = useState(false)
 
   useEffect(() => {
     const load = async () => {
@@ -28,7 +36,13 @@ export default function Centers() {
     load()
   }, [])
 
-  const definedCenters = profile?.defined_centers || []
+  const definedCenters: string[] = profile?.defined_centers || []
+
+  // Resolve whether a center (by display name) is defined
+  const isCenterDefined = (displayName: string) => {
+    const key = CENTER_NAME_TO_KEY[displayName] ?? displayName
+    return definedCenters.includes(key)
+  }
 
   const handleSaveReflection = async (centerName: string) => {
     setSaving(true)
@@ -36,16 +50,19 @@ export default function Centers() {
     if (!session) return
 
     const existing = reflections.find(r => r.center_name === centerName)
-    const isDefined = definedCenters.includes(centerName)
+    // FIX: normalise display name before checking defined status
+    const isDefined = isCenterDefined(centerName)
 
     if (existing) {
-      await supabase.from('center_reflections').update({ reflection_notes: notes[centerName] }).eq('id', existing.id)
+      await supabase.from('center_reflections')
+        .update({ reflection_notes: notes[centerName] })
+        .eq('id', existing.id)
     } else {
       await supabase.from('center_reflections').insert({
         user_id: session.user.id,
         center_name: centerName,
         is_defined: isDefined,
-        reflection_notes: notes[centerName] || ''
+        reflection_notes: notes[centerName] || '',
       })
     }
     setSaving(false)
@@ -81,8 +98,9 @@ export default function Centers() {
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 20 }}>
           {HD_CENTERS.map(center => {
-            const isDefined = definedCenters.includes(center.name)
-            const isOpen = !isDefined
+            // FIX: normalise display name → internal key before comparing with DB values
+            const isDefined  = isCenterDefined(center.name)
+            const isOpen     = !isDefined
             const isSelected = selected === center.name
 
             return (
@@ -93,7 +111,7 @@ export default function Centers() {
                   style={{
                     padding: '22px 24px', cursor: 'pointer',
                     borderColor: isSelected ? 'rgba(167,139,250,0.4)' : undefined,
-                    borderLeft: `3px solid ${isDefined ? '#7B4FD4' : '#2DD4BF'}`
+                    borderLeft: `3px solid ${isDefined ? '#7B4FD4' : '#2DD4BF'}`,
                   }}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
@@ -109,7 +127,11 @@ export default function Centers() {
                     {isDefined ? center.defined_gift : center.open_gift}
                   </p>
 
-                  <div style={{ background: isOpen ? 'rgba(248,113,113,0.06)' : 'rgba(123,79,212,0.08)', borderRadius: 8, padding: '10px 14px', border: `1px solid ${isOpen ? 'rgba(248,113,113,0.15)' : 'rgba(123,79,212,0.15)'}` }}>
+                  <div style={{
+                    background: isOpen ? 'rgba(248,113,113,0.06)' : 'rgba(123,79,212,0.08)',
+                    borderRadius: 8, padding: '10px 14px',
+                    border: `1px solid ${isOpen ? 'rgba(248,113,113,0.15)' : 'rgba(123,79,212,0.15)'}`,
+                  }}>
                     <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: isOpen ? 'rgba(248,113,113,0.6)' : 'rgba(167,139,250,0.5)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>
                       {isOpen ? 'Watch for conditioning' : 'Your consistent gift'}
                     </p>
