@@ -144,7 +144,9 @@ export default function MyChart() {
       setLoading(false)
     }
     load()
-  }, [])
+  // router.query.saved changes whenever Chart Generator redirects here after a save,
+  // which forces a fresh fetch from Supabase instead of showing stale data.
+  }, [router.query.saved])
 
   const handleSave = async () => {
     setSaving(true)
