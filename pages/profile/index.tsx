@@ -22,10 +22,45 @@ const CENTER_DISPLAY_NAMES: Record<string, string> = {
 }
 
 // FIX: Map HD_CENTERS display names → internal Center keys (for isDefined comparison)
-// HD_CENTERS uses 'Solar Plexus' and 'G Center', but the DB stores 'SolarPlexus' and 'G'
+// HD_CENTERS uses display names but the DB stores internal keys
 const CENTER_NAME_TO_KEY: Record<string, string> = {
   'Solar Plexus': 'SolarPlexus',
   'G Center': 'G',
+  'Heart/Ego': 'Heart',   // HD_CENTERS calls it Heart/Ego; DB stores 'Heart'
+}
+
+// Short descriptions for each center-pair connection, shown on hover in Active Channels
+const CENTER_PAIR_DESCRIPTIONS: Record<string, string> = {
+  'G-Spleen':           'Identity & survival intuition — knowing who you are through bodily instinct',
+  'Spleen-G':           'Identity & survival intuition — knowing who you are through bodily instinct',
+  'Sacral-Spleen':      'Life force & immune awareness — sustainable vitality guided by the body',
+  'Spleen-Sacral':      'Life force & immune awareness — sustainable vitality guided by the body',
+  'G-Throat':           'Identity expressing itself — direction and love finding its voice',
+  'Throat-G':           'Identity expressing itself — direction and love finding its voice',
+  'Sacral-Throat':      'Life force manifesting — raw energy channelled directly into action',
+  'Throat-Sacral':      'Life force manifesting — raw energy channelled directly into action',
+  'G-Heart':            'Identity & willpower — sense of self backed by consistent ego energy',
+  'Heart-G':            'Identity & willpower — sense of self backed by consistent ego energy',
+  'Head-Ajna':          'Mental pressure finding form — inspiration becoming conceptual certainty',
+  'Ajna-Head':          'Mental pressure finding form — inspiration becoming conceptual certainty',
+  'Ajna-Throat':        'Mind speaking — processed thought ready to be communicated',
+  'Throat-Ajna':        'Mind speaking — processed thought ready to be communicated',
+  'Throat-Heart':       'Will expressing — ego-driven communication and manifestation',
+  'Heart-Throat':       'Will expressing — ego-driven communication and manifestation',
+  'Throat-SolarPlexus': 'Emotional truth finding voice — feelings that need time before speaking',
+  'SolarPlexus-Throat': 'Emotional truth finding voice — feelings that need time before speaking',
+  'Sacral-Root':        'Drive powering life force — root pressure fuelling sustained energy',
+  'Root-Sacral':        'Drive powering life force — root pressure fuelling sustained energy',
+  'Sacral-SolarPlexus': 'Life force & emotional depth — passion and feeling entwined',
+  'SolarPlexus-Sacral': 'Life force & emotional depth — passion and feeling entwined',
+  'Spleen-Throat':      'Intuitive voice — spontaneous knowing that speaks in the moment',
+  'Throat-Spleen':      'Intuitive voice — spontaneous knowing that speaks in the moment',
+  'Spleen-Root':        'Survival under pressure — instinct and adrenaline working together',
+  'Root-Spleen':        'Survival under pressure — instinct and adrenaline working together',
+  'SolarPlexus-Heart':  'Emotional willpower — feeling and ego fused into tribal bonding',
+  'Heart-SolarPlexus':  'Emotional willpower — feeling and ego fused into tribal bonding',
+  'SolarPlexus-Root':   'Emotional pressure — root urgency feeding the emotional wave',
+  'Root-SolarPlexus':   'Emotional pressure — root urgency feeding the emotional wave',
 }
 
 const PLANET_SYMBOLS: Record<string, string> = {
@@ -90,6 +125,8 @@ export default function MyChart() {
   const [expandedGate, setExpandedGate] = useState<number | null>(null)
   // Tooltip state for Active Gates hover
   const [hoveredGate, setHoveredGate] = useState<number | null>(null)
+  // Tooltip state for Active Channels center label hover
+  const [hoveredChannel, setHoveredChannel] = useState<string | null>(null)
 
   useEffect(() => {
     const load = async () => {
@@ -505,8 +542,63 @@ export default function MyChart() {
 
             {/* ── Body Graph tab ── */}
             {activeTab === 'graph' && (
-              <div style={{ display: 'flex', justifyContent: 'center', padding: '16px 0' }}>
-                <BodyGraph chart={chart} size={480} />
+              <div className="glass" style={{ padding: 32 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 40, alignItems: 'start' }}>
+                  {/* Left: SVG + legend */}
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, letterSpacing: '0.12em', color: 'rgba(167,139,250,0.5)', textTransform: 'uppercase', marginBottom: 16 }}>
+                      Body Graph
+                    </p>
+                    <div style={{ background: 'rgba(8,6,24,0.6)', borderRadius: 12, padding: 20, border: '1px solid rgba(167,139,250,0.1)' }}>
+                      <BodyGraph chart={chart} size={380} />
+                    </div>
+                    <div style={{ display: 'flex', gap: 20, marginTop: 16 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <div style={{ width: 16, height: 8, background: '#7B4FD4', borderRadius: 2 }} />
+                        <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(167,139,250,0.6)' }}>Defined</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <div style={{ width: 16, height: 8, background: 'transparent', border: '1px solid rgba(167,139,250,0.3)', borderRadius: 2 }} />
+                        <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(167,139,250,0.6)' }}>Open</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right: Centers list */}
+                  <div>
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, letterSpacing: '0.12em', color: 'rgba(167,139,250,0.5)', textTransform: 'uppercase', marginBottom: 16 }}>
+                      Centers
+                    </p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      {ALL_CENTER_NAMES.map(center => {
+                        const isDefined = definedCenters.includes(center)
+                        // Build a nice display name for this internal key
+                        const displayName = CENTER_DISPLAY_NAMES[center] ?? center
+                        return (
+                          <div key={center} style={{
+                            padding: '12px 16px', borderRadius: 10,
+                            background: isDefined ? 'rgba(123,79,212,0.2)' : 'rgba(45,212,191,0.06)',
+                            border: `1px solid ${isDefined ? 'rgba(123,79,212,0.4)' : 'rgba(45,212,191,0.2)'}`,
+                            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                          }}>
+                            <span style={{ fontFamily: 'Cinzel, serif', fontSize: 13, color: isDefined ? '#EDE9FE' : 'rgba(167,139,250,0.5)' }}>
+                              {displayName}
+                            </span>
+                            <span style={{
+                              padding: '3px 10px', borderRadius: 20, fontSize: 11,
+                              fontFamily: 'Inter, sans-serif', letterSpacing: '0.05em', flexShrink: 0, marginLeft: 12,
+                              background: isDefined ? 'rgba(123,79,212,0.3)' : 'rgba(45,212,191,0.1)',
+                              border: `1px solid ${isDefined ? 'rgba(123,79,212,0.5)' : 'rgba(45,212,191,0.3)'}`,
+                              color: isDefined ? '#C4B5FD' : '#5EEAD4',
+                            }}>
+                              {isDefined ? 'DEFINED' : 'OPEN'}
+                            </span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -586,11 +678,7 @@ export default function MyChart() {
               </div>
             )}
 
-            {/* ── Active Channels tab ──
-                CHANGES:
-                - center label font: 14 → 16, + channel-center-glow class
-                - gate description font: 13 → 15
-            ── */}
+            {/* ── Active Channels tab ── */}
             {activeTab === 'channels' && (
               <div className="glass" style={{ padding: 28 }}>
                 {activeChannels.length === 0 ? (
@@ -602,19 +690,62 @@ export default function MyChart() {
                     {activeChannels.map(ch => {
                       const g1 = GATES_64[String(ch.gates[0])]
                       const g2 = GATES_64[String(ch.gates[1])]
+                      const channelKey = `${ch.gates[0]}-${ch.gates[1]}`
+                      const centerPairKey = `${ch.centers[0]}-${ch.centers[1]}`
+                      const centerTooltip = CENTER_PAIR_DESCRIPTIONS[centerPairKey] || ''
                       return (
-                        <div key={`${ch.gates[0]}-${ch.gates[1]}`} className="glass" style={{ padding: '20px 24px' }}>
+                        <div key={channelKey} className="glass" style={{ padding: '20px 24px' }}>
                           {/* Channel header */}
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
                             <div>
-                              <p style={{ fontFamily: 'Cinzel, serif', fontSize: 15, color: '#EDE9FE', marginBottom: 4 }}>{ch.name}</p>
-                              {/* FONT BUMP: 14 → 16 + glow hint animation */}
-                              <p
-                                className="channel-center-glow"
-                                style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 16, color: 'rgba(167,139,250,0.5)' }}
-                              >
-                                {centerLabel(ch.centers[0])} → {centerLabel(ch.centers[1])}
-                              </p>
+                              <p style={{ fontFamily: 'Cinzel, serif', fontSize: 15, color: '#EDE9FE', marginBottom: 8 }}>{ch.name}</p>
+                              {/* Teal pill badge — matches Chart Generator style. Hover shows center description. */}
+                              <div style={{ position: 'relative', display: 'inline-block' }}>
+                                <span
+                                  onMouseEnter={() => setHoveredChannel(channelKey)}
+                                  onMouseLeave={() => setHoveredChannel(null)}
+                                  style={{
+                                    display: 'inline-flex', alignItems: 'center',
+                                    fontFamily: 'Inter, sans-serif', fontSize: 10, padding: '3px 10px',
+                                    background: 'rgba(45,212,191,0.1)', border: '1px solid rgba(45,212,191,0.25)',
+                                    borderRadius: 20, color: '#5EEAD4', letterSpacing: '0.05em',
+                                    cursor: 'default',
+                                  }}
+                                >
+                                  {centerLabel(ch.centers[0])} → {centerLabel(ch.centers[1])}
+                                </span>
+                                {/* Hover tooltip with center connection description */}
+                                {hoveredChannel === channelKey && centerTooltip && (
+                                  <div style={{
+                                    position: 'absolute',
+                                    bottom: 'calc(100% + 8px)',
+                                    left: 0,
+                                    background: 'rgba(8,6,24,0.97)',
+                                    border: '1px solid rgba(45,212,191,0.25)',
+                                    borderRadius: 8,
+                                    padding: '10px 14px',
+                                    width: 280,
+                                    zIndex: 30,
+                                    boxShadow: '0 8px 24px rgba(0,0,0,0.6)',
+                                    pointerEvents: 'none',
+                                  }}>
+                                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: '#5EEAD4', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 5 }}>
+                                      {centerLabel(ch.centers[0])} → {centerLabel(ch.centers[1])}
+                                    </p>
+                                    <p style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 14, color: 'rgba(196,181,253,0.85)', lineHeight: 1.5 }}>
+                                      {centerTooltip}
+                                    </p>
+                                    {/* Arrow */}
+                                    <div style={{
+                                      position: 'absolute', top: '100%', left: 20,
+                                      width: 0, height: 0,
+                                      borderLeft: '5px solid transparent',
+                                      borderRight: '5px solid transparent',
+                                      borderTop: '5px solid rgba(45,212,191,0.25)',
+                                    }} />
+                                  </div>
+                                )}
+                              </div>
                             </div>
                             <span style={{
                               padding: '4px 12px', borderRadius: 20,
@@ -633,7 +764,6 @@ export default function MyChart() {
                                   <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(167,139,250,0.45)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Gate</span>
                                 </div>
                                 <p style={{ fontFamily: 'Cinzel, serif', fontSize: 12, color: '#EDE9FE', marginBottom: 4 }}>{data?.name || `Gate ${gate}`}</p>
-                                {/* FONT BUMP: gate description 13 → 15 */}
                                 <p style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 15, color: 'rgba(167,139,250,0.45)', marginBottom: data?.description ? 8 : 0 }}>
                                   {data?.keyword || ''}
                                 </p>
