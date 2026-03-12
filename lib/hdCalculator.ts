@@ -176,6 +176,9 @@ const CROSS_NAMES: Record<string, string> = {
   '23/43/4/49':  'Juxtaposition Cross of Assimilation',
   '43/23/49/4':  'Juxtaposition Cross of Insight',
 }
+export type Center =
+  | 'Head' | 'Ajna' | 'Throat' | 'G' | 'Heart'
+  | 'Sacral' | 'SolarPlexus' | 'Spleen' | 'Root'
 
 export function getIncarnationCross(
   pSunGate: number,
