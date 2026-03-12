@@ -123,7 +123,7 @@ export default function Centers() {
                     </span>
                   </div>
 
-                  <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 16, color: 'rgba(196,181,253,0.7)', marginBottom: 12, lineHeight: 1.5 }}>
+                  <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 18, color: 'rgba(196,181,253,0.7)', marginBottom: 12, lineHeight: 1.5 }}>
                     {isDefined ? center.defined_gift : center.open_gift}
                   </p>
 
@@ -135,7 +135,7 @@ export default function Centers() {
                     <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: isOpen ? 'rgba(248,113,113,0.6)' : 'rgba(167,139,250,0.5)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>
                       {isOpen ? 'Watch for conditioning' : 'Your consistent gift'}
                     </p>
-                    <p style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 15, color: isOpen ? 'rgba(248,113,113,0.8)' : 'rgba(167,139,250,0.7)' }}>
+                    <p style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 17, color: isOpen ? 'rgba(248,113,113,0.8)' : 'rgba(167,139,250,0.7)' }}>
                       {isOpen ? center.not_self_question : center.defined_gift}
                     </p>
                   </div>
