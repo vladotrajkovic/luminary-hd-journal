@@ -164,6 +164,8 @@ export default function MyChart() {
     allPersonalityGates: planetActivations.map((a: any) => a.personality?.gate).filter(Boolean) as number[],
     allDesignGates: planetActivations.map((a: any) => a.design?.gate).filter(Boolean) as number[],
     personalityActivations: planetActivations,
+    // Required by HDChart type — not stored on profile, default to 0
+    birthJD: 0, designJD: 0, sunLongitudePersonality: 0, sunLongitudeDesign: 0,
   } : null
 
   const typeInfo = profile?.hd_type ? HD_TYPES[profile.hd_type as keyof typeof HD_TYPES] : null
