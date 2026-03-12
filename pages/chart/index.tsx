@@ -239,7 +239,7 @@ export default function ChartGenerator() {
 
     setSaved(true)
     setSaving(false)
-    setTimeout(() => router.push('/profile'), 1500)
+    setTimeout(() => router.push('/profile?saved=${Date.now()}'), 1500)
   }
 
   // ── NEW: Navigate to report page with chart data ──────────
