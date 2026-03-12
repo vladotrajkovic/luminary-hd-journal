@@ -722,14 +722,15 @@ export default function MyChart() {
                                   onMouseEnter={() => setHoveredChannel(channelKey)}
                                   onMouseLeave={() => setHoveredChannel(null)}
                                   style={{
-                                    display: 'inline-flex', alignItems: 'center',
+                                    display: 'inline-flex', alignItems: 'center', gap: 5,
                                     fontFamily: 'Inter, sans-serif', fontSize: 10, padding: '3px 10px',
                                     background: 'rgba(45,212,191,0.1)', border: '1px solid rgba(45,212,191,0.25)',
                                     borderRadius: 20, color: '#5EEAD4', letterSpacing: '0.05em',
-                                    cursor: 'default',
+                                    cursor: 'help',
                                   }}
                                 >
                                   {centerLabel(ch.centers[0])} → {centerLabel(ch.centers[1])}
+                                  <span style={{ fontSize: 11, opacity: 0.7, lineHeight: 1 }}>ⓘ</span>
                                 </span>
                                 {/* Hover tooltip with center connection description */}
                                 {hoveredChannel === channelKey && (
