@@ -103,8 +103,8 @@ function buildChartFromActivations(activations: any[]): HDChart {
   })
   let definition: string
   if (definedCenters.length === 0) definition = 'No Definition (Reflector)'
-  else if (comps2 === 1) definition = 'Single Definition'
-  else if (comps2 === 2) definition = 'Split Definition'
+  else if (comps2 === 1) definition = 'Single'
+  else if (comps2 === 2) definition = 'Split'
   else if (comps2 === 3) definition = 'Triple Split'
   else definition = 'Quadruple Split'
 
