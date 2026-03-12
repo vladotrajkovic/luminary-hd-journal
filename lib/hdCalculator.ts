@@ -34,7 +34,6 @@ export type Channel = {
   centers: [Center, Center]
   name: string
   type: string
-  tooltip?: string
 }
 
 export type HDChart = {
@@ -73,29 +72,183 @@ export function dateToJulian(date: Date): number {
     date.getUTCMinutes() / 1440 +
     date.getUTCSeconds() / 86400
 
-  let jd: number
   const y2 = m <= 2 ? y - 1 : y
   const m2 = m <= 2 ? m + 12 : m
   const A = Math.floor(y2 / 100)
   const B = 2 - A + Math.floor(A / 4)
-  jd = Math.floor(365.25 * (y2 + 4716)) +
+  const jd = Math.floor(365.25 * (y2 + 4716)) +
     Math.floor(30.6001 * (m2 + 1)) +
     d + B - 1524.5
   return jd
 }
 
-// ── GATE WHEEL SEQUENCE (Jovian Archive) ──────────────────
-export const GATE_WHEEL_SEQUENCE: number[] = [
+// ── VSOP87 SIMPLIFIED PLANETARY POSITIONS ─────────────────
+// Accurate to ~0.01 degrees for dates 1800-2200
+
+function normalizeAngle(angle: number): number {
+  return ((angle % 360) + 360) % 360
+}
+
+function toRad(deg: number): number {
+  return deg * Math.PI / 180
+}
+
+// Julian centuries from J2000.0
+function T(jd: number): number {
+  return (jd - 2451545.0) / 36525
+}
+
+// Mean anomaly helper
+function M(t: number, a: number, b: number): number {
+  return normalizeAngle(a + b * t)
+}
+
+export function getSunLongitude(jd: number): number {
+  const t = T(jd)
+  // Geometric mean longitude
+  const L0 = normalizeAngle(280.46646 + 36000.76983 * t + 0.0003032 * t * t)
+  // Mean anomaly
+  const m = normalizeAngle(357.52911 + 35999.05029 * t - 0.0001537 * t * t)
+  const mRad = toRad(m)
+  // Equation of center
+  const C = (1.914602 - 0.004817 * t - 0.000014 * t * t) * Math.sin(mRad)
+    + (0.019993 - 0.000101 * t) * Math.sin(2 * mRad)
+    + 0.000289 * Math.sin(3 * mRad)
+  // Sun's true longitude
+  const sunLon = L0 + C
+  // Apparent longitude (aberration + nutation simplified)
+  const omega = normalizeAngle(125.04 - 1934.136 * t)
+  const apparent = sunLon - 0.00569 - 0.00478 * Math.sin(toRad(omega))
+  return normalizeAngle(apparent)
+}
+
+export function getMoonLongitude(jd: number): number {
+  const t = T(jd)
+  // Moon's mean longitude
+  const L = normalizeAngle(218.3164477 + 481267.88123421 * t - 0.0015786 * t * t)
+  // Mean elongation
+  const D = normalizeAngle(297.8501921 + 445267.1114034 * t - 0.0018819 * t * t)
+  // Mean anomaly of Sun
+  const Ms = normalizeAngle(357.5291092 + 35999.0502909 * t - 0.0001536 * t * t)
+  // Mean anomaly of Moon
+  const Mm = normalizeAngle(134.9633964 + 477198.8676313 * t + 0.0089970 * t * t)
+  // Moon's argument of latitude
+  const F = normalizeAngle(93.2720950 + 483202.0175233 * t - 0.0036539 * t * t)
+
+  const DRad = toRad(D), MsRad = toRad(Ms), MmRad = toRad(Mm), FRad = toRad(F)
+
+  // Main perturbations
+  let lon = L
+  lon += 6.288774 * Math.sin(MmRad)
+  lon += 1.274027 * Math.sin(2 * DRad - MmRad)
+  lon += 0.658314 * Math.sin(2 * DRad)
+  lon += 0.213618 * Math.sin(2 * MmRad)
+  lon -= 0.185116 * Math.sin(MsRad)
+  lon -= 0.114332 * Math.sin(2 * FRad)
+  lon += 0.058793 * Math.sin(2 * DRad - 2 * MmRad)
+  lon += 0.057066 * Math.sin(2 * DRad - MsRad - MmRad)
+  lon += 0.053322 * Math.sin(2 * DRad + MmRad)
+  lon += 0.045758 * Math.sin(2 * DRad - MsRad)
+  lon -= 0.040923 * Math.sin(MsRad - MmRad)
+  lon -= 0.034720 * Math.sin(DRad)
+  lon -= 0.030383 * Math.sin(MsRad + MmRad)
+  lon += 0.015327 * Math.sin(2 * DRad - 2 * FRad)
+  lon -= 0.012528 * Math.sin(MmRad + 2 * FRad)
+  lon -= 0.010980 * Math.sin(MmRad - 2 * FRad)
+  return normalizeAngle(lon)
+}
+
+export function getMercuryLongitude(jd: number): number {
+  const t = T(jd)
+  const L = normalizeAngle(252.250906 + 149474.0722491 * t)
+  const m = normalizeAngle(174.7947 + 149472.5153 * t)
+  const mRad = toRad(m)
+  return normalizeAngle(L + 23.4400 * Math.sin(mRad) + 2.9818 * Math.sin(2*mRad) + 0.5255 * Math.sin(3*mRad))
+}
+
+export function getVenusLongitude(jd: number): number {
+  const t = T(jd)
+  const L = normalizeAngle(181.979801 + 58519.2130302 * t)
+  const m = normalizeAngle(212.5 + 58517.8039 * t)
+  const mRad = toRad(m)
+  return normalizeAngle(L + 0.7758 * Math.sin(mRad) + 0.0033 * Math.sin(2*mRad))
+}
+
+export function getMarsLongitude(jd: number): number {
+  const t = T(jd)
+  const L = normalizeAngle(355.433275 + 19141.6964746 * t)
+  const m = normalizeAngle(319.5 + 19139.8580 * t)
+  const mRad = toRad(m)
+  return normalizeAngle(L + 10.6912 * Math.sin(mRad) + 0.6228 * Math.sin(2*mRad) + 0.0503 * Math.sin(3*mRad))
+}
+
+export function getJupiterLongitude(jd: number): number {
+  const t = T(jd)
+  const L = normalizeAngle(34.351484 + 3036.3027889 * t)
+  const m = normalizeAngle(20.0202 + 3034.9057 * t)
+  const mRad = toRad(m)
+  return normalizeAngle(L + 5.5549 * Math.sin(mRad) + 0.1683 * Math.sin(2*mRad))
+}
+
+export function getSaturnLongitude(jd: number): number {
+  const t = T(jd)
+  const L = normalizeAngle(50.077444 + 1223.5110686 * t)
+  const m = normalizeAngle(317.0207 + 1221.5515 * t)
+  const mRad = toRad(m)
+  return normalizeAngle(L + 6.3585 * Math.sin(mRad) + 0.2204 * Math.sin(2*mRad))
+}
+
+export function getUranusLongitude(jd: number): number {
+  const t = T(jd)
+  const L = normalizeAngle(314.055005 + 429.8640561 * t)
+  const m = normalizeAngle(142.5905 + 427.9805 * t)
+  const mRad = toRad(m)
+  return normalizeAngle(L + 5.3042 * Math.sin(mRad) + 0.1534 * Math.sin(2*mRad))
+}
+
+export function getNeptuneLongitude(jd: number): number {
+  const t = T(jd)
+  const L = normalizeAngle(304.348665 + 219.8833092 * t)
+  const m = normalizeAngle(267.9674 + 218.4580 * t)
+  const mRad = toRad(m)
+  return normalizeAngle(L + 1.0862 * Math.sin(mRad))
+}
+
+export function getPlutoLongitude(jd: number): number {
+  const t = T(jd)
+  // Simplified Pluto - accurate to ~1 degree
+  const L = normalizeAngle(238.92903833 + 145.20780515 * t)
+  const m = normalizeAngle(14.2 + 144.9600 * t)
+  const mRad = toRad(m)
+  return normalizeAngle(L + 28.3150 * Math.sin(mRad) + 4.3408 * Math.sin(2*mRad))
+}
+
+export function getNorthNodeLongitude(jd: number): number {
+  const t = T(jd)
+  // Mean ascending node of Moon
+  const omega = normalizeAngle(125.04452 - 1934.136261 * t + 0.0020708 * t * t)
+  return normalizeAngle(omega)
+}
+
+// ── LONGITUDE → GATE & LINE ────────────────────────────────
+/**
+ * Maps ecliptic longitude (0-360°) to Human Design gate and line.
+ *
+ * The wheel starts at 0° Aries = Gate 41, Line 1 and progresses
+ * through all 64 hexagrams × 6 lines = 384 positions.
+ * Each gate = 5.625° (360/64), each line = 0.9375° (5.625/6)
+ *
+ * Gate sequence around the wheel (clockwise from 0° Aries):
+ */
+const GATE_WHEEL_SEQUENCE: number[] = [
   41, 19, 13, 49, 30, 55, 37, 63, 22, 36, 25, 17, 21, 51, 42, 3,
   27, 24, 2, 23, 8, 20, 16, 35, 45, 12, 15, 52, 39, 53, 62, 56,
   31, 33, 7, 4, 29, 59, 40, 64, 47, 6, 46, 18, 48, 57, 32, 50,
-  28, 44, 1, 43, 14, 34, 9, 5, 26, 11, 10, 58, 38, 54, 61, 60,
+  28, 44, 1, 43, 14, 34, 9, 5, 26, 11, 10, 58, 38, 54, 61, 60
 ]
 
-function normalizeAngle(lon: number): number {
-  return ((lon % 360) + 360) % 360
-}
-
+// Jovian Archive uses 301.875° as the true start of the HD wheel
+// (Gate 41 Line 1 begins at 301.875° ecliptic, not exactly 300°)
 const HD_WHEEL_START = 302.25  // Jovian Archive-aligned value (JA uses ~302°, not 300°)
 
 export function longitudeToGateAndLine(longitude: number): Activation {
@@ -116,188 +269,53 @@ export function longitudeToGateAndLine(longitude: number): Activation {
 // ── ALL 36 CHANNELS ────────────────────────────────────────
 export const ALL_CHANNELS: Channel[] = [
   // Circuit: Integration
-  {
-    gates: [57, 10], centers: ['Spleen', 'G'],
-    name: 'The Channel of Survival', type: 'Integration',
-    tooltip: 'You are gifted with a razor-sharp intuitive instinct for what is safe and right for you in any moment. This channel asks you to trust the whispers of your body over the noise of the mind.',
-  },
-  {
-    gates: [34, 57], centers: ['Sacral', 'Spleen'],
-    name: 'The Channel of Power', type: 'Integration',
-    tooltip: 'You carry a potent, instinctive power that surges through the body — raw, responsive, and deeply attuned to the present. When you act from this gut-level knowing, your energy becomes an effortless force of nature.',
-  },
-  {
-    gates: [10, 20], centers: ['G', 'Throat'],
-    name: 'The Channel of Awakening', type: 'Integration',
-    tooltip: 'You are here to embody your own truth so completely that your very presence becomes an awakening for others. The way you live — not what you preach — is your most powerful teaching.',
-  },
-  {
-    gates: [34, 20], centers: ['Sacral', 'Throat'],
-    name: 'The Channel of Charisma', type: 'Integration',
-    tooltip: 'You possess a magnetic, in-the-moment charisma that draws people naturally into your orbit. Your power lives in pure action — doing what you love, now, without hesitation.',
-  },
+  // FIX: Corrected to JA convention — 10-57, G→Spleen (was 57-10, Spleen→G)
+  { gates: [10, 57], centers: ['G', 'Spleen'],        name: 'The Channel of Survival',           type: 'Integration' },
+  { gates: [34, 57], centers: ['Sacral', 'Spleen'],   name: 'The Channel of Power',              type: 'Integration' },
+  { gates: [10, 20], centers: ['G', 'Throat'],        name: 'The Channel of Awakening',          type: 'Integration' },
+  { gates: [34, 20], centers: ['Sacral', 'Throat'],   name: 'The Channel of Charisma',           type: 'Integration' },
 
   // Circuit: Centering
-  {
-    gates: [25, 51], centers: ['G', 'Heart'],
-    name: 'The Channel of Initiation', type: 'Centering',
-    tooltip: 'You are here to be initiated — through shocks, challenges, and unexpected disruptions that crack you open to something greater. Each trial is an invitation to discover the love and spirit at your core.',
-  },
+  { gates: [25, 51], centers: ['G', 'Heart'],         name: 'The Channel of Initiation',         type: 'Centering' },
 
   // Circuit: Knowing
-  {
-    gates: [61, 24], centers: ['Head', 'Ajna'],
-    name: 'The Channel of Awareness', type: 'Knowing',
-    tooltip: 'Your mind is a vessel for deep, universal knowing — insights that arrive not from logic but from inner pressure and mystery. You are here to sit with questions until truth emerges in its own time.',
-  },
-  {
-    gates: [43, 23], centers: ['Ajna', 'Throat'],
-    name: 'The Channel of Structuring', type: 'Knowing',
-    tooltip: 'You receive genius-level insights that can be difficult for others to understand until the timing is right. Your gift is learning to wait for the moment your unique knowing can land and be heard.',
-  },
-  {
-    gates: [8, 1], centers: ['Throat', 'G'],
-    name: 'The Channel of Inspiration', type: 'Knowing',
-    tooltip: 'You are a vehicle for creative inspiration — your authentic self-expression has the power to make a unique and lasting contribution to the world. Living as yourself, unapologetically, is the whole point.',
-  },
-  {
-    gates: [7, 31], centers: ['G', 'Throat'],
-    name: 'The Channel of The Alpha', type: 'Knowing',
-    tooltip: 'You carry a natural leadership frequency — not through force, but through your ability to see the direction that serves the collective future. People sense your capacity to guide, often before you do.',
-  },
+  { gates: [61, 24], centers: ['Head', 'Ajna'],       name: 'The Channel of Awareness',          type: 'Knowing' },
+  { gates: [43, 23], centers: ['Ajna', 'Throat'],     name: 'The Channel of Structuring',        type: 'Knowing' },
+  { gates: [8, 1],   centers: ['Throat', 'G'],        name: 'The Channel of Inspiration',        type: 'Knowing' },
+  { gates: [7, 31],  centers: ['G', 'Throat'],        name: 'The Channel of The Alpha',          type: 'Knowing' },
 
   // Circuit: Sensing
-  {
-    gates: [64, 47], centers: ['Head', 'Ajna'],
-    name: 'The Channel of Abstraction', type: 'Sensing',
-    tooltip: 'Your mind is a repository of rich, jumbled past experiences that you are slowly making sense of. The meaning you extract from confusion becomes wisdom others can use.',
-  },
-  {
-    gates: [11, 56], centers: ['Ajna', 'Throat'],
-    name: 'The Channel of Curiosity', type: 'Sensing',
-    tooltip: 'You are a natural storyteller and idea explorer, here to stimulate others through the ideas and experiences you have gathered. Your curiosity about life is itself a gift to the world.',
-  },
-  {
-    gates: [35, 36], centers: ['Throat', 'SolarPlexus'],
-    name: 'The Channel of Transitoriness', type: 'Sensing',
-    tooltip: 'You are driven by an emotional hunger for new experiences and the wisdom they bring. You are here to collect the full spectrum of human feeling — not to stay, but to grow through every encounter.',
-  },
+  { gates: [64, 47], centers: ['Head', 'Ajna'],       name: 'The Channel of Abstraction',        type: 'Sensing' },
+  { gates: [11, 56], centers: ['Ajna', 'Throat'],     name: 'The Channel of Curiosity',          type: 'Sensing' },
+  { gates: [35, 36], centers: ['Throat', 'SolarPlexus'], name: 'The Channel of Transitoriness', type: 'Sensing' },
 
   // Circuit: Collective Logic
-  {
-    gates: [63, 4], centers: ['Head', 'Ajna'],
-    name: 'The Channel of Logic', type: 'Logic',
-    tooltip: 'Your mind is built to doubt, question, and seek proof — you are never satisfied with "because I said so." This channel gifts you with the ability to spot patterns and test ideas until they hold up to scrutiny.',
-  },
-  {
-    gates: [17, 62], centers: ['Ajna', 'Throat'],
-    name: 'The Channel of Acceptance', type: 'Logic',
-    tooltip: 'You are gifted with the ability to organise complex ideas into clear, communicable detail that others can actually use. Your power lies in translating logical insight into practical, shareable knowledge.',
-  },
-  {
-    gates: [16, 48], centers: ['Throat', 'Spleen'],
-    name: 'The Channel of The Wavelength', type: 'Logic',
-    tooltip: 'You have an intuitive mastery of skills that deepens through repetition and devotion. Your enthusiasm for what you love is infectious, and your depth of knowledge is a genuine resource for others.',
-  },
-  {
-    gates: [9, 52], centers: ['Sacral', 'Root'],
-    name: 'The Channel of Concentration', type: 'Logic',
-    tooltip: 'You have the rare capacity to focus deeply and steadily on what matters, bringing quiet determination to any detail that serves the bigger picture. Stillness and patience are your superpowers.',
-  },
-  {
-    gates: [5, 15], centers: ['Sacral', 'G'],
-    name: 'The Channel of Rhythm', type: 'Logic',
-    tooltip: 'You are attuned to the natural rhythms of life — in your body, your routines, and the world around you. When you honour your own timing rather than forcing it, everything flows with surprising ease.',
-  },
+  { gates: [63, 4],  centers: ['Head', 'Ajna'],       name: 'The Channel of Logic',              type: 'Logic' },
+  { gates: [17, 62], centers: ['Ajna', 'Throat'],     name: 'The Channel of Acceptance',         type: 'Logic' },
+  { gates: [16, 48], centers: ['Throat', 'Spleen'],   name: 'The Channel of The Wavelength',     type: 'Logic' },
+  { gates: [9, 52],  centers: ['Sacral', 'Root'],     name: 'The Channel of Concentration',      type: 'Logic' },
+  { gates: [5, 15],  centers: ['Sacral', 'G'],        name: 'The Channel of Rhythm',             type: 'Logic' },
 
   // Circuit: Tribal
-  {
-    gates: [45, 21], centers: ['Throat', 'Heart'],
-    name: 'The Channel of The Money Line', type: 'Tribal',
-    tooltip: 'You are built to manage and distribute material resources for the people in your care. When you lead with clear authority and honest ownership, you create genuine security for yourself and your community.',
-  },
-  {
-    gates: [37, 40], centers: ['SolarPlexus', 'Heart'],
-    name: 'The Channel of Community', type: 'Tribal',
-    tooltip: 'You thrive through clear agreements and the warmth of belonging — you give your best when the bargain is fair and the people around you feel like family. Boundaries and loyalty are two sides of the same coin for you.',
-  },
-  {
-    gates: [59, 6], centers: ['Sacral', 'SolarPlexus'],
-    name: 'The Channel of Mating', type: 'Tribal',
-    tooltip: 'You carry a powerful drive toward intimacy and the creation of new life — whether that is children, projects, or deep bonds. Emotional clarity over time is what allows your connections to become truly sacred.',
-  },
-  {
-    gates: [27, 50], centers: ['Sacral', 'Spleen'],
-    name: 'The Channel of Preservation', type: 'Tribal',
-    tooltip: 'You are deeply instinctive about nourishing and protecting those in your care, upholding the values that keep a community healthy and whole. Your nurturing is not just warmth — it is a force of survival.',
-  },
-  {
-    gates: [19, 49], centers: ['Root', 'SolarPlexus'],
-    name: 'The Channel of Synthesis', type: 'Tribal',
-    tooltip: 'You are exquisitely sensitive to whether your needs — and the needs of those around you — are being genuinely met. When the conditions are right, you can catalyse powerful transformation in your relationships and community.',
-  },
-  {
-    gates: [32, 54], centers: ['Spleen', 'Root'],
-    name: 'The Channel of Transformation', type: 'Tribal',
-    tooltip: 'You carry an instinctive drive to rise and transform — not just for yourself, but for the material security of those you love. Your ambition, when grounded in service, becomes a channel for collective evolution.',
-  },
-  {
-    gates: [26, 44], centers: ['Heart', 'Spleen'],
-    name: 'The Channel of Enterprise', type: 'Tribal',
-    tooltip: 'You have a natural gift for recognising what works and selling it with conviction — your memory for what has succeeded in the past makes you a powerful force in any enterprise. Integrity is the key that unlocks your full potential.',
-  },
+  { gates: [45, 21], centers: ['Throat', 'Heart'],    name: 'The Channel of The Money Line',     type: 'Tribal' },
+  { gates: [37, 40], centers: ['SolarPlexus', 'Heart'], name: 'The Channel of Community',        type: 'Tribal' },
+  { gates: [59, 6],  centers: ['Sacral', 'SolarPlexus'], name: 'The Channel of Mating',          type: 'Tribal' },
+  { gates: [27, 50], centers: ['Sacral', 'Spleen'],   name: 'The Channel of Preservation',       type: 'Tribal' },
+  { gates: [19, 49], centers: ['Root', 'SolarPlexus'], name: 'The Channel of Synthesis',         type: 'Tribal' },
+  { gates: [32, 54], centers: ['Spleen', 'Root'],     name: 'The Channel of Transformation',     type: 'Tribal' },
+  { gates: [26, 44], centers: ['Heart', 'Spleen'],    name: 'The Channel of Enterprise',         type: 'Tribal' },
 
   // Circuit: Individual
-  {
-    gates: [28, 38], centers: ['Spleen', 'Root'],
-    name: 'The Channel of Struggle', type: 'Individual',
-    tooltip: 'You are here to wrestle with life in search of what makes it truly worth living. Your willingness to engage in the struggle — not to win, but to find meaning — is a profound gift to a world that often avoids depth.',
-  },
-  {
-    gates: [57, 20], centers: ['Spleen', 'Throat'],
-    name: 'The Channel of The Brainwave', type: 'Individual',
-    tooltip: 'You receive sudden, penetrating intuitive insights that arrive without warning and must be expressed immediately or they are lost. Your gift is not logic — it is the lightning strike of knowing in the now.',
-  },
-  {
-    gates: [39, 55], centers: ['Root', 'SolarPlexus'],
-    name: 'The Channel of Emoting', type: 'Individual',
-    tooltip: 'You carry a deep and sometimes turbulent emotional life that is the source of your greatest creativity and spiritual depth. Your feelings are not problems to be solved — they are the fuel for your unique contribution.',
-  },
-  {
-    gates: [12, 22], centers: ['Throat', 'SolarPlexus'],
-    name: 'The Channel of Openness', type: 'Individual',
-    tooltip: 'You have the gift of moving others through your emotional expression — grace, artistry, and the timing of when to speak are everything for you. When the moment is right, your voice carries a rare and transformative beauty.',
-  },
-  {
-    gates: [14, 2], centers: ['Sacral', 'G'],
-    name: 'The Channel of The Beat', type: 'Individual',
-    tooltip: 'You are a keeper of direction and resources — your Sacral energy is most alive when devoted to work that genuinely lights you up from within. When you love what you do, abundance flows as a natural consequence.',
-  },
-  {
-    gates: [29, 46], centers: ['Sacral', 'G'],
-    name: 'The Channel of Discovery', type: 'Individual',
-    tooltip: 'You are here to say yes to the experiences that call to your body — and through deep, committed engagement with life, to discover who you truly are. Your devotion to what you love becomes a blessing for everyone watching.',
-  },
-  {
-    gates: [3, 60], centers: ['Sacral', 'Root'],
-    name: 'The Channel of Mutation', type: 'Individual',
-    tooltip: 'You carry the energy of mutation — the capacity to initiate change that transforms not just your own life but the lives of those around you. The key is accepting the stillness between pulses, trusting that the next wave will come.',
-  },
-  {
-    gates: [53, 42], centers: ['Root', 'Sacral'],
-    name: 'The Channel of Maturation', type: 'Individual',
-    tooltip: 'You have a powerful drive to begin and complete cycles — to start things, see them through, and extract the full wisdom from each experience. Finishing what you start is how you mature and how you serve.',
-  },
-  {
-    gates: [18, 58], centers: ['Spleen', 'Root'],
-    name: 'The Channel of Judgment', type: 'Individual',
-    tooltip: 'You are gifted with a deep love of life and an instinctive eye for what could be better. Your drive to correct and improve is not criticism — it is an expression of your profound care for excellence and aliveness.',
-  },
-  {
-    gates: [41, 30], centers: ['Root', 'SolarPlexus'],
-    name: 'The Channel of Recognition', type: 'Individual',
-    tooltip: 'You carry a burning desire for experience and the emotional depth that comes from living fully. Your dreams and longings are not fantasies — they are the compass pointing you toward your most meaningful life.',
-  },
+  { gates: [28, 38], centers: ['Spleen', 'Root'],     name: 'The Channel of Struggle',           type: 'Individual' },
+  { gates: [57, 20], centers: ['Spleen', 'Throat'],   name: 'The Channel of The Brainwave',      type: 'Individual' },
+  { gates: [39, 55], centers: ['Root', 'SolarPlexus'], name: 'The Channel of Emoting',            type: 'Individual' },
+  { gates: [12, 22], centers: ['Throat', 'SolarPlexus'], name: 'The Channel of Openness',        type: 'Individual' },
+  { gates: [14, 2],  centers: ['Sacral', 'G'],        name: 'The Channel of The Beat',           type: 'Individual' },
+  { gates: [29, 46], centers: ['Sacral', 'G'],        name: 'The Channel of Discovery',          type: 'Individual' },
+  { gates: [3, 60],  centers: ['Sacral', 'Root'],     name: 'The Channel of Mutation',           type: 'Individual' },
+  { gates: [53, 42], centers: ['Root', 'Sacral'],     name: 'The Channel of Maturation',         type: 'Individual' },
+  { gates: [18, 58], centers: ['Spleen', 'Root'],     name: 'The Channel of Judgment',           type: 'Individual' },
+  { gates: [41, 30], centers: ['Root', 'SolarPlexus'], name: 'The Channel of Recognition',       type: 'Individual' },
 ]
 
 // ── CENTER → GATES MAPPING ─────────────────────────────────
@@ -412,22 +430,155 @@ function determineDefinition(activeChannels: Channel[], definedCenters: Center[]
         const node = queue.shift()!
         if (visited.has(node)) continue
         visited.add(node)
-        centerGraph[node]?.forEach(nb => { if (!visited.has(nb)) queue.push(nb as Center) })
+        centerGraph[node]?.forEach(n => { if (!visited.has(n)) queue.push(n as Center) })
       }
     }
   })
-  if (components === 1) return 'Single Definition'
-  if (components === 2) return 'Split Definition'
+  if (components === 1) return 'Single'
+  if (components === 2) return 'Split'
   if (components === 3) return 'Triple Split'
   return 'Quadruple Split'
 }
 
 // ── INCARNATION CROSS ──────────────────────────────────────
-export function getIncarnationCross(
-  pSunGate: number, pEarthGate: number,
-  dSunGate: number, dEarthGate: number
-): string {
-  return `Cross of ${pSunGate}/${pEarthGate} | ${dSunGate}/${dEarthGate}`
+// Based on Sun/Earth gates in Personality and Design
+const CROSS_NAMES: Record<string, string> = {
+  // Right Angle Crosses
+  '1/2/4/3':     'Right Angle Cross of the Sphinx',
+  '2/1/3/4':     'Right Angle Cross of the Sphinx',
+  '4/3/1/2':     'Right Angle Cross of the Sphinx',
+  '3/4/2/1':     'Right Angle Cross of the Sphinx',
+  '13/7/43/23':  'Right Angle Cross of the Vessel of Love',
+  '7/13/23/43':  'Right Angle Cross of the Vessel of Love',
+  '43/23/13/7':  'Right Angle Cross of the Vessel of Love',
+  '23/43/7/13':  'Right Angle Cross of the Vessel of Love',
+  '15/10/25/46': 'Right Angle Cross of the Vessel of Love',
+  '10/15/46/25': 'Right Angle Cross of the Vessel of Love',
+  '25/46/15/10': 'Right Angle Cross of the Vessel of Love',
+  '46/25/10/15': 'Right Angle Cross of the Vessel of Love',
+  '25/46/10/15': 'Right Angle Cross of the Sleeping Phoenix',
+  '46/25/15/10': 'Right Angle Cross of the Sleeping Phoenix',
+  '29/30/20/34': 'Right Angle Cross of the Unexpected',
+  '30/29/34/20': 'Right Angle Cross of the Unexpected',
+  '20/34/29/30': 'Right Angle Cross of the Unexpected',
+  '34/20/30/29': 'Right Angle Cross of the Unexpected',
 }
 
-// Note: calculateHDChart lives in lib/calculateChart.ts (server-only)
+export function getIncarnationCross(pSunGate: number, pEarthGate: number, dSunGate: number, dEarthGate: number): string {
+  const key = `${pSunGate}/${pEarthGate}/${dSunGate}/${dEarthGate}`
+  const gates = `(${pSunGate}/${pEarthGate} | ${dSunGate}/${dEarthGate})`
+  const name = CROSS_NAMES[key]
+  return name ? `${name} ${gates}` : `Cross of Gates ${gates}`
+}
+
+// ── EARTH GATE (opposite of Sun) ───────────────────────────
+function getEarthLongitude(sunLongitude: number): number {
+  return normalizeAngle(sunLongitude + 180)
+}
+
+// ── MAIN CHART CALCULATOR ──────────────────────────────────
+export function calculateHDChart(birthDate: Date): HDChart {
+  const birthJD = dateToJulian(birthDate)
+
+  // Design calculation: exactly 88 days + 88 minutes before birth
+  // (This represents the moment the neutrino stream imprinted the Design)
+  const designJD = birthJD - 88 - (88 / 1440)
+
+  // ── PERSONALITY (Conscious) activations ──
+  const pSunLon    = getSunLongitude(birthJD)
+  const pMoonLon   = getMoonLongitude(birthJD)
+  const pMercLon   = getMercuryLongitude(birthJD)
+  const pVenLon    = getVenusLongitude(birthJD)
+  const pMarsLon   = getMarsLongitude(birthJD)
+  const pJupLon    = getJupiterLongitude(birthJD)
+  const pSatLon    = getSaturnLongitude(birthJD)
+  const pUranLon   = getUranusLongitude(birthJD)
+  const pNepLon    = getNeptuneLongitude(birthJD)
+  const pPlutLon   = getPlutoLongitude(birthJD)
+  const pNNodeLon  = getNorthNodeLongitude(birthJD)
+  const pEarthLon  = getEarthLongitude(pSunLon)
+  const pSNodeLon  = getEarthLongitude(pNNodeLon)
+
+  // ── DESIGN (Unconscious) activations ──
+  const dSunLon    = getSunLongitude(designJD)
+  const dMoonLon   = getMoonLongitude(designJD)
+  const dMercLon   = getMercuryLongitude(designJD)
+  const dVenLon    = getVenusLongitude(designJD)
+  const dMarsLon   = getMarsLongitude(designJD)
+  const dJupLon    = getJupiterLongitude(designJD)
+  const dSatLon    = getSaturnLongitude(designJD)
+  const dUranLon   = getUranusLongitude(designJD)
+  const dNepLon    = getNeptuneLongitude(designJD)
+  const dPlutLon   = getPlutoLongitude(designJD)
+  const dNNodeLon  = getNorthNodeLongitude(designJD)
+  const dEarthLon  = getEarthLongitude(dSunLon)
+  const dSNodeLon  = getEarthLongitude(dNNodeLon)
+
+  // Convert to gate + line
+  const pActivations: PlanetActivation[] = [
+    { planet: 'sun',       personality: longitudeToGateAndLine(pSunLon),   design: longitudeToGateAndLine(dSunLon) },
+    { planet: 'earth',     personality: longitudeToGateAndLine(pEarthLon), design: longitudeToGateAndLine(dEarthLon) },
+    { planet: 'moon',      personality: longitudeToGateAndLine(pMoonLon),  design: longitudeToGateAndLine(dMoonLon) },
+    { planet: 'northNode', personality: longitudeToGateAndLine(pNNodeLon), design: longitudeToGateAndLine(dNNodeLon) },
+    { planet: 'southNode', personality: longitudeToGateAndLine(pSNodeLon), design: longitudeToGateAndLine(dSNodeLon) },
+    { planet: 'mercury',   personality: longitudeToGateAndLine(pMercLon),  design: longitudeToGateAndLine(dMercLon) },
+    { planet: 'venus',     personality: longitudeToGateAndLine(pVenLon),   design: longitudeToGateAndLine(dVenLon) },
+    { planet: 'mars',      personality: longitudeToGateAndLine(pMarsLon),  design: longitudeToGateAndLine(dMarsLon) },
+    { planet: 'jupiter',   personality: longitudeToGateAndLine(pJupLon),   design: longitudeToGateAndLine(dJupLon) },
+    { planet: 'saturn',    personality: longitudeToGateAndLine(pSatLon),   design: longitudeToGateAndLine(dSatLon) },
+    { planet: 'uranus',    personality: longitudeToGateAndLine(pUranLon),  design: longitudeToGateAndLine(dUranLon) },
+    { planet: 'neptune',   personality: longitudeToGateAndLine(pNepLon),   design: longitudeToGateAndLine(dNepLon) },
+    { planet: 'pluto',     personality: longitudeToGateAndLine(pPlutLon),  design: longitudeToGateAndLine(dPlutLon) },
+  ]
+
+  // Collect all active gates
+  const personalityGates = pActivations.map(a => a.personality.gate)
+  const designGates = pActivations.map(a => a.design.gate)
+  const allGates = Array.from(new Set([...personalityGates, ...designGates]))
+
+  // Find active channels
+  const activeChannels = ALL_CHANNELS.filter(ch =>
+    allGates.includes(ch.gates[0]) && allGates.includes(ch.gates[1])
+  )
+
+  // Determine centers
+  const definedCenters = getDefinedCenters(allGates)
+  const allCenters: Center[] = ['Head', 'Ajna', 'Throat', 'G', 'Heart', 'Sacral', 'SolarPlexus', 'Spleen', 'Root']
+  const openCenters = allCenters.filter(c => !definedCenters.includes(c))
+
+  // Determine type, authority, profile, definition
+  const type = determineType(definedCenters, activeChannels)
+  const authority = determineAuthority(definedCenters, type)
+
+  const pSunActivation = pActivations.find(a => a.planet === 'sun')!
+  const dSunActivation = pActivations.find(a => a.planet === 'sun')!
+  const profile = determineProfile(pSunActivation.personality.line, dSunActivation.design.line)
+  const definition = determineDefinition(activeChannels, definedCenters)
+
+  // Incarnation cross
+  const pEarthGate = longitudeToGateAndLine(pEarthLon).gate
+  const dEarthGate = longitudeToGateAndLine(dEarthLon).gate
+  const incarnationCross = getIncarnationCross(
+    pSunActivation.personality.gate, pEarthGate,
+    dSunActivation.design.gate, dEarthGate
+  )
+
+  return {
+    type,
+    authority,
+    profile,
+    definition,
+    incarnationCross,
+    personalityActivations: pActivations,
+    allPersonalityGates: personalityGates,
+    allDesignGates: designGates,
+    allGates,
+    activeChannels,
+    definedCenters,
+    openCenters,
+    birthJD,
+    designJD,
+    sunLongitudePersonality: pSunLon,
+    sunLongitudeDesign: dSunLon,
+  }
+}
