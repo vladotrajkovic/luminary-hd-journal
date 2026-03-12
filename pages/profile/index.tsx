@@ -15,9 +15,17 @@ const ALL_CENTER_NAMES: Center[] = [
   'Head', 'Ajna', 'Throat', 'G', 'Heart', 'Sacral', 'SolarPlexus', 'Spleen', 'Root',
 ]
 
+// Map internal Center keys → display names
 const CENTER_DISPLAY_NAMES: Record<string, string> = {
   SolarPlexus: 'Solar Plexus',
   G: 'G Center',
+}
+
+// FIX: Map HD_CENTERS display names → internal Center keys (for isDefined comparison)
+// HD_CENTERS uses 'Solar Plexus' and 'G Center', but the DB stores 'SolarPlexus' and 'G'
+const CENTER_NAME_TO_KEY: Record<string, string> = {
+  'Solar Plexus': 'SolarPlexus',
+  'G Center': 'G',
 }
 
 const PLANET_SYMBOLS: Record<string, string> = {
@@ -80,7 +88,8 @@ export default function MyChart() {
   const [saved, setSaved] = useState(false)
   const [activeTab, setActiveTab] = useState<'graph' | 'activations' | 'channels'>('graph')
   const [expandedGate, setExpandedGate] = useState<number | null>(null)
-  const [hoveredChannel, setHoveredChannel] = useState<string | null>(null)
+  // Tooltip state for Active Gates hover
+  const [hoveredGate, setHoveredGate] = useState<number | null>(null)
 
   useEffect(() => {
     const load = async () => {
@@ -160,7 +169,9 @@ export default function MyChart() {
   const typeInfo = profile?.hd_type ? HD_TYPES[profile.hd_type as keyof typeof HD_TYPES] : null
   const profileInfo = profile?.hd_profile ? HD_PROFILES[profile.hd_profile as keyof typeof HD_PROFILES] : null
   const birthDateDisplay = profile?.birth_date
-    ? new Date(profile.birth_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+    ? new Date(profile.birth_date + 'T12:00:00').toLocaleDateString('en-GB', {
+        day: 'numeric', month: 'long', year: 'numeric',
+      })
     : '—'
 
   return (
@@ -171,14 +182,27 @@ export default function MyChart() {
       </Head>
       <Layout>
 
-        {/* No chart banner */}
-        {!hasChart && (
-          <div style={{ background: 'rgba(212,175,55,0.08)', border: '1px solid rgba(212,175,55,0.2)', borderRadius: 12, padding: '24px 28px', marginBottom: 28 }}>
-            <p style={{ fontFamily: 'Cinzel, serif', fontSize: 14, color: '#D4AF37', marginBottom: 8 }}>
-              Your chart has not been generated yet
+        {/* ── Header ── */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 36, flexWrap: 'wrap', gap: 16 }}>
+          <div>
+            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, letterSpacing: '0.15em', color: 'rgba(167,139,250,0.5)', textTransform: 'uppercase', marginBottom: 8 }}>
+              Your Blueprint
             </p>
-            <p style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 16, color: 'rgba(212,175,55,0.7)', marginBottom: 16 }}>
-              Visit the Chart Generator to calculate your Human Design chart from your birth data.
+            <h1 style={{ fontFamily: 'Cinzel, serif', fontSize: 32, color: '#EDE9FE', letterSpacing: '0.05em' }}>
+              My Human Design Chart
+            </h1>
+          </div>
+          <button onClick={handleSave} disabled={saving} className="btn-cosmic">
+            {saving ? 'Saving...' : saved ? '✓ Saved!' : '✦ Save Chart'}
+          </button>
+        </div>
+
+        {/* ── No chart yet ── */}
+        {!hasChart && (
+          <div className="glass" style={{ padding: 32, marginBottom: 24, borderColor: 'rgba(212,175,55,0.3)', background: 'rgba(212,175,55,0.04)', textAlign: 'center' }}>
+            <p style={{ fontFamily: 'Cinzel, serif', fontSize: 16, color: '#D4AF37', marginBottom: 12 }}>✦ No Chart Generated Yet</p>
+            <p style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 17, color: 'rgba(196,181,253,0.7)', marginBottom: 20 }}>
+              Go to the Chart Generator, enter your birth data, and click "Save to My Chart" to populate this page.
             </p>
             <button className="btn-cosmic" onClick={() => router.push('/chart')}>Go to Chart Generator →</button>
           </div>
@@ -247,6 +271,9 @@ export default function MyChart() {
 
         {/* ══════════════════════════════════════════════════════
             SECTION 3 — CENTERS
+            FIX: use CENTER_NAME_TO_KEY to normalise HD_CENTERS display
+            names (e.g. 'Solar Plexus') to internal keys ('SolarPlexus')
+            before comparing against the definedCenters array from the DB.
         ══════════════════════════════════════════════════════ */}
         <div className="glass" style={{ padding: 32, marginBottom: 24 }}>
           <h2 style={{ fontFamily: 'Cinzel, serif', fontSize: 14, letterSpacing: '0.12em', color: '#A78BFA', marginBottom: 8 }}>CENTERS</h2>
@@ -255,7 +282,9 @@ export default function MyChart() {
           </p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 16 }}>
             {HD_CENTERS.map(center => {
-              const isDefined = definedCenters.includes(center.name)
+              // Normalise display name to internal key before comparing
+              const centerKey = CENTER_NAME_TO_KEY[center.name] ?? center.name
+              const isDefined = definedCenters.includes(centerKey)
               return (
                 <div key={center.name} style={{
                   padding: '16px 20px', borderRadius: 12,
@@ -264,7 +293,7 @@ export default function MyChart() {
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                     <span style={{ fontFamily: 'Cinzel, serif', fontSize: 14, color: isDefined ? '#EDE9FE' : 'rgba(167,139,250,0.5)' }}>
-                      {centerLabel(center.name)}
+                      {center.name}
                     </span>
                     <span className={`center-badge ${isDefined ? 'center-defined' : 'center-open'}`}>
                       {isDefined ? 'Defined' : 'Open'}
@@ -286,6 +315,10 @@ export default function MyChart() {
 
         {/* ══════════════════════════════════════════════════════
             SECTION 4 — ACTIVE GATES with expand-on-click
+            CHANGES:
+            - keyword font: 13 → 15
+            - expanded description font: 15 → 17
+            - tooltip "Click for More Details" on hover (collapsed only)
         ══════════════════════════════════════════════════════ */}
         <div className="glass" style={{ padding: 32, marginBottom: 24 }}>
           <h2 style={{ fontFamily: 'Cinzel, serif', fontSize: 14, letterSpacing: '0.12em', color: '#A78BFA', marginBottom: 8 }}>ACTIVE GATES</h2>
@@ -301,7 +334,10 @@ export default function MyChart() {
                   <div
                     key={gNum}
                     onClick={() => setExpandedGate(isExpanded ? null : gNum)}
+                    onMouseEnter={() => { if (!isExpanded) setHoveredGate(gNum) }}
+                    onMouseLeave={() => setHoveredGate(null)}
                     style={{
+                      position: 'relative',
                       padding: '12px 16px', borderRadius: 10, cursor: 'pointer',
                       background: isExpanded ? 'rgba(123,79,212,0.2)' : 'rgba(45,27,105,0.35)',
                       border: `1px solid ${isExpanded ? 'rgba(123,79,212,0.5)' : 'rgba(123,79,212,0.2)'}`,
@@ -309,6 +345,43 @@ export default function MyChart() {
                       gridColumn: isExpanded ? 'span 2' : 'span 1',
                     }}
                   >
+                    {/* Tooltip — only shown when collapsed and hovered */}
+                    {hoveredGate === gNum && !isExpanded && (
+                      <div style={{
+                        position: 'absolute',
+                        bottom: '100%',
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        background: 'rgba(15,8,40,0.96)',
+                        border: '1px solid rgba(167,139,250,0.3)',
+                        borderRadius: 6,
+                        padding: '5px 12px',
+                        marginBottom: 6,
+                        fontSize: 11,
+                        fontFamily: 'Inter, sans-serif',
+                        color: '#C4B5FD',
+                        whiteSpace: 'nowrap',
+                        zIndex: 20,
+                        boxShadow: '0 4px 16px rgba(0,0,0,0.5)',
+                        pointerEvents: 'none',
+                        letterSpacing: '0.04em',
+                      }}>
+                        Click for More Details
+                        {/* Small arrow */}
+                        <div style={{
+                          position: 'absolute',
+                          top: '100%',
+                          left: '50%',
+                          transform: 'translateX(-50%)',
+                          width: 0, height: 0,
+                          borderLeft: '5px solid transparent',
+                          borderRight: '5px solid transparent',
+                          borderTop: '5px solid rgba(167,139,250,0.3)',
+                        }} />
+                      </div>
+                    )}
+
+                    {/* Always-visible header */}
                     <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
                       <span style={{ fontFamily: 'Cinzel, serif', fontSize: 22, color: '#D4AF37', lineHeight: 1, minWidth: 30, paddingTop: 2, flexShrink: 0 }}>
                         {gNum}
@@ -317,7 +390,8 @@ export default function MyChart() {
                         <p style={{ fontFamily: 'Cinzel, serif', fontSize: 12, color: '#EDE9FE', marginBottom: 2 }}>
                           {gateData?.name || `Gate ${gNum}`}
                         </p>
-                        <p style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 13, color: 'rgba(212,175,55,0.6)' }}>
+                        {/* FONT BUMP: keyword 13 → 15 */}
+                        <p style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 15, color: 'rgba(212,175,55,0.6)' }}>
                           {gateData?.keyword || ''}
                         </p>
                       </div>
@@ -325,9 +399,12 @@ export default function MyChart() {
                         {isExpanded ? '▲' : '▼'}
                       </span>
                     </div>
+
+                    {/* Expanded detail */}
                     {isExpanded && gateData && (
                       <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid rgba(123,79,212,0.25)' }}>
-                        <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 15, color: 'rgba(196,181,253,0.8)', lineHeight: 1.6, marginBottom: 16 }}>
+                        {/* FONT BUMP: description 15 → 17 */}
+                        <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 17, color: 'rgba(196,181,253,0.8)', lineHeight: 1.6, marginBottom: 16 }}>
                           {gateData.description}
                         </p>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
@@ -358,33 +435,50 @@ export default function MyChart() {
         </div>
 
         {/* ══════════════════════════════════════════════════════
-            SECTION 5 — CHART TABS (Body Graph / Activations / Channels)
+            SECTION 5 — PERSONAL CHART NOTES (editable)
+        ══════════════════════════════════════════════════════ */}
+        <div className="glass" style={{ padding: 32, marginBottom: 24 }}>
+          <h2 style={{ fontFamily: 'Cinzel, serif', fontSize: 14, letterSpacing: '0.12em', color: '#A78BFA', marginBottom: 16 }}>PERSONAL CHART NOTES</h2>
+          <textarea
+            className="textarea-cosmic" rows={6} value={notes}
+            onChange={e => setNotes(e.target.value)}
+            placeholder="Any additional notes about your chart, channels, splits, or things you want to remember..."
+          />
+        </div>
+
+        {/* ══════════════════════════════════════════════════════
+            SECTION 6 — HD CHART VISUALIZATION
         ══════════════════════════════════════════════════════ */}
         {hasChart && chart && (
           <div className="glass" style={{ padding: 32, marginBottom: 24 }}>
 
-            {/* Key stats */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 14, marginBottom: 24 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 28, flexWrap: 'wrap', gap: 16 }}>
+              <div>
+                <h2 style={{ fontFamily: 'Cinzel, serif', fontSize: 14, letterSpacing: '0.12em', color: '#A78BFA', marginBottom: 6 }}>YOUR HD CHART</h2>
+                <p style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 16, color: 'rgba(167,139,250,0.5)' }}>
+                  Body graph, planet activations and channels from your saved chart
+                </p>
+              </div>
+              <button className="btn-ghost" onClick={handleGenerateReport} style={{ fontSize: 12 }}>
+                ✧ Generate Report
+              </button>
+            </div>
+
+            {/* Stats row */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12, marginBottom: 24 }}>
               {[
                 { label: 'Type',            value: chart.type,                           color: '#A78BFA' },
                 { label: 'Authority',       value: chart.authority,                      color: '#A78BFA' },
                 { label: 'Profile',         value: chart.profile,                        color: '#D4AF37' },
                 { label: 'Definition',      value: chart.definition,                     color: '#2DD4BF' },
                 { label: 'Defined Centers', value: `${chart.definedCenters.length} / 9`, color: '#A78BFA' },
-                { label: 'Active Channels', value: String(chart.activeChannels.length),  color: '#A78BFA' },
+                { label: 'Active Channels', value: String(activeChannels.length),        color: '#A78BFA' },
               ].map(item => (
                 <div key={item.label} style={{ background: 'rgba(45,27,105,0.3)', borderRadius: 10, padding: '14px 16px', border: '1px solid rgba(123,79,212,0.2)' }}>
                   <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(167,139,250,0.5)', marginBottom: 6 }}>{item.label}</div>
                   <div style={{ fontFamily: 'Cinzel, serif', fontSize: 15, color: item.color }}>{item.value}</div>
                 </div>
               ))}
-            </div>
-
-            {/* Generate Report button */}
-            <div style={{ marginBottom: 24 }}>
-              <button className="btn-ghost" onClick={handleGenerateReport} style={{ fontSize: 12 }}>
-                ✧ Generate Full Report
-              </button>
             </div>
 
             {/* Tab bar */}
@@ -409,138 +503,15 @@ export default function MyChart() {
 
             {/* ── Body Graph tab ── */}
             {activeTab === 'graph' && (
-              <div className="glass" style={{ padding: 32 }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 40, alignItems: 'start' }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, letterSpacing: '0.12em', color: 'rgba(167,139,250,0.5)', textTransform: 'uppercase', marginBottom: 16 }}>Body Graph</p>
-                    <div style={{ background: 'rgba(8,6,24,0.6)', borderRadius: 12, padding: 20, border: '1px solid rgba(167,139,250,0.1)' }}>
-                      <BodyGraph chart={chart as any} size={380} />
-                    </div>
-                    <div style={{ display: 'flex', gap: 20, marginTop: 16 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <div style={{ width: 16, height: 8, background: '#7B4FD4', borderRadius: 2 }} />
-                        <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(167,139,250,0.6)' }}>Defined</span>
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <div style={{ width: 16, height: 8, background: 'transparent', border: '1px solid rgba(167,139,250,0.3)', borderRadius: 2 }} />
-                        <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(167,139,250,0.6)' }}>Open</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div>
-                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, letterSpacing: '0.12em', color: 'rgba(167,139,250,0.5)', textTransform: 'uppercase', marginBottom: 16 }}>Centers</p>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                      {ALL_CENTER_NAMES.map(center => {
-                        const isDefined = chart.definedCenters.includes(center)
-                        const centerData = HD_CENTERS.find(c => c.name === center)
-                        return (
-                          <div key={center} style={{
-                            padding: '12px 16px', borderRadius: 10,
-                            background: isDefined ? 'rgba(123,79,212,0.2)' : 'rgba(45,212,191,0.06)',
-                            border: `1px solid ${isDefined ? 'rgba(123,79,212,0.4)' : 'rgba(45,212,191,0.2)'}`,
-                            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                          }}>
-                            <div>
-                              <span style={{ fontFamily: 'Cinzel, serif', fontSize: 13, color: '#EDE9FE' }}>{centerLabel(center)}</span>
-                              <p style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 13, color: 'rgba(167,139,250,0.5)', marginTop: 2 }}>
-                                {isDefined ? centerData?.defined_gift : centerData?.open_gift}
-                              </p>
-                            </div>
-                            <span style={{
-                              padding: '3px 10px', borderRadius: 20, fontSize: 11,
-                              fontFamily: 'Inter, sans-serif', letterSpacing: '0.05em', flexShrink: 0, marginLeft: 12,
-                              background: isDefined ? 'rgba(123,79,212,0.3)' : 'rgba(45,212,191,0.1)',
-                              border: `1px solid ${isDefined ? 'rgba(123,79,212,0.5)' : 'rgba(45,212,191,0.3)'}`,
-                              color: isDefined ? '#C4B5FD' : '#5EEAD4',
-                            }}>
-                              {isDefined ? 'DEFINED' : 'OPEN'}
-                            </span>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  </div>
-                </div>
+              <div style={{ display: 'flex', justifyContent: 'center', padding: '16px 0' }}>
+                <BodyGraph chart={chart} size={480} />
               </div>
             )}
 
             {/* ── Planet Activations tab ── */}
             {activeTab === 'activations' && (
               <div className="glass" style={{ padding: 28 }}>
-                {hasPlanetData ? (
-                  <>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
-                      {/* Personality column */}
-                      <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-                          <div style={{ width: 12, height: 12, borderRadius: '50%', background: '#EDE9FE' }} />
-                          <span style={{ fontFamily: 'Cinzel, serif', fontSize: 12, color: '#EDE9FE', letterSpacing: '0.1em' }}>PERSONALITY</span>
-                          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(167,139,250,0.45)' }}>(Conscious)</span>
-                        </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                          {planetActivations.map((activation: any, i: number) => {
-                            const pGate = GATES_64[String(activation.personality?.gate)]
-                            return (
-                              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderRadius: 8, background: 'rgba(45,27,105,0.3)', border: '1px solid rgba(123,79,212,0.15)' }}>
-                                <span style={{ fontSize: 16, width: 24, textAlign: 'center', flexShrink: 0 }}>
-                                  {PLANET_SYMBOLS[activation.planet] || '·'}
-                                </span>
-                                <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(167,139,250,0.5)', width: 80, flexShrink: 0 }}>
-                                  {PLANET_NAMES[activation.planet] || activation.planet}
-                                </span>
-                                <div>
-                                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-                                    <span style={{ fontFamily: 'Cinzel, serif', fontSize: 18, color: '#EDE9FE' }}>{activation.personality?.gate}</span>
-                                    <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(167,139,250,0.5)' }}>.{activation.personality?.line}</span>
-                                  </div>
-                                  <div style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 13, color: 'rgba(167,139,250,0.45)', marginTop: 2 }}>
-                                    {pGate?.name || `Gate ${activation.personality?.gate}`}
-                                  </div>
-                                </div>
-                              </div>
-                            )
-                          })}
-                        </div>
-                      </div>
-
-                      {/* Design column */}
-                      <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-                          <div style={{ width: 12, height: 12, borderRadius: '50%', background: '#F87171' }} />
-                          <span style={{ fontFamily: 'Cinzel, serif', fontSize: 12, color: '#F87171', letterSpacing: '0.1em' }}>DESIGN</span>
-                          <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(248,113,113,0.45)' }}>(Unconscious)</span>
-                        </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                          {planetActivations.map((activation: any, i: number) => {
-                            const dGate = GATES_64[String(activation.design?.gate)]
-                            return (
-                              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderRadius: 8, background: 'rgba(45,27,105,0.3)', border: '1px solid rgba(123,79,212,0.15)' }}>
-                                <span style={{ fontSize: 16, width: 24, textAlign: 'center', flexShrink: 0 }}>
-                                  {PLANET_SYMBOLS[activation.planet] || '·'}
-                                </span>
-                                <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(167,139,250,0.5)', width: 80, flexShrink: 0 }}>
-                                  {PLANET_NAMES[activation.planet] || activation.planet}
-                                </span>
-                                <div>
-                                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-                                    <span style={{ fontFamily: 'Cinzel, serif', fontSize: 18, color: '#F87171' }}>{activation.design?.gate}</span>
-                                    <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(248,113,113,0.5)' }}>.{activation.design?.line}</span>
-                                  </div>
-                                  <div style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 13, color: 'rgba(248,113,113,0.35)', marginTop: 2 }}>
-                                    {dGate?.name || `Gate ${activation.design?.gate}`}
-                                  </div>
-                                </div>
-                              </div>
-                            )
-                          })}
-                        </div>
-                      </div>
-                    </div>
-                    <p style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 13, color: 'rgba(167,139,250,0.4)', marginTop: 16, textAlign: 'center' }}>
-                      ✦ Planet line numbers may occasionally differ from other HD software by ±1 on boundary cases — your type, profile, channels and defined centers are unaffected.
-                    </p>
-                  </>
-                ) : (
+                {!hasPlanetData ? (
                   <div style={{ background: 'rgba(212,175,55,0.06)', border: '1px solid rgba(212,175,55,0.2)', borderRadius: 10, padding: '20px 24px', display: 'flex', alignItems: 'flex-start', gap: 12 }}>
                     <span style={{ color: '#D4AF37', fontSize: 16, flexShrink: 0 }}>⬡</span>
                     <div>
@@ -552,11 +523,72 @@ export default function MyChart() {
                       </p>
                     </div>
                   </div>
+                ) : (
+                  <>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+                      {/* Header */}
+                      <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr 1fr', gap: 8, padding: '8px 16px', borderBottom: '1px solid rgba(167,139,250,.1)', gridColumn: 'span 2' }}>
+                        <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(167,139,250,.5)', letterSpacing: '.1em', textTransform: 'uppercase' }}>Planet</span>
+                        <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: '#A78BFA', letterSpacing: '.1em', textTransform: 'uppercase' }}>Personality (Conscious)</span>
+                        <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: '#F87171', letterSpacing: '.1em', textTransform: 'uppercase' }}>Design (Unconscious)</span>
+                      </div>
+
+                      {planetActivations.map(activation => {
+                        const pGate = GATES_64[String(activation.personality?.gate)]
+                        const dGate = GATES_64[String(activation.design?.gate)]
+                        return (
+                          <div key={activation.planet} style={{
+                            display: 'grid', gridTemplateColumns: '80px 1fr 1fr', gap: 8,
+                            padding: '12px 16px', borderBottom: '1px solid rgba(167,139,250,.06)',
+                            gridColumn: 'span 2', transition: 'background .2s'
+                          }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                              <span style={{ fontSize: 18, opacity: .8 }}>{PLANET_SYMBOLS[activation.planet]}</span>
+                              <span style={{ fontFamily: 'Cinzel, serif', fontSize: 11, color: 'rgba(196,181,253,.7)' }}>
+                                {PLANET_NAMES[activation.planet]}
+                              </span>
+                            </div>
+                            {/* Personality */}
+                            <div>
+                              <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                                <span style={{ fontFamily: 'Cinzel, serif', fontSize: 20, color: '#A78BFA' }}>
+                                  {activation.personality?.gate}
+                                </span>
+                                <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(167,139,250,.5)' }}>
+                                  .{activation.personality?.line}
+                                </span>
+                              </div>
+                              <div style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 13, color: 'rgba(167,139,250,0.45)', marginTop: 2 }}>
+                                {pGate?.name || `Gate ${activation.personality?.gate}`}
+                              </div>
+                            </div>
+                            {/* Design */}
+                            <div>
+                              <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                                <span style={{ fontFamily: 'Cinzel, serif', fontSize: 20, color: '#F87171' }}>{activation.design?.gate}</span>
+                                <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(248,113,113,0.5)' }}>.{activation.design?.line}</span>
+                              </div>
+                              <div style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 13, color: 'rgba(248,113,113,0.35)', marginTop: 2 }}>
+                                {dGate?.name || `Gate ${activation.design?.gate}`}
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                    <p style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 13, color: 'rgba(167,139,250,0.4)', marginTop: 16, textAlign: 'center' }}>
+                      ✦ Planet line numbers may occasionally differ from other HD software by ±1 on boundary cases — your type, profile, channels and defined centers are unaffected.
+                    </p>
+                  </>
                 )}
               </div>
             )}
 
-            {/* ── Active Channels tab ── */}
+            {/* ── Active Channels tab ──
+                CHANGES:
+                - center label font: 14 → 16, + channel-center-glow class
+                - gate description font: 13 → 15
+            ── */}
             {activeTab === 'channels' && (
               <div className="glass" style={{ padding: 28 }}>
                 {activeChannels.length === 0 ? (
@@ -568,53 +600,20 @@ export default function MyChart() {
                     {activeChannels.map(ch => {
                       const g1 = GATES_64[String(ch.gates[0])]
                       const g2 = GATES_64[String(ch.gates[1])]
-                      const channelKey = `${ch.gates[0]}-${ch.gates[1]}`
                       return (
-                        <div key={channelKey} className="glass" style={{ padding: '20px 24px' }}>
+                        <div key={`${ch.gates[0]}-${ch.gates[1]}`} className="glass" style={{ padding: '20px 24px' }}>
                           {/* Channel header */}
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
                             <div>
-                              <p style={{ fontFamily: 'Cinzel, serif', fontSize: 15, color: '#EDE9FE', marginBottom: 8 }}>{ch.name}</p>
-
-                              {/* ── Teal pill badge with hover tooltip ── */}
-                              <div
-                                style={{ position: 'relative', display: 'inline-block' }}
-                                onMouseEnter={() => setHoveredChannel(channelKey)}
-                                onMouseLeave={() => setHoveredChannel(null)}
+                              <p style={{ fontFamily: 'Cinzel, serif', fontSize: 15, color: '#EDE9FE', marginBottom: 4 }}>{ch.name}</p>
+                              {/* FONT BUMP: 14 → 16 + glow hint animation */}
+                              <p
+                                className="channel-center-glow"
+                                style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 16, color: 'rgba(167,139,250,0.5)' }}
                               >
-                                <span style={{
-                                  fontFamily: 'Inter, sans-serif', fontSize: 10, padding: '3px 10px',
-                                  background: 'rgba(45,212,191,0.1)', border: '1px solid rgba(45,212,191,0.25)',
-                                  borderRadius: 20, color: '#5EEAD4', letterSpacing: '0.05em',
-                                  display: 'inline-block', cursor: 'default',
-                                  borderBottom: ch.tooltip ? '1px dashed rgba(45,212,191,0.5)' : undefined,
-                                }}>
-                                  {centerLabel(ch.centers[0])} → {centerLabel(ch.centers[1])}
-                                </span>
-
-                                {hoveredChannel === channelKey && ch.tooltip && (
-                                  <div style={{
-                                    position: 'absolute', bottom: 'calc(100% + 8px)', left: 0,
-                                    zIndex: 20,
-                                    background: 'rgba(10,6,36,0.97)',
-                                    border: '1px solid rgba(45,212,191,0.25)',
-                                    borderRadius: 10, padding: '12px 16px',
-                                    width: 300,
-                                    backdropFilter: 'blur(16px)',
-                                    boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
-                                    pointerEvents: 'none',
-                                  }}>
-                                    <p style={{
-                                      fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic',
-                                      fontSize: 14, color: 'rgba(196,181,253,0.9)', lineHeight: 1.7, margin: 0,
-                                    }}>
-                                      {ch.tooltip}
-                                    </p>
-                                  </div>
-                                )}
-                              </div>
+                                {centerLabel(ch.centers[0])} → {centerLabel(ch.centers[1])}
+                              </p>
                             </div>
-
                             <span style={{
                               padding: '4px 12px', borderRadius: 20,
                               fontFamily: 'Inter, sans-serif', fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase',
@@ -623,7 +622,6 @@ export default function MyChart() {
                               {ch.type}
                             </span>
                           </div>
-
                           {/* Two gate cards */}
                           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                             {[{ gate: ch.gates[0], data: g1 }, { gate: ch.gates[1], data: g2 }].map(({ gate, data }) => (
@@ -633,13 +631,12 @@ export default function MyChart() {
                                   <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(167,139,250,0.45)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Gate</span>
                                 </div>
                                 <p style={{ fontFamily: 'Cinzel, serif', fontSize: 12, color: '#EDE9FE', marginBottom: 4 }}>{data?.name || `Gate ${gate}`}</p>
-                                {data?.keyword && (
-                                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(212,175,55,0.6)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>
-                                    {data.keyword}
-                                  </p>
-                                )}
+                                {/* FONT BUMP: gate description 13 → 15 */}
+                                <p style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 15, color: 'rgba(167,139,250,0.45)', marginBottom: data?.description ? 8 : 0 }}>
+                                  {data?.keyword || ''}
+                                </p>
                                 {data?.description && (
-                                  <p style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 13, color: 'rgba(167,139,250,0.45)', lineHeight: 1.5 }}>
+                                  <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 15, color: 'rgba(196,181,253,0.5)', lineHeight: 1.5 }}>
                                     {data.description}
                                   </p>
                                 )}
@@ -656,33 +653,6 @@ export default function MyChart() {
 
           </div>
         )}
-
-        {/* ══════════════════════════════════════════════════════
-            SECTION 6 — NOTES
-        ══════════════════════════════════════════════════════ */}
-        <div className="glass" style={{ padding: 32, marginBottom: 24 }}>
-          <h2 style={{ fontFamily: 'Cinzel, serif', fontSize: 14, letterSpacing: '0.12em', color: '#A78BFA', marginBottom: 8 }}>PERSONAL NOTES</h2>
-          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', color: 'rgba(167,139,250,0.5)', fontSize: 16, marginBottom: 16 }}>
-            Your private space to reflect on your chart — experiments, insights, observations.
-          </p>
-          <textarea
-            className="input-cosmic"
-            value={notes}
-            onChange={e => setNotes(e.target.value)}
-            placeholder="Write your reflections here..."
-            rows={6}
-            style={{ width: '100%', resize: 'vertical', marginBottom: 16 }}
-          />
-          <button
-            className="btn-cosmic"
-            onClick={handleSave}
-            disabled={saving}
-            style={{ fontSize: 13 }}
-          >
-            {saving ? 'Saving...' : saved ? '✓ Saved' : '✦ Save Notes'}
-          </button>
-        </div>
-
       </Layout>
     </>
   )
