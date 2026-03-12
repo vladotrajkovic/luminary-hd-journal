@@ -715,7 +715,7 @@ export default function MyChart() {
                           {/* Channel header */}
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
                             <div>
-                              <p style={{ fontFamily: 'Cinzel, serif', fontSize: 15, color: '#EDE9FE', marginBottom: 8 }}>{ch.name}</p>
+                              <p style={{ fontFamily: 'Cinzel, serif', fontSize: 17, color: '#EDE9FE', marginBottom: 8 }}>{ch.name}</p>
                               {/* Teal pill badge — matches Chart Generator style. Hover shows center description. */}
                               <div style={{ position: 'relative', display: 'inline-block' }}>
                                 <span
@@ -749,7 +749,7 @@ export default function MyChart() {
                                     <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: '#5EEAD4', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>
                                       {centerLabel(ch.centers[0])} → {centerLabel(ch.centers[1])}
                                     </p>
-                                    <p style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 16, color: 'rgba(196,181,253,0.9)', lineHeight: 1.5 }}>
+                                    <p style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 18, color: 'rgba(196,181,253,0.9)', lineHeight: 1.5 }}>
                                       {centerTooltip || `${centerLabel(ch.centers[0])} and ${centerLabel(ch.centers[1])} working in unified definition`}
                                     </p>
                                     {/* Arrow */}
@@ -780,12 +780,12 @@ export default function MyChart() {
                                   <span style={{ fontFamily: 'Cinzel, serif', fontSize: 24, color: '#A78BFA' }}>{gate}</span>
                                   <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: 'rgba(167,139,250,0.45)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Gate</span>
                                 </div>
-                                <p style={{ fontFamily: 'Cinzel, serif', fontSize: 12, color: '#EDE9FE', marginBottom: 4 }}>{data?.name || `Gate ${gate}`}</p>
-                                <p style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 15, color: 'rgba(167,139,250,0.45)', marginBottom: data?.description ? 8 : 0 }}>
+                                <p style={{ fontFamily: 'Cinzel, serif', fontSize: 14, color: '#EDE9FE', marginBottom: 4 }}>{data?.name || `Gate ${gate}`}</p>
+                                <p style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 17, color: 'rgba(167,139,250,0.45)', marginBottom: data?.description ? 8 : 0 }}>
                                   {data?.keyword || ''}
                                 </p>
                                 {data?.description && (
-                                  <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 15, color: 'rgba(196,181,253,0.5)', lineHeight: 1.5 }}>
+                                  <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 17, color: 'rgba(196,181,253,0.5)', lineHeight: 1.5 }}>
                                     {data.description}
                                   </p>
                                 )}
