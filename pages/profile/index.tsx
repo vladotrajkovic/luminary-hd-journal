@@ -30,6 +30,8 @@ const CENTER_NAME_TO_KEY: Record<string, string> = {
 }
 
 // Short descriptions for each center-pair connection, shown on hover in Active Channels
+// Covers all 36 channels across all circuits (Integration, Centering, Knowing, Sensing,
+// Logic, Tribal, Individual)
 const CENTER_PAIR_DESCRIPTIONS: Record<string, string> = {
   'G-Spleen':           'Identity & survival intuition — knowing who you are through bodily instinct',
   'Spleen-G':           'Identity & survival intuition — knowing who you are through bodily instinct',
@@ -41,6 +43,8 @@ const CENTER_PAIR_DESCRIPTIONS: Record<string, string> = {
   'Throat-Sacral':      'Life force manifesting — raw energy channelled directly into action',
   'G-Heart':            'Identity & willpower — sense of self backed by consistent ego energy',
   'Heart-G':            'Identity & willpower — sense of self backed by consistent ego energy',
+  'Sacral-G':           'Life force anchored in self — sustainable energy with a clear sense of direction',
+  'G-Sacral':           'Life force anchored in self — sustainable energy with a clear sense of direction',
   'Head-Ajna':          'Mental pressure finding form — inspiration becoming conceptual certainty',
   'Ajna-Head':          'Mental pressure finding form — inspiration becoming conceptual certainty',
   'Ajna-Throat':        'Mind speaking — processed thought ready to be communicated',
@@ -49,14 +53,16 @@ const CENTER_PAIR_DESCRIPTIONS: Record<string, string> = {
   'Heart-Throat':       'Will expressing — ego-driven communication and manifestation',
   'Throat-SolarPlexus': 'Emotional truth finding voice — feelings that need time before speaking',
   'SolarPlexus-Throat': 'Emotional truth finding voice — feelings that need time before speaking',
+  'Throat-Spleen':      'Intuitive voice — spontaneous knowing that speaks in the moment',
+  'Spleen-Throat':      'Intuitive voice — spontaneous knowing that speaks in the moment',
   'Sacral-Root':        'Drive powering life force — root pressure fuelling sustained energy',
   'Root-Sacral':        'Drive powering life force — root pressure fuelling sustained energy',
   'Sacral-SolarPlexus': 'Life force & emotional depth — passion and feeling entwined',
   'SolarPlexus-Sacral': 'Life force & emotional depth — passion and feeling entwined',
-  'Spleen-Throat':      'Intuitive voice — spontaneous knowing that speaks in the moment',
-  'Throat-Spleen':      'Intuitive voice — spontaneous knowing that speaks in the moment',
   'Spleen-Root':        'Survival under pressure — instinct and adrenaline working together',
   'Root-Spleen':        'Survival under pressure — instinct and adrenaline working together',
+  'Heart-Spleen':       'Willpower & immune resilience — ego strength expressed through healthy boundaries',
+  'Spleen-Heart':       'Willpower & immune resilience — ego strength expressed through healthy boundaries',
   'SolarPlexus-Heart':  'Emotional willpower — feeling and ego fused into tribal bonding',
   'Heart-SolarPlexus':  'Emotional willpower — feeling and ego fused into tribal bonding',
   'SolarPlexus-Root':   'Emotional pressure — root urgency feeding the emotional wave',
@@ -715,7 +721,7 @@ export default function MyChart() {
                                   {centerLabel(ch.centers[0])} → {centerLabel(ch.centers[1])}
                                 </span>
                                 {/* Hover tooltip with center connection description */}
-                                {hoveredChannel === channelKey && centerTooltip && (
+                                {hoveredChannel === channelKey && (
                                   <div style={{
                                     position: 'absolute',
                                     bottom: 'calc(100% + 8px)',
@@ -724,16 +730,16 @@ export default function MyChart() {
                                     border: '1px solid rgba(45,212,191,0.25)',
                                     borderRadius: 8,
                                     padding: '10px 14px',
-                                    width: 280,
+                                    width: 300,
                                     zIndex: 30,
                                     boxShadow: '0 8px 24px rgba(0,0,0,0.6)',
                                     pointerEvents: 'none',
                                   }}>
-                                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: '#5EEAD4', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 5 }}>
+                                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 10, color: '#5EEAD4', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>
                                       {centerLabel(ch.centers[0])} → {centerLabel(ch.centers[1])}
                                     </p>
-                                    <p style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 14, color: 'rgba(196,181,253,0.85)', lineHeight: 1.5 }}>
-                                      {centerTooltip}
+                                    <p style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 16, color: 'rgba(196,181,253,0.9)', lineHeight: 1.5 }}>
+                                      {centerTooltip || `${centerLabel(ch.centers[0])} and ${centerLabel(ch.centers[1])} working in unified definition`}
                                     </p>
                                     {/* Arrow */}
                                     <div style={{
