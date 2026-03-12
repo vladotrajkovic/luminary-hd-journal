@@ -97,7 +97,7 @@ function buildChartFromActivations(activations: any[]): HDChart {
         const n = q.shift()!
         if (visited2.has(n)) continue
         visited2.add(n)
-        centerGraph[n]?.forEach(nb => q.push(nb))
+        centerGraph[n]?.forEach(nb => q.push(nb as Center))
       }
     }
   })
