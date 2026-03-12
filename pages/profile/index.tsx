@@ -143,10 +143,19 @@ export default function MyChart() {
       if (data) { setProfile(data); setNotes(data.notes || '') }
       setLoading(false)
     }
+
+    // Initial load
     load()
-  // router.query.saved changes whenever Chart Generator redirects here after a save,
-  // which forces a fresh fetch from Supabase instead of showing stale data.
-  }, [router.query.saved])
+
+    // Re-fetch every time the user navigates to this page,
+    // including after saving a new chart from the Chart Generator.
+    const handleRouteChange = (url: string) => {
+      if (url.startsWith('/profile')) load()
+    }
+    router.events.on('routeChangeComplete', handleRouteChange)
+    return () => router.events.off('routeChangeComplete', handleRouteChange)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const handleSave = async () => {
     setSaving(true)
