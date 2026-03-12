@@ -150,7 +150,8 @@ export default function Dashboard() {
             <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 16, color: 'rgba(196,181,253,0.6)', marginBottom: 16 }}>
               {moonPhase.energy}
             </p>
-            <p style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 15, color: 'rgba(167,139,250,0.5)' }}>
+            {/* BUMPED: fontSize 15→17, opacity 0.5→0.7 for readability */}
+            <p style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 17, color: 'rgba(167,139,250,0.7)' }}>
               {moonPhase.journal_prompt}
             </p>
           </div>
