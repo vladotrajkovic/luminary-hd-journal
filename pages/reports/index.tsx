@@ -34,6 +34,93 @@ function parseSections(rawText: string): Record<string, string> {
   return result
 }
 
+// ── RESPONSIVE STYLES ──────────────────────────────────────
+const REPORT_CSS = `
+  .report-page-inner {
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+  }
+  .report-card {
+    background: rgba(15, 10, 46, 0.6);
+    border: 1px solid rgba(167, 139, 250, 0.15);
+    border-radius: 16px;
+    padding: 32px 36px;
+    margin-bottom: 24px;
+    backdrop-filter: blur(10px);
+  }
+  .report-section-card {
+    background: rgba(15, 10, 46, 0.6);
+    border: 1px solid rgba(167, 139, 250, 0.15);
+    border-radius: 16px;
+    padding: 32px 36px;
+    margin-bottom: 24px;
+    backdrop-filter: blur(10px);
+  }
+  .report-profile-strip {
+    display: flex;
+    gap: 28px;
+    flex-wrap: wrap;
+    background: rgba(45, 27, 105, 0.2);
+    border-radius: 12px;
+    padding: 20px 28px;
+    margin-bottom: 32px;
+    border: 1px solid rgba(123, 79, 212, 0.2);
+  }
+  .report-page-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 42px;
+    font-weight: 400;
+    color: #EDE9FE;
+    line-height: 1.15;
+    margin-bottom: 12px;
+  }
+  .report-body-text {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px;
+    color: rgba(220, 210, 255, 0.85);
+    line-height: 1.9;
+    white-space: pre-wrap;
+  }
+  .report-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  @media (max-width: 600px) {
+    .report-page-inner {
+      padding: 24px 14px 60px;
+    }
+    .report-card {
+      padding: 20px 18px;
+      border-radius: 12px;
+    }
+    .report-section-card {
+      padding: 20px 18px;
+      border-radius: 12px;
+    }
+    .report-profile-strip {
+      gap: 16px;
+      padding: 16px 18px;
+    }
+    .report-page-title {
+      font-size: 28px;
+    }
+    .report-body-text {
+      font-size: 16px;
+      line-height: 1.75;
+    }
+    .report-actions {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .report-actions button {
+      width: 100%;
+    }
+  }
+`
+
 // ── STYLES ─────────────────────────────────────────────────
 const S = {
   card: {
@@ -107,8 +194,7 @@ function SectionCard({ section, content, isStreaming }: {
   isStreaming: boolean
 }) {
   return (
-    <div style={{
-      ...S.card,
+    <div className="report-section-card" style={{
       borderColor: `${section.color}25`,
       borderLeft: `3px solid ${section.color}55`,
     }}>
@@ -117,7 +203,7 @@ function SectionCard({ section, content, isStreaming }: {
         <p style={S.sectionTitle(section.color)}>{section.label}</p>
       </div>
       <div style={S.divider} />
-      <p style={S.body}>
+      <p className="report-body-text">
         {content}
         {isStreaming && (
           <span style={{
@@ -350,16 +436,17 @@ export default function ReportPage() {
     <Layout>
       <Head>
         <title>HD Report · Luminary</title>
+        <style>{REPORT_CSS}</style>
       </Head>
 
-      <div style={{ maxWidth: 'min(1200px, 92vw)', margin: '0 auto', padding: '40px 0 80px' }}>
+      <div className="report-page-inner">
 
         {/* ── Page Header ── */}
         <div style={{ marginBottom: 40 }}>
           <p style={{ fontFamily: 'Cinzel, serif', fontSize: 11, letterSpacing: '0.25em', color: 'rgba(167,139,250,0.45)', textTransform: 'uppercase', marginBottom: 10 }}>
             ✧ Personal Reading
           </p>
-          <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 42, fontWeight: 400, color: '#EDE9FE', lineHeight: 1.15, marginBottom: 12 }}>
+          <h1 className="report-page-title">
             Your Human Design Report
           </h1>
           <p style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 19, color: 'rgba(196,181,253,0.5)', lineHeight: 1.6 }}>
@@ -394,12 +481,7 @@ export default function ReportPage() {
 
         {/* ── Profile Summary ── */}
         {profile && (profile.hd_type || profile.hd_authority) && (
-          <div style={{
-            display: 'flex', gap: 28, flexWrap: 'wrap',
-            background: 'rgba(45,27,105,0.2)', borderRadius: 12,
-            padding: '20px 28px', marginBottom: 32,
-            border: '1px solid rgba(123,79,212,0.2)',
-          }}>
+          <div className="report-profile-strip">
             {[
               { label: 'Type',       value: profile.hd_type,       color: '#A78BFA' },
               { label: 'Authority',  value: profile.hd_authority,   color: '#2DD4BF' },
@@ -521,8 +603,7 @@ export default function ReportPage() {
 
             {/* ── Completion actions ── */}
             {done && hasReport && (
-              <div className="report-section" style={{
-                ...S.card,
+              <div className="report-section report-card" style={{
                 background: 'linear-gradient(135deg, rgba(45,27,105,0.3) 0%, rgba(15,10,46,0.5) 100%)',
                 borderColor: 'rgba(212,175,55,0.2)',
                 textAlign: 'center',
@@ -535,7 +616,7 @@ export default function ReportPage() {
                     ? 'Your reading is saved and will be here whenever you return.'
                     : 'Download your report as a beautifully formatted PDF, or come back to regenerate it any time.'}
                 </p>
-                <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+                <div className="report-actions">
                   <button
                     onClick={handleExportPdf}
                     disabled={exporting}
