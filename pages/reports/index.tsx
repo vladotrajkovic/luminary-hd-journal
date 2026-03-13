@@ -16,7 +16,7 @@ const SECTIONS = [
   { key: 'final',     tag: 'section_final',      label: 'Your Path Forward', icon: '✧', color: '#C4B5FD' },
 ]
 
-// Parse streaming text into sections using XML-like tags
+// ── SECTION PARSER ─────────────────────────────────────────
 function parseSections(rawText: string): Record<string, string> {
   const result: Record<string, string> = {}
   for (const section of SECTIONS) {
@@ -52,13 +52,6 @@ const S = {
     textTransform: 'uppercase' as const,
     marginBottom: 8,
   }),
-  body: {
-    fontFamily: 'Cormorant Garamond, serif',
-    fontSize: 18,
-    color: 'rgba(220, 210, 255, 0.85)',
-    lineHeight: 1.9,
-    whiteSpace: 'pre-wrap' as const,
-  },
   divider: {
     width: 60,
     height: 1,
@@ -67,51 +60,15 @@ const S = {
   },
 }
 
-// ── SKELETON CARD ──────────────────────────────────────────
-function SkeletonCard({ label, icon, color }: { label: string; icon: string; color: string }) {
-  return (
-    <div style={{
-      ...S.card,
-      borderColor: `${color}22`,
-      background: 'rgba(15,10,46,0.4)',
-      display: 'flex',
-      alignItems: 'center',
-      gap: 16,
-      padding: '24px 32px',
-    }}>
-      <span style={{ fontSize: 22, opacity: 0.3, color }}>{icon}</span>
-      <span style={{ fontFamily: 'Cinzel, serif', fontSize: 13, color: `${color}55`, letterSpacing: '0.15em', textTransform: 'uppercase' }}>
-        {label}
-      </span>
-      <div style={{ flex: 1, display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-        {[80, 60, 90].map((w, i) => (
-          <div key={i} style={{ width: w, height: 8, borderRadius: 4, background: 'rgba(167,139,250,0.08)', animation: 'pulse 2s infinite', animationDelay: `${i * 0.2}s` }} />
-        ))}
-      </div>
-    </div>
-  )
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// PATCH for pages/reports/index.tsx
-//
-// 1. ADD the MarkdownContent component below (paste it right above SectionCard)
-// 2. REPLACE the <p style={S.body}> block inside SectionCard with <MarkdownContent>
-//
-// Full replacements shown clearly below.
-// ─────────────────────────────────────────────────────────────────────────────
-
-
-// ── MARKDOWN RENDERER ─────────────────────────────────────
+// ── MARKDOWN RENDERER ──────────────────────────────────────
 // Handles the subset of markdown the content library emits:
 //   **bold**  *italic*  - bullets  --- dividers  blank-line paragraphs
-//   **Heading** — subtitle  (center/channel label lines)
+//   **Heading** — subtitle  (center / channel label lines)
 
 type Segment = { type: 'text' | 'bold' | 'italic'; value: string }
 
 function parseInline(raw: string): Segment[] {
   const segments: Segment[] = []
-  // Match **bold** and *italic* (non-greedy, single-line)
   const re = /\*\*(.+?)\*\*|\*(.+?)\*/g
   let last = 0
   let m: RegExpExecArray | null
@@ -125,10 +82,10 @@ function parseInline(raw: string): Segment[] {
   return segments
 }
 
-function renderInline(segments: Segment[], baseColor: string) {
+function renderInline(segments: Segment[]) {
   return segments.map((seg, i) => {
     if (seg.type === 'bold')   return <strong key={i} style={{ fontWeight: 600, color: 'rgba(235, 225, 255, 0.95)' }}>{seg.value}</strong>
-    if (seg.type === 'italic') return <em key={i} style={{ fontStyle: 'italic', color: 'rgba(196, 181, 253, 0.85)' }}>{seg.value}</em>
+    if (seg.type === 'italic') return <em     key={i} style={{ fontStyle: 'italic', color: 'rgba(196, 181, 253, 0.85)' }}>{seg.value}</em>
     return <span key={i}>{seg.value}</span>
   })
 }
@@ -145,7 +102,6 @@ function MarkdownContent({ text, accentColor, isStreaming }: {
     lineHeight: 1.9,
   }
 
-  // Split into lines, group into paragraphs (separated by blank lines)
   const lines = text.split('\n')
   const blocks: React.ReactNode[] = []
   let paragraphLines: string[] = []
@@ -157,23 +113,21 @@ function MarkdownContent({ text, accentColor, isStreaming }: {
     if (combined) {
       blocks.push(
         <p key={key++} style={{ ...baseStyle, margin: '0 0 16px 0' }}>
-          {renderInline(parseInline(combined), accentColor)}
+          {renderInline(parseInline(combined))}
         </p>
       )
     }
     paragraphLines = []
   }
 
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i]
-
+  for (const line of lines) {
     // Horizontal divider ---
     if (line.trim() === '---') {
       flushParagraph()
       blocks.push(
         <div key={key++} style={{
           width: '100%', height: 1,
-          background: `linear-gradient(90deg, transparent, ${accentColor}30, transparent)`,
+          background: `linear-gradient(90deg, transparent, ${accentColor}35, transparent)`,
           margin: '24px 0',
         }} />
       )
@@ -188,20 +142,20 @@ function MarkdownContent({ text, accentColor, isStreaming }: {
         <div key={key++} style={{ display: 'flex', gap: 12, margin: '0 0 10px 0', alignItems: 'flex-start' }}>
           <span style={{ color: accentColor, fontSize: 18, lineHeight: 1.9, flexShrink: 0, marginTop: 1 }}>◦</span>
           <p style={{ ...baseStyle, margin: 0 }}>
-            {renderInline(parseInline(bulletText), accentColor)}
+            {renderInline(parseInline(bulletText))}
           </p>
         </div>
       )
       continue
     }
 
-    // Blank line → flush current paragraph
+    // Blank line → flush paragraph
     if (line.trim() === '') {
       flushParagraph()
       continue
     }
 
-    // Accumulate into current paragraph
+    // Accumulate into paragraph
     paragraphLines.push(line)
   }
   flushParagraph()
@@ -220,10 +174,42 @@ function MarkdownContent({ text, accentColor, isStreaming }: {
   )
 }
 
+// ── SKELETON CARD ──────────────────────────────────────────
+function SkeletonCard({ label, icon, color }: { label: string; icon: string; color: string }) {
+  return (
+    <div style={{
+      ...S.card,
+      borderColor: `${color}22`,
+      background: 'rgba(15,10,46,0.4)',
+      display: 'flex',
+      alignItems: 'center',
+      gap: 16,
+      padding: '24px 32px',
+    }}>
+      <span style={{ fontSize: 22, opacity: 0.3, color }}>{icon}</span>
+      <div style={{ flex: 1 }}>
+        <span style={{
+          fontFamily: 'Cinzel, serif', fontSize: 13,
+          color: `${color}55`, letterSpacing: '0.15em', textTransform: 'uppercase',
+        }}>
+          {label}
+        </span>
+      </div>
+      <div style={{ display: 'flex', gap: 8 }}>
+        {[80, 60, 90].map((w, i) => (
+          <div key={i} style={{
+            width: w, height: 8, borderRadius: 4,
+            background: 'rgba(167,139,250,0.08)',
+            animation: 'pulse 2s infinite',
+            animationDelay: `${i * 0.2}s`,
+          }} />
+        ))}
+      </div>
+    </div>
+  )
+}
 
-// ── SECTION CARD (updated) ────────────────────────────────
-// Replace the entire existing SectionCard function with this:
-
+// ── SECTION CARD ───────────────────────────────────────────
 function SectionCard({ section, content, isStreaming }: {
   section: typeof SECTIONS[0]
   content: string
@@ -249,38 +235,6 @@ function SectionCard({ section, content, isStreaming }: {
   )
 }
 
-
-// ── SECTION CARD ───────────────────────────────────────────
-function SectionCard({ section, content, isStreaming }: {
-  section: typeof SECTIONS[0]
-  content: string
-  isStreaming: boolean
-}) {
-  return (
-    <div style={{
-      ...S.card,
-      borderColor: `${section.color}25`,
-      borderLeft: `3px solid ${section.color}55`,
-    }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
-        <span style={{ fontSize: 20, color: section.color }}>{section.icon}</span>
-        <p style={S.sectionTitle(section.color)}>{section.label}</p>
-      </div>
-      <div style={S.divider} />
-      <p style={S.body}>
-        {content}
-        {isStreaming && (
-          <span style={{
-            display: 'inline-block', width: 2, height: 20, background: section.color,
-            marginLeft: 3, verticalAlign: 'middle',
-            animation: 'blink 1s step-end infinite',
-          }} />
-        )}
-      </p>
-    </div>
-  )
-}
-
 // ── MAIN PAGE ──────────────────────────────────────────────
 export default function ReportPage() {
   const router = useRouter()
@@ -298,7 +252,7 @@ export default function ReportPage() {
   const [savedAt, setSavedAt]       = useState<string | null>(null)
   const rawRef = useRef('')
 
-  // ── LOAD: fetch profile + restore saved report from DB ──
+  // ── LOAD ────────────────────────────────────────────────
   useEffect(() => {
     const load = async () => {
       const { data: { session } } = await supabase.auth.getSession()
@@ -313,7 +267,6 @@ export default function ReportPage() {
 
       setProfile(data)
 
-      // Build chart data object (used by both restore and fresh paths)
       const chartFromProfile = {
         type:             data?.hd_type             || 'Unknown',
         authority:        data?.hd_authority         || 'Unknown',
@@ -323,13 +276,13 @@ export default function ReportPage() {
         definedCenters:   data?.defined_centers      || [],
         openCenters: (['Head','Ajna','Throat','G','Heart','Sacral','SolarPlexus','Spleen','Root'] as string[])
           .filter((c: string) => !(data?.defined_centers || []).includes(c)),
-        activeChannels:     [],
-        allGates:           data?.active_gates        || [],
+        activeChannels:      [],
+        allGates:            data?.active_gates        || [],
         allPersonalityGates: [],
-        allDesignGates:     [],
+        allDesignGates:      [],
       }
 
-      // ── Restore persisted report from DB ──
+      // Restore persisted report
       if (data?.hd_report && typeof data.hd_report === 'object' && Object.keys(data.hd_report).length > 0) {
         setSections(data.hd_report as Record<string, string>)
         setDone(true)
@@ -339,7 +292,7 @@ export default function ReportPage() {
         return
       }
 
-      // ── Check if fresh chart was passed from Chart Generator ──
+      // Check sessionStorage (passed from Chart Generator)
       const stored = typeof window !== 'undefined'
         ? sessionStorage.getItem('luminary_chart_report')
         : null
@@ -353,24 +306,20 @@ export default function ReportPage() {
         } catch { /* fall through */ }
       }
 
-      // ── Default: build from profile ──
       setChartData(chartFromProfile)
       setLoading(false)
     }
     load()
   }, [])
 
-  // ── SAVE report sections to DB ──────────────────────────
+  // ── SAVE TO DB ──────────────────────────────────────────
   const saveReportToDb = async (completedSections: Record<string, string>) => {
     if (!userId) return
     setSaving(true)
     const now = new Date().toISOString()
     const { error: saveError } = await supabase
       .from('profiles')
-      .update({
-        hd_report: completedSections,
-        hd_report_generated_at: now,
-      })
+      .update({ hd_report: completedSections, hd_report_generated_at: now })
       .eq('id', userId)
     if (!saveError) {
       setSavedAt(now)
@@ -380,7 +329,7 @@ export default function ReportPage() {
     setSaving(false)
   }
 
-  // ── GENERATE report via streaming API ──────────────────
+  // ── GENERATE ────────────────────────────────────────────
   const generateReport = async () => {
     if (!chartData) return
     setGenerating(true)
@@ -423,7 +372,6 @@ export default function ReportPage() {
         }
       }
 
-      // Persist completed sections to DB
       const finalSections = parseSections(rawRef.current)
       await saveReportToDb(finalSections)
 
@@ -435,7 +383,7 @@ export default function ReportPage() {
     }
   }
 
-  // ── REGENERATE: wipe DB entry and reset state ───────────
+  // ── REGENERATE ──────────────────────────────────────────
   const handleRegenerate = async () => {
     if (userId) {
       await supabase
@@ -466,6 +414,7 @@ export default function ReportPage() {
   const hasReport   = Object.keys(sections).length > 0
   const missingData = !profile?.hd_type || !profile?.hd_authority || !profile?.hd_profile
 
+  // ── LOADING STATE ───────────────────────────────────────
   if (loading) {
     return (
       <Layout>
@@ -476,6 +425,7 @@ export default function ReportPage() {
     )
   }
 
+  // ── RENDER ──────────────────────────────────────────────
   return (
     <>
       <Head>
@@ -490,7 +440,7 @@ export default function ReportPage() {
       </Head>
       <Layout>
 
-        {/* ── Header ── */}
+        {/* ── Page Header ── */}
         <div style={{ marginBottom: 40 }}>
           <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, letterSpacing: '0.15em', color: 'rgba(167,139,250,0.5)', textTransform: 'uppercase', marginBottom: 8 }}>
             Your Personal Reading
@@ -515,6 +465,7 @@ export default function ReportPage() {
               </span>
             </div>
           )}
+
           {saving && (
             <div style={{
               display: 'inline-flex', alignItems: 'center', gap: 8, marginTop: 16,
@@ -544,7 +495,11 @@ export default function ReportPage() {
               { label: 'Incarnation Cross', value: profile.hd_incarnation_cross,  color: '#FCD34D' },
             ].filter(i => i.value).map(item => (
               <div key={item.label} style={{ textAlign: 'center' }}>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, letterSpacing: '0.15em', color: 'rgba(167,139,250,0.45)', textTransform: 'uppercase', marginBottom: 4 }}>
+                <p style={{
+                  fontFamily: 'Inter, sans-serif', fontSize: 9,
+                  letterSpacing: '0.15em', color: 'rgba(167,139,250,0.45)',
+                  textTransform: 'uppercase', marginBottom: 4,
+                }}>
                   {item.label}
                 </p>
                 <p style={{
@@ -574,7 +529,7 @@ export default function ReportPage() {
           </div>
         )}
 
-        {/* ── Generate Button (only shown when no report and not currently generating) ── */}
+        {/* ── Generate Button ── */}
         {!hasReport && !generating && (
           <div style={{ textAlign: 'center', padding: '40px 0 48px' }}>
             <div style={{
@@ -597,7 +552,7 @@ export default function ReportPage() {
           </div>
         )}
 
-        {/* ── Generating indicator ── */}
+        {/* ── Generating Indicator ── */}
         {generating && (
           <div style={{ textAlign: 'center', padding: '24px 0 32px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, marginBottom: 16 }}>
@@ -607,7 +562,7 @@ export default function ReportPage() {
               </p>
             </div>
             <p style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 15, color: 'rgba(167,139,250,0.5)' }}>
-              This takes about 15–20 seconds — your full reading is being crafted...
+              Your reading is being assembled — most sections appear instantly...
             </p>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center', marginTop: 20 }}>
               {SECTIONS.map(s => (
@@ -643,7 +598,7 @@ export default function ReportPage() {
                 return <SkeletonCard key={section.key} label={section.label} icon={section.icon} color={section.color} />
               }
               const nextSectionIdx = SECTIONS.findIndex(s => s.key === section.key) + 1
-              const nextSection = SECTIONS[nextSectionIdx]
+              const nextSection    = SECTIONS[nextSectionIdx]
               const isCurrentlyStreaming = generating && nextSection && !sections[nextSection.key]
               return (
                 <div key={section.key} className="report-section">
@@ -652,7 +607,7 @@ export default function ReportPage() {
               )
             })}
 
-            {/* ── Completion actions ── */}
+            {/* ── Completion Actions ── */}
             {done && hasReport && (
               <div className="report-section" style={{
                 ...S.card,
