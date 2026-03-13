@@ -150,7 +150,7 @@ export default function AccountPage() {
           'address, email_subscribed, avatar_url'
         )
         .eq('id', session.user.id)
-        .single()
+        .single() as { data: any }
 
       if (data) {
         setFirstName(data.first_name || '')
