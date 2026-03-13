@@ -92,6 +92,164 @@ function SkeletonCard({ label, icon, color }: { label: string; icon: string; col
   )
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// PATCH for pages/reports/index.tsx
+//
+// 1. ADD the MarkdownContent component below (paste it right above SectionCard)
+// 2. REPLACE the <p style={S.body}> block inside SectionCard with <MarkdownContent>
+//
+// Full replacements shown clearly below.
+// ─────────────────────────────────────────────────────────────────────────────
+
+
+// ── MARKDOWN RENDERER ─────────────────────────────────────
+// Handles the subset of markdown the content library emits:
+//   **bold**  *italic*  - bullets  --- dividers  blank-line paragraphs
+//   **Heading** — subtitle  (center/channel label lines)
+
+type Segment = { type: 'text' | 'bold' | 'italic'; value: string }
+
+function parseInline(raw: string): Segment[] {
+  const segments: Segment[] = []
+  // Match **bold** and *italic* (non-greedy, single-line)
+  const re = /\*\*(.+?)\*\*|\*(.+?)\*/g
+  let last = 0
+  let m: RegExpExecArray | null
+  while ((m = re.exec(raw)) !== null) {
+    if (m.index > last) segments.push({ type: 'text', value: raw.slice(last, m.index) })
+    if (m[1] !== undefined) segments.push({ type: 'bold',   value: m[1] })
+    else                    segments.push({ type: 'italic', value: m[2] })
+    last = re.lastIndex
+  }
+  if (last < raw.length) segments.push({ type: 'text', value: raw.slice(last) })
+  return segments
+}
+
+function renderInline(segments: Segment[], baseColor: string) {
+  return segments.map((seg, i) => {
+    if (seg.type === 'bold')   return <strong key={i} style={{ fontWeight: 600, color: 'rgba(235, 225, 255, 0.95)' }}>{seg.value}</strong>
+    if (seg.type === 'italic') return <em key={i} style={{ fontStyle: 'italic', color: 'rgba(196, 181, 253, 0.85)' }}>{seg.value}</em>
+    return <span key={i}>{seg.value}</span>
+  })
+}
+
+function MarkdownContent({ text, accentColor, isStreaming }: {
+  text: string
+  accentColor: string
+  isStreaming: boolean
+}) {
+  const baseStyle: React.CSSProperties = {
+    fontFamily: 'Cormorant Garamond, serif',
+    fontSize: 18,
+    color: 'rgba(220, 210, 255, 0.85)',
+    lineHeight: 1.9,
+  }
+
+  // Split into lines, group into paragraphs (separated by blank lines)
+  const lines = text.split('\n')
+  const blocks: React.ReactNode[] = []
+  let paragraphLines: string[] = []
+  let key = 0
+
+  const flushParagraph = () => {
+    if (paragraphLines.length === 0) return
+    const combined = paragraphLines.join(' ').trim()
+    if (combined) {
+      blocks.push(
+        <p key={key++} style={{ ...baseStyle, margin: '0 0 16px 0' }}>
+          {renderInline(parseInline(combined), accentColor)}
+        </p>
+      )
+    }
+    paragraphLines = []
+  }
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i]
+
+    // Horizontal divider ---
+    if (line.trim() === '---') {
+      flushParagraph()
+      blocks.push(
+        <div key={key++} style={{
+          width: '100%', height: 1,
+          background: `linear-gradient(90deg, transparent, ${accentColor}30, transparent)`,
+          margin: '24px 0',
+        }} />
+      )
+      continue
+    }
+
+    // Bullet point
+    if (line.trimStart().startsWith('- ')) {
+      flushParagraph()
+      const bulletText = line.trimStart().slice(2)
+      blocks.push(
+        <div key={key++} style={{ display: 'flex', gap: 12, margin: '0 0 10px 0', alignItems: 'flex-start' }}>
+          <span style={{ color: accentColor, fontSize: 18, lineHeight: 1.9, flexShrink: 0, marginTop: 1 }}>◦</span>
+          <p style={{ ...baseStyle, margin: 0 }}>
+            {renderInline(parseInline(bulletText), accentColor)}
+          </p>
+        </div>
+      )
+      continue
+    }
+
+    // Blank line → flush current paragraph
+    if (line.trim() === '') {
+      flushParagraph()
+      continue
+    }
+
+    // Accumulate into current paragraph
+    paragraphLines.push(line)
+  }
+  flushParagraph()
+
+  return (
+    <div>
+      {blocks}
+      {isStreaming && (
+        <span style={{
+          display: 'inline-block', width: 2, height: 20, background: accentColor,
+          marginLeft: 3, verticalAlign: 'middle',
+          animation: 'blink 1s step-end infinite',
+        }} />
+      )}
+    </div>
+  )
+}
+
+
+// ── SECTION CARD (updated) ────────────────────────────────
+// Replace the entire existing SectionCard function with this:
+
+function SectionCard({ section, content, isStreaming }: {
+  section: typeof SECTIONS[0]
+  content: string
+  isStreaming: boolean
+}) {
+  return (
+    <div style={{
+      ...S.card,
+      borderColor: `${section.color}25`,
+      borderLeft: `3px solid ${section.color}55`,
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+        <span style={{ fontSize: 20, color: section.color }}>{section.icon}</span>
+        <p style={S.sectionTitle(section.color)}>{section.label}</p>
+      </div>
+      <div style={S.divider} />
+      <MarkdownContent
+        text={content}
+        accentColor={section.color}
+        isStreaming={isStreaming}
+      />
+    </div>
+  )
+}
+
+
 // ── SECTION CARD ───────────────────────────────────────────
 function SectionCard({ section, content, isStreaming }: {
   section: typeof SECTIONS[0]
