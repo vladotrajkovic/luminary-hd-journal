@@ -135,12 +135,15 @@ function SectionCard({ section, content, isStreaming }: {
 export default function ReportPage() {
   const router = useRouter()
   const [profile, setProfile] = useState<any>(null)
+  const [userId, setUserId] = useState<string | null>(null)
   const [chartData, setChartData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [generating, setGenerating] = useState(false)
   const [rawText, setRawText] = useState('')
   const [sections, setSections] = useState<Record<string, string>>({})
   const [done, setDone] = useState(false)
+  const [savedAt, setSavedAt] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [exporting, setExporting] = useState(false)
   const rawRef = useRef('')
@@ -149,11 +152,29 @@ export default function ReportPage() {
     const load = async () => {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) { router.push('/auth/login'); return }
-      const { data } = await supabase.from('profiles').select('*').eq('id', session.user.id).single()
+
+      setUserId(session.user.id)
+
+      const { data } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', session.user.id)
+        .single()
+
       setProfile(data)
 
-      // Check if fresh chart data was passed from Chart Generator via sessionStorage
-      const stored = typeof window !== 'undefined' ? sessionStorage.getItem('luminary_chart_report') : null
+      // ── Restore saved report if it exists ──────────────────
+      if (data?.hd_report && Object.keys(data.hd_report).length >= 3) {
+        setSections(data.hd_report)
+        setSavedAt(data.hd_report_generated_at || null)
+        setDone(true)
+        setLoading(false)
+        return
+      }
+
+      // ── Check if fresh chart data was passed from Chart Generator ──
+      const stored = typeof window !== 'undefined'
+        ? sessionStorage.getItem('luminary_chart_report') : null
       if (stored) {
         sessionStorage.removeItem('luminary_chart_report')
         try {
@@ -164,7 +185,7 @@ export default function ReportPage() {
         } catch { /* fall through to profile data */ }
       }
 
-      // Build chart data from profile
+      // ── Build chart data from profile ──
       if (data) {
         setChartData({
           type: data.hd_type || 'Unknown',
@@ -186,6 +207,28 @@ export default function ReportPage() {
     load()
   }, [])
 
+  // ── Save report sections to Supabase ──────────────────────
+  const saveReportToDb = async (completedSections: Record<string, string>) => {
+    if (!userId) return
+    setSaving(true)
+    const now = new Date().toISOString()
+    try {
+      await supabase
+        .from('profiles')
+        .update({
+          hd_report: completedSections,
+          hd_report_generated_at: now,
+        })
+        .eq('id', userId)
+      setSavedAt(now)
+    } catch (e) {
+      console.error('Failed to save report:', e)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  // ── Generate report ───────────────────────────────────────
   const generateReport = async () => {
     if (!chartData) return
     setGenerating(true)
@@ -227,11 +270,53 @@ export default function ReportPage() {
           }
         }
       }
+
+      // ── Auto-save once complete ───────────────────────────
+      const finalSections = parseSections(rawRef.current)
+      if (Object.keys(finalSections).length >= 3) {
+        await saveReportToDb(finalSections)
+      }
+
     } catch (err: any) {
       setError(err.message || 'Something went wrong')
     } finally {
       setGenerating(false)
       setDone(true)
+    }
+  }
+
+  // ── Regenerate: clear saved report and restart ────────────
+  const handleRegenerate = async () => {
+    // Clear from DB
+    if (userId) {
+      await supabase
+        .from('profiles')
+        .update({ hd_report: null, hd_report_generated_at: null })
+        .eq('id', userId)
+    }
+    setSections({})
+    setDone(false)
+    setSavedAt(null)
+    rawRef.current = ''
+    setRawText('')
+    setError('')
+
+    // Rebuild chartData from profile for the new generation
+    if (profile) {
+      setChartData({
+        type: profile.hd_type || 'Unknown',
+        authority: profile.hd_authority || 'Unknown',
+        profile: profile.hd_profile || 'Unknown',
+        definition: profile.hd_definition || 'Unknown',
+        incarnationCross: profile.hd_incarnation_cross || 'Unknown',
+        definedCenters: profile.defined_centers || [],
+        openCenters: (['Head','Ajna','Throat','G','Heart','Sacral','SolarPlexus','Spleen','Root'] as string[])
+          .filter((c: string) => !(profile.defined_centers || []).includes(c)),
+        activeChannels: [],
+        allGates: profile.active_gates || [],
+        allPersonalityGates: [],
+        allDesignGates: [],
+      })
     }
   }
 
@@ -246,49 +331,68 @@ export default function ReportPage() {
     }
   }
 
-  const hasReport = Object.keys(sections).length > 0
+  const hasReport = Object.keys(sections).length >= 3
+  const missingData = !chartData?.type || chartData?.type === 'Unknown'
 
   if (loading) {
     return (
       <Layout>
-        <div style={{ textAlign: 'center', paddingTop: 80, fontFamily: 'Cinzel, serif', color: 'rgba(167,139,250,0.4)', letterSpacing: '0.2em' }}>
-          Loading your chart...
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 18, color: 'rgba(167,139,250,0.5)' }}>
+            Loading your reading...
+          </p>
         </div>
       </Layout>
     )
   }
 
-  const missingData = !profile?.hd_type || !profile?.hd_authority || !profile?.hd_profile
-
   return (
-    <>
+    <Layout>
       <Head>
-        <title>Your HD Report — Luminary</title>
-        <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Cinzel:wght@400;500;600&family=Inter:wght@300;400;500&display=swap" rel="stylesheet" />
-        <style>{`
-          @keyframes pulse { 0%,100%{opacity:0.4} 50%{opacity:1} }
-          @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
-          @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
-          @keyframes shimmer { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
-          .report-section { animation: fadeUp 0.5s ease forwards; }
-        `}</style>
+        <title>HD Report · Luminary</title>
       </Head>
-      <Layout>
 
-        {/* ── Header ── */}
+      <div style={{ maxWidth: 820, margin: '0 auto', padding: '40px 24px 80px' }}>
+
+        {/* ── Page Header ── */}
         <div style={{ marginBottom: 40 }}>
-          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, letterSpacing: '0.15em', color: 'rgba(167,139,250,0.5)', textTransform: 'uppercase', marginBottom: 8 }}>
-            Your Personal Reading
+          <p style={{ fontFamily: 'Cinzel, serif', fontSize: 11, letterSpacing: '0.25em', color: 'rgba(167,139,250,0.45)', textTransform: 'uppercase', marginBottom: 10 }}>
+            ✧ Personal Reading
           </p>
-          <h1 style={{ fontFamily: 'Cinzel, serif', fontSize: 32, color: '#EDE9FE', letterSpacing: '0.05em' }}>
-            Human Design Report
+          <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 42, fontWeight: 400, color: '#EDE9FE', lineHeight: 1.15, marginBottom: 12 }}>
+            Your Human Design Report
           </h1>
-          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 18, color: 'rgba(196,181,253,0.55)', marginTop: 8 }}>
-            Your complete reading, woven from the stars at the moment of your birth
+          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 19, color: 'rgba(196,181,253,0.5)', lineHeight: 1.6 }}>
+            A personalised reading woven from the blueprint of your birth
           </p>
+
+          {/* Saved indicator */}
+          {savedAt && !generating && (
+            <div style={{
+              display: 'inline-flex', alignItems: 'center', gap: 8, marginTop: 16,
+              background: 'rgba(45,212,191,0.07)', border: '1px solid rgba(45,212,191,0.2)',
+              borderRadius: 20, padding: '6px 16px',
+            }}>
+              <span style={{ color: '#2DD4BF', fontSize: 12 }}>✓</span>
+              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(45,212,191,0.7)', letterSpacing: '0.05em' }}>
+                Saved · {new Date(savedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
+              </span>
+            </div>
+          )}
+          {saving && (
+            <div style={{
+              display: 'inline-flex', alignItems: 'center', gap: 8, marginTop: 16,
+              background: 'rgba(167,139,250,0.07)', border: '1px solid rgba(167,139,250,0.2)',
+              borderRadius: 20, padding: '6px 16px',
+            }}>
+              <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(167,139,250,0.6)', letterSpacing: '0.05em' }}>
+                Saving your report...
+              </span>
+            </div>
+          )}
         </div>
 
-        {/* ── Chart Summary ── */}
+        {/* ── Profile Summary ── */}
         {profile && (profile.hd_type || profile.hd_authority) && (
           <div style={{
             display: 'flex', gap: 28, flexWrap: 'wrap',
@@ -297,10 +401,10 @@ export default function ReportPage() {
             border: '1px solid rgba(123,79,212,0.2)',
           }}>
             {[
-              { label: 'Type',      value: profile.hd_type,      color: '#A78BFA' },
-              { label: 'Authority', value: profile.hd_authority,  color: '#2DD4BF' },
-              { label: 'Profile',   value: profile.hd_profile,    color: '#D4AF37' },
-              { label: 'Definition',value: profile.hd_definition, color: '#F9A8D4' },
+              { label: 'Type',       value: profile.hd_type,       color: '#A78BFA' },
+              { label: 'Authority',  value: profile.hd_authority,   color: '#2DD4BF' },
+              { label: 'Profile',    value: profile.hd_profile,     color: '#D4AF37' },
+              { label: 'Definition', value: profile.hd_definition,  color: '#F9A8D4' },
             ].filter(i => i.value).map(item => (
               <div key={item.label} style={{ textAlign: 'center' }}>
                 <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, letterSpacing: '0.15em', color: 'rgba(167,139,250,0.45)', textTransform: 'uppercase', marginBottom: 4 }}>{item.label}</p>
@@ -311,7 +415,7 @@ export default function ReportPage() {
         )}
 
         {/* ── Missing Data Warning ── */}
-        {missingData && (
+        {missingData && !hasReport && (
           <div style={{ background: 'rgba(212,175,55,0.08)', border: '1px solid rgba(212,175,55,0.25)', borderRadius: 12, padding: '20px 24px', marginBottom: 28 }}>
             <p style={{ fontFamily: 'Cinzel, serif', fontSize: 13, color: '#D4AF37', marginBottom: 6 }}>⚠ Incomplete Chart Data</p>
             <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 16, color: 'rgba(212,175,55,0.7)', lineHeight: 1.6 }}>
@@ -323,7 +427,7 @@ export default function ReportPage() {
           </div>
         )}
 
-        {/* ── Generate Button ── */}
+        {/* ── Generate Button (only shown when no saved report) ── */}
         {!hasReport && (
           <div style={{ textAlign: 'center', padding: '40px 0 48px' }}>
             <div style={{
@@ -427,7 +531,9 @@ export default function ReportPage() {
                   ✦ Your Reading is Complete ✦
                 </p>
                 <p style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 18, color: 'rgba(196,181,253,0.5)', marginBottom: 28 }}>
-                  Download your report as a beautifully formatted PDF, or come back to regenerate it any time.
+                  {savedAt
+                    ? 'Your reading is saved and will be here whenever you return.'
+                    : 'Download your report as a beautifully formatted PDF, or come back to regenerate it any time.'}
                 </p>
                 <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
                   <button
@@ -436,19 +542,14 @@ export default function ReportPage() {
                     className="btn-cosmic"
                     style={{ fontSize: 12, padding: '10px 28px', opacity: exporting ? 0.6 : 1 }}
                   >
-                    {exporting ? '⧗ Generating PDF...' : '↓ Download PDF Report'}
+                    {exporting ? '✦ Preparing PDF...' : '↓ Download PDF'}
                   </button>
                   <button
-                    onClick={() => {
-                      setSections({})
-                      setRawText('')
-                      setDone(false)
-                      rawRef.current = ''
-                    }}
+                    onClick={handleRegenerate}
                     className="btn-ghost"
                     style={{ fontSize: 12, padding: '10px 28px' }}
                   >
-                    ↺ Regenerate
+                    ↺ Regenerate Report
                   </button>
                 </div>
               </div>
@@ -456,7 +557,7 @@ export default function ReportPage() {
           </div>
         )}
 
-      </Layout>
-    </>
+      </div>
+    </Layout>
   )
 }
