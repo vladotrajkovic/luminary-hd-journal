@@ -153,8 +153,7 @@ export default function ReportPage() {
       setProfile(data)
 
       // Check if fresh chart data was passed from Chart Generator via sessionStorage
-      const stored = typeof window !== 'undefined' ?
-        sessionStorage.getItem('luminary_chart_report') : null
+      const stored = typeof window !== 'undefined' ? sessionStorage.getItem('luminary_chart_report') : null
       if (stored) {
         sessionStorage.removeItem('luminary_chart_report')
         try {
@@ -247,43 +246,49 @@ export default function ReportPage() {
     }
   }
 
-  const hasReport = Object.keys(sections).length >= 3
-  const missingData = !chartData?.type || chartData?.type === 'Unknown'
+  const hasReport = Object.keys(sections).length > 0
 
   if (loading) {
     return (
       <Layout>
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
-          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 18, color: 'rgba(167,139,250,0.5)' }}>
-            Loading your reading...
-          </p>
+        <div style={{ textAlign: 'center', paddingTop: 80, fontFamily: 'Cinzel, serif', color: 'rgba(167,139,250,0.4)', letterSpacing: '0.2em' }}>
+          Loading your chart...
         </div>
       </Layout>
     )
   }
 
+  const missingData = !profile?.hd_type || !profile?.hd_authority || !profile?.hd_profile
+
   return (
-    <Layout>
+    <>
       <Head>
-        <title>HD Report · Luminary</title>
+        <title>Your HD Report — Luminary</title>
+        <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Cinzel:wght@400;500;600&family=Inter:wght@300;400;500&display=swap" rel="stylesheet" />
+        <style>{`
+          @keyframes pulse { 0%,100%{opacity:0.4} 50%{opacity:1} }
+          @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+          @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+          @keyframes shimmer { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
+          .report-section { animation: fadeUp 0.5s ease forwards; }
+        `}</style>
       </Head>
+      <Layout>
 
-      <div style={{ maxWidth: 820, margin: '0 auto', padding: '40px 24px 80px' }}>
-
-        {/* ── Page Header ── */}
+        {/* ── Header ── */}
         <div style={{ marginBottom: 40 }}>
-          <p style={{ fontFamily: 'Cinzel, serif', fontSize: 11, letterSpacing: '0.25em', color: 'rgba(167,139,250,0.45)', textTransform: 'uppercase', marginBottom: 10 }}>
-            ✧ Personal Reading
+          <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, letterSpacing: '0.15em', color: 'rgba(167,139,250,0.5)', textTransform: 'uppercase', marginBottom: 8 }}>
+            Your Personal Reading
           </p>
-          <h1 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 42, fontWeight: 400, color: '#EDE9FE', lineHeight: 1.15, marginBottom: 12 }}>
-            Your Human Design Report
+          <h1 style={{ fontFamily: 'Cinzel, serif', fontSize: 32, color: '#EDE9FE', letterSpacing: '0.05em' }}>
+            Human Design Report
           </h1>
-          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 19, color: 'rgba(196,181,253,0.5)', lineHeight: 1.6 }}>
-            A personalised reading woven from the blueprint of your birth
+          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 18, color: 'rgba(196,181,253,0.55)', marginTop: 8 }}>
+            Your complete reading, woven from the stars at the moment of your birth
           </p>
         </div>
 
-        {/* ── Profile Summary ── */}
+        {/* ── Chart Summary ── */}
         {profile && (profile.hd_type || profile.hd_authority) && (
           <div style={{
             display: 'flex', gap: 28, flexWrap: 'wrap',
@@ -431,10 +436,15 @@ export default function ReportPage() {
                     className="btn-cosmic"
                     style={{ fontSize: 12, padding: '10px 28px', opacity: exporting ? 0.6 : 1 }}
                   >
-                    {exporting ? '✦ Preparing PDF...' : '↓ Download PDF'}
+                    {exporting ? '⧗ Generating PDF...' : '↓ Download PDF Report'}
                   </button>
                   <button
-                    onClick={() => { setSections({}); setDone(false); rawRef.current = ''; setRawText('') }}
+                    onClick={() => {
+                      setSections({})
+                      setRawText('')
+                      setDone(false)
+                      rawRef.current = ''
+                    }}
                     className="btn-ghost"
                     style={{ fontSize: 12, padding: '10px 28px' }}
                   >
@@ -446,7 +456,7 @@ export default function ReportPage() {
           </div>
         )}
 
-      </div>
-    </Layout>
+      </Layout>
+    </>
   )
 }
