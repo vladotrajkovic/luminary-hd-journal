@@ -352,7 +352,7 @@ export default function ReportPage() {
         <title>HD Report · Luminary</title>
       </Head>
 
-      <div style={{ maxWidth: 820, margin: '0 auto', padding: '40px 24px 80px' }}>
+      <div style={{ maxWidth: 'min(1200px, 92vw)', margin: '0 auto', padding: '40px 0 80px' }}>
 
         {/* ── Page Header ── */}
         <div style={{ marginBottom: 40 }}>
