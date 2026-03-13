@@ -1,92 +1,245 @@
+// pages/api/generate-report.ts
+// Hybrid report generator:
+//   - Type, Authority, Profile, Centers, Channels → fetched from content_library (Supabase, instant)
+//   - Intro + Final → small Claude API call (~1200 tokens, ~$0.02/report)
+//
+// Replace the existing pages/api/generate-report.ts with this file.
+
 import type { NextApiRequest, NextApiResponse } from 'next'
+import { getChartContent } from '../../lib/contentLibrary'
+import type { HdCenterName } from '../../lib/contentLibraryTypes'
 
 export const config = { api: { bodyParser: true } }
+
+// ── Center key mapping ─────────────────────────────────────
+// chartData.definedCenters uses internal Center type keys ('SolarPlexus', 'G', etc.)
+// getChartContent expects HdCenterName slugs ('solar_plexus', 'g', etc.)
+const CENTER_TO_SLUG: Record<string, HdCenterName> = {
+  Head:        'head',
+  Ajna:        'ajna',
+  Throat:      'throat',
+  G:           'g',
+  Heart:       'heart',
+  Sacral:      'sacral',
+  SolarPlexus: 'solar_plexus',
+  Spleen:      'spleen',
+  Root:        'root',
+}
+
+// Display labels shown as headings inside each center block in the report
+const CENTER_LABEL: Record<HdCenterName, string> = {
+  head:        'Head Center',
+  ajna:        'Ajna Center',
+  throat:      'Throat Center',
+  g:           'G Center (Identity)',
+  heart:       'Heart / Ego Center',
+  sacral:      'Sacral Center',
+  solar_plexus:'Solar Plexus Center',
+  spleen:      'Spleen Center',
+  root:        'Root Center',
+}
+
+const ALL_CENTER_KEYS: HdCenterName[] = [
+  'head', 'ajna', 'throat', 'g', 'heart',
+  'sacral', 'solar_plexus', 'spleen', 'root',
+]
+
+// ── Authority key mapping ─────────────────────────────────
+// Handles the names the chart calculator emits (e.g. "Solar Plexus", "Sacral", etc.)
+const AUTHORITY_SLUG: Record<string, string> = {
+  'Sacral':              'authority_sacral',
+  'Solar Plexus':        'authority_emotional',
+  'Emotional':           'authority_emotional',
+  'Splenic':             'authority_splenic',
+  'Spleen':              'authority_splenic',
+  'Ego Manifested':      'authority_ego_manifested',
+  'Ego Projected':       'authority_ego_projected',
+  'Self-Projected':      'authority_self_projected',
+  'Self Projected':      'authority_self_projected',
+  'G Center':            'authority_self_projected',
+  'Mental Projector':    'authority_mental_projector',
+  'No Inner Authority':  'authority_mental_projector',
+  'Lunar':               'authority_lunar',
+  'Moon':                'authority_lunar',
+}
+
+// ── Helpers ────────────────────────────────────────────────
+function toTypeKey(type: string): string {
+  return `type_${type.toLowerCase().replace(/\s+/g, '_')}`
+}
+
+function toAuthorityKey(authority: string): string {
+  return AUTHORITY_SLUG[authority]
+    ?? `authority_${authority.toLowerCase().replace(/[\s-]+/g, '_')}`
+}
+
+function toProfileKey(profile: string): string {
+  // profile is "1/3", "4/6", etc.
+  const [l1, l2] = profile.split('/').map(s => s.trim())
+  return `profile_${l1}_${l2}`
+}
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).end()
 
   const { chartData, userName } = req.body
-
   if (!chartData) return res.status(400).json({ error: 'Missing chart data' })
 
   const {
-    type, authority, profile, definition, incarnationCross,
-    definedCenters, openCenters, activeChannels, allGates,
-    allPersonalityGates, allDesignGates,
+    type         = 'Generator',
+    authority    = 'Sacral',
+    profile      = '1/3',
+    definition   = '',
+    incarnationCross = '',
+    definedCenters   = [] as string[],
+    openCenters      = [] as string[],
+    activeChannels   = [] as any[],
   } = chartData
 
-  const systemPrompt = `You are a compassionate and insightful Human Design reader and guide. Your role is to generate a deeply personal, warm, and illuminating Human Design report. Your writing style is:
-- Warm, direct, and personal (use "you" throughout)
-- Poetic yet practical — beautiful language grounded in real guidance
-- Encouraging and empowering, never diagnostic or prescriptive
-- Deep but accessible — no jargon without explanation
+  // ── Build content library keys ─────────────────────────
+  const typeKey      = toTypeKey(type)
+  const authorityKey = toAuthorityKey(authority)
+  const profileKey   = toProfileKey(profile)
 
-You follow the Jovian Archive tradition closely. Write flowing paragraphs, not bullet points. Each section should feel like a personal letter to the individual.`
+  // Build defined-center lookup set (handles both chartData key formats)
+  const definedSet = new Set<HdCenterName>(
+    (definedCenters as string[])
+      .map(c => CENTER_TO_SLUG[c] ?? CENTER_TO_SLUG[c.replace(/\s/g, '')] ?? null)
+      .filter(Boolean) as HdCenterName[]
+  )
 
+  const centerInput = ALL_CENTER_KEYS.map(name => ({ name, defined: definedSet.has(name) }))
+
+  const channelInput = (activeChannels as any[]).map((ch: any) => ({
+    gate1: ch.gates[0],
+    gate2: ch.gates[1],
+  }))
+
+  // ── Set SSE headers (do this early) ──────────────────────
+  res.setHeader('Content-Type', 'text/event-stream')
+  res.setHeader('Cache-Control', 'no-cache')
+  res.setHeader('Connection', 'keep-alive')
+
+  const emit = (text: string) => {
+    res.write(`data: ${JSON.stringify({ text })}\n\n`)
+  }
+
+  // ── Fetch static content from Supabase ────────────────────
+  let staticContent: Awaited<ReturnType<typeof getChartContent>> | null = null
+  try {
+    staticContent = await getChartContent({
+      typeKey:      typeKey as any,
+      authorityKey: authorityKey as any,
+      profileKey:   profileKey as any,
+      centers:      centerInput,
+      channels:     channelInput,
+    })
+  } catch (err) {
+    console.error('[generate-report] Content library fetch failed:', err)
+  }
+
+  // ── Emit static sections immediately ─────────────────────
+  // These resolve 5 of 7 skeleton cards instantly, before Claude even starts.
+
+  if (staticContent) {
+    // Type
+    if (staticContent.type) {
+      emit(`<section_type>\n${staticContent.type}\n</section_type>\n`)
+    }
+
+    // Authority
+    if (staticContent.authority) {
+      emit(`<section_authority>\n${staticContent.authority}\n</section_authority>\n`)
+    }
+
+    // Profile
+    if (staticContent.profile) {
+      emit(`<section_profile>\n${staticContent.profile}\n</section_profile>\n`)
+    }
+
+    // Centers — one content block per center with a label heading
+    const centersBlocks = ALL_CENTER_KEYS.map(slug => {
+      const isDefined = definedSet.has(slug)
+      const key = `center_${slug}_${isDefined ? 'defined' : 'open'}` as any
+      const body = staticContent!.centers.get(key) ?? ''
+      const label = CENTER_LABEL[slug]
+      const state = isDefined ? 'Defined' : 'Open / Undefined'
+      return `**${label}** — ${state}\n\n${body}`
+    }).filter(b => b.includes('\n\n'))
+
+    if (centersBlocks.length > 0) {
+      emit(`<section_centers>\n${centersBlocks.join('\n\n---\n\n')}\n</section_centers>\n`)
+    }
+
+    // Channels — one content block per active channel with a label heading
+    if (channelInput.length > 0) {
+      const channelsBlocks = channelInput.map(({ gate1, gate2 }) => {
+        const lo = Math.min(gate1, gate2)
+        const hi = Math.max(gate1, gate2)
+        const key = `channel_${lo}_${hi}` as any
+        const body = staticContent!.channels.get(key) ?? ''
+        const chInfo = (activeChannels as any[]).find(
+          (ch: any) => ch.gates.includes(gate1) && ch.gates.includes(gate2)
+        )
+        const label = chInfo?.name
+          ? `Channel ${lo}–${hi}: ${chInfo.name}`
+          : `Channel ${lo}–${hi}`
+        return `**${label}**\n\n${body}`
+      }).filter(b => b.includes('\n\n'))
+
+      if (channelsBlocks.length > 0) {
+        emit(`<section_channels>\n${channelsBlocks.join('\n\n---\n\n')}\n</section_channels>\n`)
+      } else {
+        emit(`<section_channels>\nYou have no fully activated channels in your chart. This is not a lack — it means your energy is designed to remain open and magnetic, drawing in the energies of others and sampling the full spectrum of human experience. Your individual gates each carry profound meaning and are activated in the right company.\n</section_channels>\n`)
+      }
+    } else {
+      emit(`<section_channels>\nYou have no fully activated channels in your chart. This is not a lack — it means your energy is designed to remain open and magnetic, drawing in the energies of others and sampling the full spectrum of human experience. Your individual gates each carry profound meaning and are activated in the right company.\n</section_channels>\n`)
+    }
+  } else {
+    // Content library unavailable — emit minimal placeholders so the UI isn't broken.
+    // Claude will still generate personalised intro + final below.
+    emit(`<section_type>\nContent for your Type (${type}) is being prepared.\n</section_type>\n`)
+    emit(`<section_authority>\nContent for your Authority (${authority}) is being prepared.\n</section_authority>\n`)
+    emit(`<section_profile>\nContent for your Profile (${profile}) is being prepared.\n</section_profile>\n`)
+    emit(`<section_centers>\nCenter content is being prepared.\n</section_centers>\n`)
+    emit(`<section_channels>\nChannel content is being prepared.\n</section_channels>\n`)
+  }
+
+  // ── Claude: personalised intro + final only ───────────────
   const channelList = activeChannels.length > 0
-    ? activeChannels.map((ch: any) => `Channel ${ch.gates[0]}-${ch.gates[1]}: ${ch.name} (${ch.type})`).join(', ')
-    : 'No fully activated channels (hanging gates carry significant energy)'
+    ? (activeChannels as any[]).map((ch: any) => `${ch.gates[0]}–${ch.gates[1]}: ${ch.name}`).join(', ')
+    : 'No fully activated channels'
 
-  const definedCentersList = definedCenters.join(', ') || 'None'
-  const openCentersList = openCenters.join(', ') || 'None'
-  const personalityGates = allPersonalityGates?.join(', ') || allGates?.join(', ') || 'Unknown'
-  const designGates = allDesignGates?.join(', ') || 'Unknown'
+  const definedCentersList = (definedCenters as string[]).join(', ') || 'None'
 
-  const userPrompt = `Generate a complete, personalised Human Design report for ${userName || 'this person'} with the following chart:
+  const systemPrompt = `You are a warm, deeply insightful Human Design guide. Write in second person ("you") throughout. Your voice is poetic yet grounded — beautiful language that delivers real, practical guidance. No bullet points except where specifically instructed. No jargon without explanation.`
 
-**CHART DATA:**
+  const userPrompt = `Write exactly two sections of a Human Design report for ${userName || 'this person'}. Use only the XML section tags below — no other output.
+
+Chart:
 - Type: ${type}
-- Authority: ${authority}
+- Authority: ${authority}  
 - Profile: ${profile}
 - Definition: ${definition}
 - Incarnation Cross: ${incarnationCross}
 - Defined Centers: ${definedCentersList}
-- Open/Undefined Centers: ${openCentersList}
 - Active Channels: ${channelList}
-- Personality (Conscious) Gates: ${personalityGates}
-- Design (Unconscious) Gates: ${designGates}
-
-Generate the report in exactly these sections, using the XML tags below to delimit them. Write flowing, personal prose — NO bullet points, NO numbered lists:
 
 <section_intro>
-Write a warm, personal 2-3 paragraph introduction to Human Design and what it means to receive this reading. Reference their specific type and make them feel seen.
+Write 2–3 warm, personal paragraphs welcoming them to their Human Design reading. Reference their Type (${type}) in the opening. Explain, briefly and simply, what Human Design is and how this report is meant to be used — as a mirror, not a prescription. Make them feel genuinely seen. Close the section with an invitation to read slowly and return often.
 </section_intro>
 
-<section_type>
-Write a deeply personal 4-5 paragraph section about their Type (${type}). Cover: what it means to be this type, their Strategy, their Signature (what they feel when aligned), their Not-Self Theme (what they feel when out of alignment), their life purpose, and practical day-to-day guidance. Make it feel like a personal guide written just for them.
-</section_type>
-
-<section_authority>
-Write a deeply personal 4-5 paragraph section about their Inner Authority (${authority}). Explain how this authority works in their body, how to listen to it, common challenges, and real-life examples of how to apply it in decisions. Be warm and specific.
-</section_authority>
-
-<section_profile>
-Write 3-4 paragraphs about their Profile (${profile}). Explain both line numbers individually, then how they work together. Include: life theme, how they learn, how they interact with others, their relationship style, and growth edge.
-</section_profile>
-
-<section_centers>
-Write a personalised section covering all 9 centers. For each center, state whether it is Defined or Open/Undefined for this person, and write 2-3 sentences about what that means for them personally. Cover all 9 in this order: Head, Ajna, Throat, G Center (Identity), Heart (Ego/Will), Sacral, Solar Plexus (Emotional), Spleen, Root. Make each feel personal and specific to their chart.
-Centers status: Defined: ${definedCentersList} | Open: ${openCentersList}
-</section_centers>
-
-<section_channels>
-${activeChannels.length > 0
-  ? `Write a personalised description for each of their active channels. For each channel, give it a header (e.g. "Channel ${activeChannels[0]?.gates?.[0]}-${activeChannels[0]?.gates?.[1]}: ${activeChannels[0]?.name}") followed by 2-3 paragraphs about what this channel means for them — their natural gifts, potential challenges, and how to use this energy wisely. Channels: ${channelList}`
-  : 'This person has no fully activated channels. Write 2 paragraphs about the power and significance of hanging (single) gates, and how their specific gates still carry profound meaning and energy in their chart.'
-}
-</section_channels>
-
 <section_final>
-Write the closing "Final Note" in three parts — do not use headers, let it flow naturally:
+Write a closing note in three parts — no sub-headers, let it flow as natural prose:
 
-PART 1 — Opening (1 paragraph): Begin with a warm, grounding statement about what this chart is really for. Remind them that it is not here to tell them what to do — it is here to remind them of what is already true inside them.
+PART 1 (1 paragraph): A warm, grounding statement about what this chart is really for. It is not here to tell them what to do — it is here to remind them of what is already true inside them.
 
-PART 2 — Personal Summary (exactly 3 bullet points using "- " dash format): Write three short, specific, personal reminders drawn directly from their chart. Each should be one or two sentences. Cover:
-  - Their Type and what it means for how they move through life (e.g. "You are a ${type} — designed to [strategy]. Your power is in [key quality].")
-  - Their Profile (${profile}) and what it means for how they need to live and connect
-  - A key gift or theme from their defined centers or active channels — something that may feel "normal" to them but is truly special
+PART 2 (exactly 3 bullet points, each starting with "- "): Three short, specific personal reminders drawn directly from their chart. One or two sentences each. Cover:
+- Their Type (${type}) and what it means for how they move through life
+- Their Profile (${profile}) and how they are designed to learn and connect
+- A key gift or theme from their defined centers or active channels
 
-PART 3 — Closing (3 paragraphs): Write a flowing, poetic closing. Remind them this is not about fixing anything — it is about remembering their natural flow and trusting their own rhythm. Encourage them to take their time, come back to their chart, reflect, experiment, and notice how their body speaks to them. End with a final sentence about how Human Design, with time and curiosity, can become a beautiful ally on their path — helping them make decisions with clarity, relate to others with ease, and live life in a way that feels true to who they really are.
+PART 3 (2–3 paragraphs): A poetic, encouraging closing. This is not about fixing anything — it is about remembering their natural flow. Encourage curiosity and patience with the experiment. End with one sentence about how Human Design, explored over time, can become a true ally on their path.
 </section_final>`
 
   try {
@@ -99,7 +252,7 @@ PART 3 — Closing (3 paragraphs): Write a flowing, poetic closing. Remind them 
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
-        max_tokens: 4000,
+        max_tokens: 1400,
         stream: true,
         system: systemPrompt,
         messages: [{ role: 'user', content: userPrompt }],
@@ -107,39 +260,38 @@ PART 3 — Closing (3 paragraphs): Write a flowing, poetic closing. Remind them 
     })
 
     if (!anthropicRes.ok) {
-      const err = await anthropicRes.text()
-      return res.status(500).json({ error: err })
-    }
+      const errText = await anthropicRes.text()
+      console.error('[generate-report] Claude API error:', errText)
+      // Emit fallback intro + final so the report is still complete
+      emit(`<section_intro>\nWelcome to your Human Design reading. This chart is a map of your unique energy — a guide to understanding how you are designed to move through the world as a ${type}. Take your time with it.\n</section_intro>\n`)
+      emit(`<section_final>\nTrust your design. Return to it often. Your chart is always here.\n</section_final>\n`)
+    } else {
+      const reader = anthropicRes.body!.getReader()
+      const decoder = new TextDecoder()
 
-    res.setHeader('Content-Type', 'text/event-stream')
-    res.setHeader('Cache-Control', 'no-cache')
-    res.setHeader('Connection', 'keep-alive')
-
-    const reader = anthropicRes.body!.getReader()
-    const decoder = new TextDecoder()
-
-    while (true) {
-      const { done, value } = await reader.read()
-      if (done) break
-      const chunk = decoder.decode(value, { stream: true })
-      const lines = chunk.split('\n')
-      for (const line of lines) {
-        if (line.startsWith('data: ')) {
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        const chunk = decoder.decode(value, { stream: true })
+        for (const line of chunk.split('\n')) {
+          if (!line.startsWith('data: ')) continue
           const data = line.slice(6).trim()
           if (data === '[DONE]') continue
           try {
             const parsed = JSON.parse(data)
             if (parsed.type === 'content_block_delta' && parsed.delta?.text) {
-              res.write(`data: ${JSON.stringify({ text: parsed.delta.text })}\n\n`)
+              emit(parsed.delta.text)
             }
-          } catch { /* skip */ }
+          } catch { /* skip malformed SSE frames */ }
         }
       }
     }
-
-    res.write('data: [DONE]\n\n')
-    res.end()
   } catch (err: any) {
-    res.status(500).json({ error: err.message })
+    console.error('[generate-report] Unexpected error:', err)
+    emit(`<section_intro>\nWelcome to your Human Design reading as a ${type}.\n</section_intro>\n`)
+    emit(`<section_final>\nTrust your design.\n</section_final>\n`)
   }
+
+  res.write('data: [DONE]\n\n')
+  res.end()
 }
