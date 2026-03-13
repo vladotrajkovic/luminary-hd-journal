@@ -16,6 +16,104 @@ const SECTIONS = [
   { key: 'final',     tag: 'section_final',     label: 'Your Path Forward', icon: '✧', color: '#C4B5FD' },
 ]
 
+// ── RESPONSIVE CSS ─────────────────────────────────────────
+// Must be injected via <style dangerouslySetInnerHTML> — the only
+// reliable way to get real media queries into a Next.js pages-router
+// component. <style> inside next/head does NOT work for this.
+const REPORT_CSS = `
+  .rp-outer {
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+  }
+  .rp-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 42px;
+    font-weight: 400;
+    color: #EDE9FE;
+    line-height: 1.15;
+    margin-bottom: 12px;
+  }
+  .rp-card {
+    background: rgba(15,10,46,0.6);
+    border: 1px solid rgba(167,139,250,0.15);
+    border-radius: 16px;
+    padding: 32px 36px;
+    margin-bottom: 24px;
+    backdrop-filter: blur(10px);
+  }
+  .rp-profile-strip {
+    display: flex;
+    gap: 28px;
+    flex-wrap: wrap;
+    background: rgba(45,27,105,0.2);
+    border-radius: 12px;
+    padding: 20px 28px;
+    margin-bottom: 32px;
+    border: 1px solid rgba(123,79,212,0.2);
+  }
+  .rp-body {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px;
+    color: rgba(220,210,255,0.85);
+    line-height: 1.9;
+    white-space: pre-wrap;
+  }
+  .rp-divider {
+    width: 60px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(167,139,250,0.4), transparent);
+    margin: 20px 0;
+  }
+  .rp-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  @media (max-width: 768px) {
+    .rp-outer {
+      padding: 24px 16px 60px;
+    }
+    .rp-title {
+      font-size: 30px;
+    }
+    .rp-card {
+      padding: 20px 18px;
+      border-radius: 12px;
+    }
+    .rp-profile-strip {
+      gap: 16px;
+      padding: 14px 16px;
+    }
+    .rp-body {
+      font-size: 16px;
+      line-height: 1.75;
+    }
+    .rp-actions {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .rp-actions .btn-cosmic,
+    .rp-actions .btn-ghost {
+      width: 100%;
+      text-align: center;
+    }
+  }
+`
+
+// ── NON-RESPONSIVE INLINE STYLES ──────────────────────────
+const S = {
+  sectionTitle: (color: string) => ({
+    fontFamily: 'Cinzel, serif',
+    fontSize: 13,
+    letterSpacing: '0.2em',
+    color,
+    textTransform: 'uppercase' as const,
+    marginBottom: 8,
+  }),
+}
+
 // Parse streaming text into sections using XML-like tags
 function parseSections(rawText: string): Record<string, string> {
   const result: Record<string, string> = {}
@@ -34,145 +132,15 @@ function parseSections(rawText: string): Record<string, string> {
   return result
 }
 
-// ── RESPONSIVE STYLES ──────────────────────────────────────
-const REPORT_CSS = `
-  .report-page-inner {
-    max-width: 820px;
-    margin: 0 auto;
-    padding: 40px 24px 80px;
-  }
-  .report-card {
-    background: rgba(15, 10, 46, 0.6);
-    border: 1px solid rgba(167, 139, 250, 0.15);
-    border-radius: 16px;
-    padding: 32px 36px;
-    margin-bottom: 24px;
-    backdrop-filter: blur(10px);
-  }
-  .report-section-card {
-    background: rgba(15, 10, 46, 0.6);
-    border: 1px solid rgba(167, 139, 250, 0.15);
-    border-radius: 16px;
-    padding: 32px 36px;
-    margin-bottom: 24px;
-    backdrop-filter: blur(10px);
-  }
-  .report-profile-strip {
-    display: flex;
-    gap: 28px;
-    flex-wrap: wrap;
-    background: rgba(45, 27, 105, 0.2);
-    border-radius: 12px;
-    padding: 20px 28px;
-    margin-bottom: 32px;
-    border: 1px solid rgba(123, 79, 212, 0.2);
-  }
-  .report-page-title {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 42px;
-    font-weight: 400;
-    color: #EDE9FE;
-    line-height: 1.15;
-    margin-bottom: 12px;
-  }
-  .report-body-text {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 18px;
-    color: rgba(220, 210, 255, 0.85);
-    line-height: 1.9;
-    white-space: pre-wrap;
-  }
-  .report-actions {
-    display: flex;
-    gap: 12px;
-    justify-content: center;
-    flex-wrap: wrap;
-  }
-  @media (max-width: 600px) {
-    .report-page-inner {
-      padding: 24px 14px 60px;
-    }
-    .report-card {
-      padding: 20px 18px;
-      border-radius: 12px;
-    }
-    .report-section-card {
-      padding: 20px 18px;
-      border-radius: 12px;
-    }
-    .report-profile-strip {
-      gap: 16px;
-      padding: 16px 18px;
-    }
-    .report-page-title {
-      font-size: 28px;
-    }
-    .report-body-text {
-      font-size: 16px;
-      line-height: 1.75;
-    }
-    .report-actions {
-      flex-direction: column;
-      align-items: stretch;
-    }
-    .report-actions button {
-      width: 100%;
-    }
-  }
-`
-
-// ── STYLES ─────────────────────────────────────────────────
-const S = {
-  card: {
-    background: 'rgba(15, 10, 46, 0.6)',
-    border: '1px solid rgba(167, 139, 250, 0.15)',
-    borderRadius: 16,
-    padding: '32px 36px',
-    marginBottom: 24,
-    backdropFilter: 'blur(10px)',
-  } as React.CSSProperties,
-  sectionTitle: (color: string) => ({
-    fontFamily: 'Cinzel, serif',
-    fontSize: 13,
-    letterSpacing: '0.2em',
-    color,
-    textTransform: 'uppercase' as const,
-    marginBottom: 8,
-  }),
-  sectionHeading: {
-    fontFamily: 'Cormorant Garamond, serif',
-    fontSize: 28,
-    fontWeight: 400,
-    color: '#EDE9FE',
-    marginBottom: 24,
-    lineHeight: 1.2,
-  } as React.CSSProperties,
-  body: {
-    fontFamily: 'Cormorant Garamond, serif',
-    fontSize: 18,
-    color: 'rgba(220, 210, 255, 0.85)',
-    lineHeight: 1.9,
-    whiteSpace: 'pre-wrap' as const,
-  },
-  divider: {
-    width: 60,
-    height: 1,
-    background: 'linear-gradient(90deg, transparent, rgba(167,139,250,0.4), transparent)',
-    margin: '20px 0',
-  },
-}
-
 // ── SKELETON CARD ──────────────────────────────────────────
 function SkeletonCard({ label, icon, color }: { label: string; icon: string; color: string }) {
   return (
-    <div style={{
-      ...S.card,
+    <div className="rp-card" style={{
       borderColor: `${color}22`,
       background: 'rgba(15,10,46,0.4)',
       display: 'flex',
       alignItems: 'center',
       gap: 16,
-      padding: '24px 32px',
     }}>
       <span style={{ fontSize: 22, opacity: 0.3, color }}>{icon}</span>
       <span style={{ fontFamily: 'Cinzel, serif', fontSize: 13, color: `${color}55`, letterSpacing: '0.15em', textTransform: 'uppercase' }}>
@@ -194,7 +162,7 @@ function SectionCard({ section, content, isStreaming }: {
   isStreaming: boolean
 }) {
   return (
-    <div className="report-section-card" style={{
+    <div className="rp-card" style={{
       borderColor: `${section.color}25`,
       borderLeft: `3px solid ${section.color}55`,
     }}>
@@ -202,8 +170,8 @@ function SectionCard({ section, content, isStreaming }: {
         <span style={{ fontSize: 20, color: section.color }}>{section.icon}</span>
         <p style={S.sectionTitle(section.color)}>{section.label}</p>
       </div>
-      <div style={S.divider} />
-      <p className="report-body-text">
+      <div className="rp-divider" />
+      <p className="rp-body">
         {content}
         {isStreaming && (
           <span style={{
@@ -225,7 +193,6 @@ export default function ReportPage() {
   const [chartData, setChartData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [generating, setGenerating] = useState(false)
-  const [rawText, setRawText] = useState('')
   const [sections, setSections] = useState<Record<string, string>>({})
   const [done, setDone] = useState(false)
   const [savedAt, setSavedAt] = useState<string | null>(null)
@@ -249,7 +216,7 @@ export default function ReportPage() {
 
       setProfile(data)
 
-      // ── Restore saved report if it exists ──────────────────
+      // ── Restore saved report ────────────────────────────
       if (data?.hd_report && Object.keys(data.hd_report).length >= 3) {
         setSections(data.hd_report)
         setSavedAt(data.hd_report_generated_at || null)
@@ -258,20 +225,19 @@ export default function ReportPage() {
         return
       }
 
-      // ── Check if fresh chart data was passed from Chart Generator ──
+      // ── Fresh chart data from Chart Generator ───────────
       const stored = typeof window !== 'undefined'
         ? sessionStorage.getItem('luminary_chart_report') : null
       if (stored) {
         sessionStorage.removeItem('luminary_chart_report')
         try {
-          const parsed = JSON.parse(stored)
-          setChartData(parsed)
+          setChartData(JSON.parse(stored))
           setLoading(false)
           return
-        } catch { /* fall through to profile data */ }
+        } catch { /* fall through */ }
       }
 
-      // ── Build chart data from profile ──
+      // ── Build from profile ───────────────────────────────
       if (data) {
         setChartData({
           type: data.hd_type || 'Unknown',
@@ -293,7 +259,7 @@ export default function ReportPage() {
     load()
   }, [])
 
-  // ── Save report sections to Supabase ──────────────────────
+  // ── Save to DB ────────────────────────────────────────────
   const saveReportToDb = async (completedSections: Record<string, string>) => {
     if (!userId) return
     setSaving(true)
@@ -301,10 +267,7 @@ export default function ReportPage() {
     try {
       await supabase
         .from('profiles')
-        .update({
-          hd_report: completedSections,
-          hd_report_generated_at: now,
-        })
+        .update({ hd_report: completedSections, hd_report_generated_at: now })
         .eq('id', userId)
       setSavedAt(now)
     } catch (e) {
@@ -314,14 +277,13 @@ export default function ReportPage() {
     }
   }
 
-  // ── Generate report ───────────────────────────────────────
+  // ── Generate ──────────────────────────────────────────────
   const generateReport = async () => {
     if (!chartData) return
     setGenerating(true)
     setDone(false)
     setError('')
     rawRef.current = ''
-    setRawText('')
     setSections({})
 
     try {
@@ -330,7 +292,6 @@ export default function ReportPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ chartData, userName: profile?.full_name }),
       })
-
       if (!res.ok) throw new Error('Failed to generate report')
 
       const reader = res.body!.getReader()
@@ -340,8 +301,7 @@ export default function ReportPage() {
         const { done: streamDone, value } = await reader.read()
         if (streamDone) break
         const chunk = decoder.decode(value, { stream: true })
-        const lines = chunk.split('\n')
-        for (const line of lines) {
+        for (const line of chunk.split('\n')) {
           if (line.startsWith('data: ')) {
             const data = line.slice(6).trim()
             if (data === '[DONE]') { setDone(true); continue }
@@ -349,7 +309,6 @@ export default function ReportPage() {
               const parsed = JSON.parse(data)
               if (parsed.text) {
                 rawRef.current += parsed.text
-                setRawText(rawRef.current)
                 setSections(parseSections(rawRef.current))
               }
             } catch { /* skip */ }
@@ -357,12 +316,10 @@ export default function ReportPage() {
         }
       }
 
-      // ── Auto-save once complete ───────────────────────────
       const finalSections = parseSections(rawRef.current)
       if (Object.keys(finalSections).length >= 3) {
         await saveReportToDb(finalSections)
       }
-
     } catch (err: any) {
       setError(err.message || 'Something went wrong')
     } finally {
@@ -371,9 +328,8 @@ export default function ReportPage() {
     }
   }
 
-  // ── Regenerate: clear saved report and restart ────────────
+  // ── Regenerate ────────────────────────────────────────────
   const handleRegenerate = async () => {
-    // Clear from DB
     if (userId) {
       await supabase
         .from('profiles')
@@ -384,10 +340,7 @@ export default function ReportPage() {
     setDone(false)
     setSavedAt(null)
     rawRef.current = ''
-    setRawText('')
     setError('')
-
-    // Rebuild chartData from profile for the new generation
     if (profile) {
       setChartData({
         type: profile.hd_type || 'Unknown',
@@ -436,24 +389,23 @@ export default function ReportPage() {
     <Layout>
       <Head>
         <title>HD Report · Luminary</title>
-        <style>{REPORT_CSS}</style>
       </Head>
 
-      <div className="report-page-inner">
+      {/* Inject responsive CSS — must be here in the body, NOT inside next/head */}
+      <style dangerouslySetInnerHTML={{ __html: REPORT_CSS }} />
+
+      <div className="rp-outer">
 
         {/* ── Page Header ── */}
         <div style={{ marginBottom: 40 }}>
           <p style={{ fontFamily: 'Cinzel, serif', fontSize: 11, letterSpacing: '0.25em', color: 'rgba(167,139,250,0.45)', textTransform: 'uppercase', marginBottom: 10 }}>
             ✧ Personal Reading
           </p>
-          <h1 className="report-page-title">
-            Your Human Design Report
-          </h1>
+          <h1 className="rp-title">Your Human Design Report</h1>
           <p style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 19, color: 'rgba(196,181,253,0.5)', lineHeight: 1.6 }}>
             A personalised reading woven from the blueprint of your birth
           </p>
 
-          {/* Saved indicator */}
           {savedAt && !generating && (
             <div style={{
               display: 'inline-flex', alignItems: 'center', gap: 8, marginTop: 16,
@@ -479,14 +431,14 @@ export default function ReportPage() {
           )}
         </div>
 
-        {/* ── Profile Summary ── */}
+        {/* ── Profile Summary Strip ── */}
         {profile && (profile.hd_type || profile.hd_authority) && (
-          <div className="report-profile-strip">
+          <div className="rp-profile-strip">
             {[
-              { label: 'Type',       value: profile.hd_type,       color: '#A78BFA' },
-              { label: 'Authority',  value: profile.hd_authority,   color: '#2DD4BF' },
-              { label: 'Profile',    value: profile.hd_profile,     color: '#D4AF37' },
-              { label: 'Definition', value: profile.hd_definition,  color: '#F9A8D4' },
+              { label: 'Type',       value: profile.hd_type,      color: '#A78BFA' },
+              { label: 'Authority',  value: profile.hd_authority,  color: '#2DD4BF' },
+              { label: 'Profile',    value: profile.hd_profile,    color: '#D4AF37' },
+              { label: 'Definition', value: profile.hd_definition, color: '#F9A8D4' },
             ].filter(i => i.value).map(item => (
               <div key={item.label} style={{ textAlign: 'center' }}>
                 <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 9, letterSpacing: '0.15em', color: 'rgba(167,139,250,0.45)', textTransform: 'uppercase', marginBottom: 4 }}>{item.label}</p>
@@ -509,18 +461,15 @@ export default function ReportPage() {
           </div>
         )}
 
-        {/* ── Generate Button (only shown when no saved report) ── */}
+        {/* ── Generate Button ── */}
         {!hasReport && (
           <div style={{ textAlign: 'center', padding: '40px 0 48px' }}>
             <div style={{
               width: 100, height: 100, borderRadius: '50%', margin: '0 auto 28px',
               background: 'radial-gradient(circle, rgba(123,79,212,0.25) 0%, transparent 70%)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              border: '1px solid rgba(123,79,212,0.2)',
-              fontSize: 40,
-            }}>
-              ✦
-            </div>
+              border: '1px solid rgba(123,79,212,0.2)', fontSize: 40,
+            }}>✦</div>
             <p style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 20, color: 'rgba(196,181,253,0.6)', maxWidth: 480, margin: '0 auto 32px' }}>
               Luminary will weave your Type, Authority, Profile, Centers and Channels into a personalised, flowing reading — written just for you.
             </p>
@@ -550,19 +499,14 @@ export default function ReportPage() {
         {/* ── Report Sections ── */}
         {(generating || hasReport) && (
           <div>
-            {/* Progress indicator while generating */}
             {generating && (
               <div style={{ marginBottom: 28 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-                  <div style={{
-                    width: 10, height: 10, borderRadius: '50%', background: '#A78BFA',
-                    animation: 'pulse 1.5s infinite',
-                  }} />
+                  <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#A78BFA', animation: 'pulse 1.5s infinite' }} />
                   <p style={{ fontFamily: 'Cinzel, serif', fontSize: 11, letterSpacing: '0.2em', color: 'rgba(167,139,250,0.6)', textTransform: 'uppercase' }}>
                     Generating Your Reading
                   </p>
                 </div>
-                {/* Section progress pills */}
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                   {SECTIONS.map(s => (
                     <span key={s.key} style={{
@@ -580,30 +524,23 @@ export default function ReportPage() {
               </div>
             )}
 
-            {/* Render each section as it arrives */}
             {SECTIONS.map((section) => {
               const content = sections[section.key]
               if (!content && !generating) return null
-              if (!content) {
-                return <SkeletonCard key={section.key} label={section.label} icon={section.icon} color={section.color} />
-              }
+              if (!content) return <SkeletonCard key={section.key} label={section.label} icon={section.icon} color={section.color} />
               const nextSectionIdx = SECTIONS.findIndex(s => s.key === section.key) + 1
               const nextSection = SECTIONS[nextSectionIdx]
               const isCurrentlyStreaming = generating && nextSection && !sections[nextSection.key]
               return (
-                <div key={section.key} className="report-section">
-                  <SectionCard
-                    section={section}
-                    content={content}
-                    isStreaming={!!isCurrentlyStreaming}
-                  />
+                <div key={section.key}>
+                  <SectionCard section={section} content={content} isStreaming={!!isCurrentlyStreaming} />
                 </div>
               )
             })}
 
-            {/* ── Completion actions ── */}
+            {/* ── Completion card ── */}
             {done && hasReport && (
-              <div className="report-section report-card" style={{
+              <div className="rp-card" style={{
                 background: 'linear-gradient(135deg, rgba(45,27,105,0.3) 0%, rgba(15,10,46,0.5) 100%)',
                 borderColor: 'rgba(212,175,55,0.2)',
                 textAlign: 'center',
@@ -616,7 +553,7 @@ export default function ReportPage() {
                     ? 'Your reading is saved and will be here whenever you return.'
                     : 'Download your report as a beautifully formatted PDF, or come back to regenerate it any time.'}
                 </p>
-                <div className="report-actions">
+                <div className="rp-actions">
                   <button
                     onClick={handleExportPdf}
                     disabled={exporting}
