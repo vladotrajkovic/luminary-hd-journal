@@ -241,7 +241,7 @@ export default function ReportPage() {
             ✧ Personal Reading
           </p>
           <h1 className="rp-title">Your Human Design Report</h1>
-          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 19, color: 'rgba(196,181,253,0.5)', lineHeight: 1.6 }}>
+          <p style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 'clamp(15px, 4vw, 19px)', color: 'rgba(196,181,253,0.5)', lineHeight: 1.6 }}>
             A personalised reading woven from the blueprint of your birth
           </p>
 
