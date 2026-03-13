@@ -4,15 +4,16 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 
 const NAV_ITEMS = [
-  { href: '/dashboard', label: 'Dashboard', icon: '◈' },
-  { href: '/chart', label: 'Chart Generator', icon: '✺' },
-  { href: '/reports', label: 'HD Report', icon: '✧' },
-  { href: '/journal', label: 'Journal', icon: '✍' },
-  { href: '/journal/new', label: 'New Entry', icon: '✦' },
-  { href: '/profile', label: 'My Chart', icon: '◎' },
-  { href: '/centers', label: 'Centers', icon: '◯' },
-  { href: '/gates', label: 'Gate Library', icon: '⬡' },
-  { href: '/transits', label: 'Moon & Transits', icon: '☽' },
+  { href: '/dashboard',   label: 'Dashboard',       icon: '◈' },
+  { href: '/chart',       label: 'Chart Generator', icon: '✺' },
+  { href: '/reports',     label: 'HD Report',       icon: '✧' },
+  { href: '/journal',     label: 'Journal',          icon: '✍' },
+  { href: '/journal/new', label: 'New Entry',        icon: '✦' },
+  { href: '/profile',     label: 'My Chart',         icon: '◎' },
+  { href: '/centers',     label: 'Centers',          icon: '◯' },
+  { href: '/gates',       label: 'Gate Library',     icon: '⬡' },
+  { href: '/transits',    label: 'Moon & Transits',  icon: '☽' },
+  { href: '/account',     label: 'Personal Details', icon: '✎' },
 ]
 
 export default function Layout({ children }: { children: React.ReactNode }) {
@@ -51,7 +52,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           position: 'fixed', top: 16, left: 16, zIndex: 200,
           background: 'rgba(26,10,62,0.8)', border: '1px solid rgba(167,139,250,0.3)',
           borderRadius: 8, padding: '8px 12px', color: '#C4B5FD', cursor: 'pointer',
-          display: 'none', fontSize: 18
+          display: 'none', fontSize: 18,
         }}
         className="mobile-menu-btn"
       >
@@ -60,6 +61,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
       {/* Sidebar */}
       <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`} style={{ zIndex: 150 }}>
+
         {/* Logo */}
         <div style={{ padding: '28px 20px 20px', borderBottom: '1px solid rgba(167,139,250,0.1)' }}>
           <div style={{ fontFamily: 'Cinzel, serif', fontSize: 18, color: '#EDE9FE', letterSpacing: '0.12em' }}>
@@ -77,14 +79,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               Experimenter
             </div>
             <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 17, color: '#EDE9FE' }}>
-              {profile.full_name || user?.email}
+              {profile.username || profile.full_name || user?.email}
             </div>
             {profile.hd_type && (
               <div style={{
                 display: 'inline-block', marginTop: 6, padding: '3px 10px',
                 background: 'rgba(123,79,212,0.3)', borderRadius: 12,
                 fontFamily: 'Inter, sans-serif', fontSize: 11, color: '#A78BFA',
-                border: '1px solid rgba(123,79,212,0.4)'
+                border: '1px solid rgba(123,79,212,0.4)',
               }}>
                 {profile.hd_type}
               </div>
@@ -93,7 +95,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         )}
 
         {/* Nav */}
-        <nav style={{ padding: '12px 0', flex: 1 }}>
+        <nav style={{ padding: '12px 0', flex: 1, overflowY: 'auto' }}>
           {NAV_ITEMS.map(item => (
             <Link key={item.href} href={item.href}>
               <div
@@ -116,7 +118,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               fontFamily: 'Inter, sans-serif', fontSize: 12, cursor: 'pointer',
               letterSpacing: '0.08em', textTransform: 'uppercase',
               padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 8,
-              transition: 'color 0.2s'
+              transition: 'color 0.2s',
             }}
             onMouseEnter={e => (e.currentTarget.style.color = '#A78BFA')}
             onMouseLeave={e => (e.currentTarget.style.color = 'rgba(167,139,250,0.4)')}
@@ -137,7 +139,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           onClick={() => setSidebarOpen(false)}
           style={{
             position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
-            zIndex: 140, display: 'none'
+            zIndex: 140, display: 'none',
           }}
           className="mobile-overlay"
         />
