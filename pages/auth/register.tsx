@@ -6,7 +6,9 @@ import { supabase } from '../../lib/supabase'
 
 export default function Register() {
   const router = useRouter()
-  const [fullName, setFullName] = useState('')
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
+  const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -17,11 +19,22 @@ export default function Register() {
     e.preventDefault()
     setLoading(true)
     setError('')
+
+    const fullName = `${firstName.trim()} ${lastName.trim()}`.trim()
+
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { full_name: fullName } }
+      options: {
+        data: {
+          full_name: fullName,
+          first_name: firstName.trim(),
+          last_name: lastName.trim(),
+          username: username.trim(),
+        },
+      },
     })
+
     if (error) {
       setError(error.message)
       setLoading(false)
@@ -68,7 +81,7 @@ export default function Register() {
       <div className="cosmic-bg min-h-screen flex items-center justify-center relative py-12">
         <div className="stars" />
         <div style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: 480, padding: '0 24px' }}>
-          
+
           <div style={{ textAlign: 'center', marginBottom: 40 }}>
             <div style={{ fontSize: 40, marginBottom: 12 }}>✦</div>
             <h1 style={{ fontFamily: 'Cinzel, serif', fontSize: 24, letterSpacing: '0.15em', color: '#EDE9FE' }}>
@@ -88,30 +101,58 @@ export default function Register() {
               <div style={{
                 background: 'rgba(220, 38, 38, 0.15)', border: '1px solid rgba(220,38,38,0.3)',
                 borderRadius: 8, padding: '12px 16px', marginBottom: 20,
-                fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#FCA5A5'
+                fontFamily: 'Inter, sans-serif', fontSize: 13, color: '#FCA5A5',
               }}>
                 {error}
               </div>
             )}
 
             <form onSubmit={handleRegister}>
+
+              {/* First Name + Last Name */}
               <div style={{ marginBottom: 20 }}>
-                <label style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, letterSpacing: '0.1em', color: 'rgba(167,139,250,0.7)', textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>
-                  Your Name
+                <label style={labelStyle}>
+                  Your First &amp; Last Name <span style={{ color: '#A78BFA' }}>*</span>
+                </label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  <input
+                    type="text"
+                    className="input-cosmic"
+                    value={firstName}
+                    onChange={e => setFirstName(e.target.value)}
+                    placeholder="First name"
+                    required
+                  />
+                  <input
+                    type="text"
+                    className="input-cosmic"
+                    value={lastName}
+                    onChange={e => setLastName(e.target.value)}
+                    placeholder="Last name"
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Username */}
+              <div style={{ marginBottom: 20 }}>
+                <label style={labelStyle}>
+                  Your Username <span style={{ color: '#A78BFA' }}>*</span>
                 </label>
                 <input
                   type="text"
                   className="input-cosmic"
-                  value={fullName}
-                  onChange={e => setFullName(e.target.value)}
+                  value={username}
+                  onChange={e => setUsername(e.target.value)}
                   placeholder="How you wish to be called"
                   required
                 />
               </div>
 
+              {/* Email */}
               <div style={{ marginBottom: 20 }}>
-                <label style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, letterSpacing: '0.1em', color: 'rgba(167,139,250,0.7)', textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>
-                  Email
+                <label style={labelStyle}>
+                  Email <span style={{ color: '#A78BFA' }}>*</span>
                 </label>
                 <input
                   type="email"
@@ -123,9 +164,10 @@ export default function Register() {
                 />
               </div>
 
+              {/* Password */}
               <div style={{ marginBottom: 28 }}>
-                <label style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, letterSpacing: '0.1em', color: 'rgba(167,139,250,0.7)', textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>
-                  Password
+                <label style={labelStyle}>
+                  Password <span style={{ color: '#A78BFA' }}>*</span>
                 </label>
                 <input
                   type="password"
@@ -138,7 +180,12 @@ export default function Register() {
                 />
               </div>
 
-              <button type="submit" className="btn-cosmic" style={{ width: '100%', padding: '14px', fontSize: 13 }} disabled={loading}>
+              <button
+                type="submit"
+                className="btn-cosmic"
+                style={{ width: '100%', padding: '14px', fontSize: 13 }}
+                disabled={loading}
+              >
                 {loading ? '✦ Creating your space...' : 'Begin My Experiment →'}
               </button>
             </form>
@@ -152,8 +199,24 @@ export default function Register() {
               </Link>
             </p>
           </div>
+
+          <p style={{ textAlign: 'center', marginTop: 24 }}>
+            <Link href="/" style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(167,139,250,0.4)', textDecoration: 'none' }}>
+              ← Back to home
+            </Link>
+          </p>
         </div>
       </div>
     </>
   )
+}
+
+const labelStyle: React.CSSProperties = {
+  fontFamily: 'Inter, sans-serif',
+  fontSize: 11,
+  letterSpacing: '0.1em',
+  color: 'rgba(167,139,250,0.7)',
+  textTransform: 'uppercase',
+  display: 'block',
+  marginBottom: 8,
 }
