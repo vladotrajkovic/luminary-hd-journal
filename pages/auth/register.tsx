@@ -9,20 +9,54 @@ export default function Register() {
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [username, setUsername] = useState('')
+  const [usernameError, setUsernameError] = useState('')
+  const [checkingUsername, setCheckingUsername] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
 
+  // Check username availability as the user types (debounced inline)
+  let usernameTimeout: any = null
+  const handleUsernameChange = (val: string) => {
+    setUsername(val)
+    setUsernameError('')
+    clearTimeout(usernameTimeout)
+    if (val.trim().length < 2) return
+    usernameTimeout = setTimeout(async () => {
+      setCheckingUsername(true)
+      const { data } = await supabase
+        .from('profiles')
+        .select('id')
+        .ilike('username', val.trim())
+        .maybeSingle()
+      setCheckingUsername(false)
+      if (data) setUsernameError('This username is already taken.')
+    }, 500)
+  }
+
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (usernameError) return
     setLoading(true)
     setError('')
 
-    const fullName = `${firstName.trim()} ${lastName.trim()}`.trim()
+    // Final uniqueness check before submitting
+    const { data: existing } = await supabase
+      .from('profiles')
+      .select('id')
+      .ilike('username', username.trim())
+      .maybeSingle()
 
-    const { error } = await supabase.auth.signUp({
+    if (existing) {
+      setError('That username is already taken. Please choose another.')
+      setLoading(false)
+      return
+    }
+
+    const fullName = `${firstName.trim()} ${lastName.trim()}`.trim()
+    const { error: signUpError } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -35,8 +69,8 @@ export default function Register() {
       },
     })
 
-    if (error) {
-      setError(error.message)
+    if (signUpError) {
+      setError(signUpError.message)
       setLoading(false)
     } else {
       setSuccess(true)
@@ -109,7 +143,7 @@ export default function Register() {
 
             <form onSubmit={handleRegister}>
 
-              {/* First Name + Last Name */}
+              {/* First + Last Name */}
               <div style={{ marginBottom: 20 }}>
                 <label style={labelStyle}>
                   Your First &amp; Last Name <span style={{ color: '#A78BFA' }}>*</span>
@@ -143,10 +177,25 @@ export default function Register() {
                   type="text"
                   className="input-cosmic"
                   value={username}
-                  onChange={e => setUsername(e.target.value)}
+                  onChange={e => handleUsernameChange(e.target.value)}
                   placeholder="How you wish to be called"
                   required
                 />
+                {checkingUsername && (
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(167,139,250,0.4)', marginTop: 5 }}>
+                    Checking availability...
+                  </p>
+                )}
+                {usernameError && (
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: '#FCA5A5', marginTop: 5 }}>
+                    ✗ {usernameError}
+                  </p>
+                )}
+                {!usernameError && !checkingUsername && username.trim().length >= 2 && (
+                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: '#2DD4BF', marginTop: 5 }}>
+                    ✓ Username available
+                  </p>
+                )}
               </div>
 
               {/* Email */}
@@ -184,7 +233,7 @@ export default function Register() {
                 type="submit"
                 className="btn-cosmic"
                 style={{ width: '100%', padding: '14px', fontSize: 13 }}
-                disabled={loading}
+                disabled={loading || !!usernameError || checkingUsername}
               >
                 {loading ? '✦ Creating your space...' : 'Begin My Experiment →'}
               </button>
