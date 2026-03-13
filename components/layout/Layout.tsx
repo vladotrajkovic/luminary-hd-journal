@@ -4,16 +4,16 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 
 const NAV_ITEMS = [
-  { href: '/dashboard',   label: 'Dashboard',       icon: '◈' },
-  { href: '/chart',       label: 'Chart Generator', icon: '✺' },
-  { href: '/reports',     label: 'HD Report',       icon: '✧' },
-  { href: '/journal',     label: 'Journal',          icon: '✍' },
-  { href: '/journal/new', label: 'New Entry',        icon: '✦' },
-  { href: '/profile',     label: 'My Chart',         icon: '◎' },
-  { href: '/centers',     label: 'Centers',          icon: '◯' },
-  { href: '/gates',       label: 'Gate Library',     icon: '⬡' },
-  { href: '/transits',    label: 'Moon & Transits',  icon: '☽' },
-  { href: '/account',     label: 'Personal Details', icon: '✎' },
+  { href: '/dashboard',   label: 'Dashboard',        icon: '◈' },
+  { href: '/chart',       label: 'Chart Generator',  icon: '✺' },
+  { href: '/reports',     label: 'HD Report',        icon: '✧' },
+  { href: '/journal',     label: 'Journal',           icon: '✍' },
+  { href: '/journal/new', label: 'New Entry',         icon: '✦' },
+  { href: '/profile',     label: 'My Chart',          icon: '◎' },
+  { href: '/centers',     label: 'Centers',           icon: '◯' },
+  { href: '/gates',       label: 'Gate Library',      icon: '⬡' },
+  { href: '/transits',    label: 'Moon & Transits',   icon: '☽' },
+  { href: '/account',     label: 'Personal Details',  icon: '✎' },
 ]
 
 export default function Layout({ children }: { children: React.ReactNode }) {
@@ -72,25 +72,40 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </div>
         </div>
 
-        {/* User info */}
+        {/* User info — shows avatar if available */}
         {profile && (
-          <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(167,139,250,0.08)' }}>
-            <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(167,139,250,0.5)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>
-              Experimenter
+          <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(167,139,250,0.08)', display: 'flex', alignItems: 'center', gap: 12 }}>
+            {/* Avatar thumbnail */}
+            <div style={{
+              width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
+              background: profile.avatar_url ? 'transparent' : 'rgba(123,79,212,0.25)',
+              border: '1px solid rgba(167,139,250,0.25)',
+              overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              {profile.avatar_url
+                ? <img src={profile.avatar_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                : <span style={{ fontSize: 14, color: 'rgba(167,139,250,0.4)' }}>✦</span>
+              }
             </div>
-            <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 17, color: '#EDE9FE' }}>
-              {profile.username || profile.full_name || user?.email}
-            </div>
-            {profile.hd_type && (
-              <div style={{
-                display: 'inline-block', marginTop: 6, padding: '3px 10px',
-                background: 'rgba(123,79,212,0.3)', borderRadius: 12,
-                fontFamily: 'Inter, sans-serif', fontSize: 11, color: '#A78BFA',
-                border: '1px solid rgba(123,79,212,0.4)',
-              }}>
-                {profile.hd_type}
+
+            <div>
+              <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: 'rgba(167,139,250,0.5)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 2 }}>
+                Experimenter
               </div>
-            )}
+              <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 16, color: '#EDE9FE' }}>
+                {profile.username || profile.full_name || user?.email}
+              </div>
+              {profile.hd_type && (
+                <div style={{
+                  display: 'inline-block', marginTop: 4, padding: '2px 8px',
+                  background: 'rgba(123,79,212,0.3)', borderRadius: 12,
+                  fontFamily: 'Inter, sans-serif', fontSize: 10, color: '#A78BFA',
+                  border: '1px solid rgba(123,79,212,0.4)',
+                }}>
+                  {profile.hd_type}
+                </div>
+              )}
+            </div>
           </div>
         )}
 
