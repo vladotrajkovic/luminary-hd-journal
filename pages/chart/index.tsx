@@ -468,12 +468,6 @@ export default function ChartGenerator() {
                 </button>
               ))}
             </div>
-
-             {/* ── Body Graph Tab ─────────────────────────────────────────
-                FIND: the entire block starting with {/* Body Graph Tab */}
-                and ending just before {/* Planet Activations Tab */}
-                REPLACE WITH the block below
-            ────────────────────────────────────────────────────────── */}
  
             {/* Body Graph Tab */}
             {activeTab === 'graph' && (
