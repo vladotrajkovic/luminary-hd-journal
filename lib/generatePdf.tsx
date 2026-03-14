@@ -218,9 +218,8 @@ export async function generateHDReportPdf(data: ReportData): Promise<void> {
       fontSize: 12,
       fontFamily: 'Helvetica-Bold',
       color: C.subheading,
-      marginTop: 16,
+      marginTop: 8,
       marginBottom: 6,
-      minPresenceAhead: 48,
     },
     bulletRow: {
       flexDirection: 'row',
@@ -452,31 +451,75 @@ export async function generateHDReportPdf(data: ReportData): Promise<void> {
     </View>
   )
 
-  // Block renderer — converts parsed markdown blocks to react-pdf elements
-  const renderBlocks = (blocks: Block[]) =>
-    blocks.map((b, i) => {
+  // Block renderer — converts parsed markdown blocks to react-pdf elements.
+  // Subheadings are always wrapped together with the following content block
+  // in a wrap={false} View so they can never be orphaned at the bottom of a page.
+  const renderBlocks = (blocks: Block[]) => {
+    const elements: React.ReactElement[] = []
+    let i = 0
+
+    while (i < blocks.length) {
+      const b = blocks[i]
+
       if (b.type === 'subheading') {
-        return React.createElement(Text, { key: i, style: S.subheading }, b.text)
+        const headingEl = React.createElement(Text, { style: S.subheading }, b.text)
+        const next = blocks[i + 1]
+
+        // Build the following content element if it exists and isn't another heading/divider
+        let nextEl: React.ReactElement | null = null
+        if (next && next.type === 'bullet') {
+          nextEl = React.createElement(
+            View, { style: S.bulletRow },
+            React.createElement(Text, { style: S.bulletDot }, '\u25E6'),
+            React.createElement(Text, { style: S.bulletText }, ...inlineNodes(next.segs, Text))
+          )
+        } else if (next && next.type === 'paragraph') {
+          nextEl = React.createElement(
+            Text, { style: S.para },
+            ...inlineNodes(next.segs, Text)
+          )
+        }
+
+        if (nextEl) {
+          // Heading + first following block kept together — no page break between them
+          elements.push(
+            React.createElement(View, { key: i, wrap: false }, headingEl, nextEl)
+          )
+          i += 2 // consumed subheading + next block
+        } else {
+          // No suitable following block — just wrap the heading alone
+          elements.push(React.createElement(View, { key: i, wrap: false }, headingEl))
+          i += 1
+        }
+        continue
       }
+
       if (b.type === 'divider') {
-        return React.createElement(View, { key: i, style: S.hrule })
+        elements.push(React.createElement(View, { key: i, style: S.hrule }))
+        i++
+        continue
       }
+
       if (b.type === 'bullet') {
-        return React.createElement(
+        elements.push(React.createElement(
           View, { key: i, style: S.bulletRow },
           React.createElement(Text, { style: S.bulletDot }, '\u25E6'),
-          React.createElement(
-            Text, { style: S.bulletText },
-            ...inlineNodes(b.segs, Text)
-          )
-        )
+          React.createElement(Text, { style: S.bulletText }, ...inlineNodes(b.segs, Text))
+        ))
+        i++
+        continue
       }
+
       // paragraph
-      return React.createElement(
+      elements.push(React.createElement(
         Text, { key: i, style: S.para },
         ...inlineNodes(b.segs, Text)
-      )
-    })
+      ))
+      i++
+    }
+
+    return elements
+  }
 
   // ── Cover page ─────────────────────────────────────────────
   const stats = [
