@@ -430,12 +430,18 @@ export async function generateHDReportPdf(data: ReportData): Promise<void> {
     day: 'numeric', month: 'long', year: 'numeric',
   })
 
-  // Page header: fixed gray bar, repeats on every page
+  // Page header: fixed gray bar, repeats on every page.
+  // The fixed spacer beneath it ensures consistent breathing room between
+  // the gray bar and whatever follows (section bar on page 1, or continuing
+  // text on overflow pages).
   const PageHeader = ({ section }: { section: string }) => (
-    <View style={S.pageHeaderBar} fixed>
-      <Text style={S.pageHeaderSection}>{section.toUpperCase()}</Text>
-      <Text style={S.pageHeaderName}>{name}</Text>
-    </View>
+    <>
+      <View style={S.pageHeaderBar} fixed>
+        <Text style={S.pageHeaderSection}>{section.toUpperCase()}</Text>
+        <Text style={S.pageHeaderName}>{name}</Text>
+      </View>
+      <View style={{ height: 16 }} fixed />
+    </>
   )
 
   // Page footer: absolute position, bottom of every page
