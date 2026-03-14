@@ -556,12 +556,6 @@ export default function MyChart() {
                 </button>
               ))}
             </div>
-
-            {/* ── Body Graph tab ─────────────────────────────────────────
-                FIND: the entire block starting with {/* ── Body Graph tab */}
-                and ending just before {/* ── Planet Activations tab */}
-                REPLACE WITH the block below
-            ────────────────────────────────────────────────────────── */}}
  
             {/* ── Body Graph tab ── */}
             {activeTab === 'graph' && (
