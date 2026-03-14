@@ -203,7 +203,7 @@ export async function generateHDReportPdf(data: ReportData): Promise<void> {
     // ── Content wrapper (padded inner area) ──
     content: {
       paddingHorizontal: 36,
-      paddingTop: 18,
+      paddingTop: 30,
     },
 
     // ── Body blocks ────────────────────────────────────
@@ -220,6 +220,7 @@ export async function generateHDReportPdf(data: ReportData): Promise<void> {
       color: C.subheading,
       marginTop: 16,
       marginBottom: 6,
+      minPresenceAhead: 48,
     },
     bulletRow: {
       flexDirection: 'row',
