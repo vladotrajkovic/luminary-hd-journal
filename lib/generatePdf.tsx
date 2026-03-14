@@ -230,6 +230,7 @@ export async function generateHDReportPdf(data: ReportData): Promise<void> {
       width: 5,
       height: 5,
       backgroundColor: C.gold,
+      transform: 'rotate(45deg)',
       marginRight: 9,
       marginTop: 4,
     },
