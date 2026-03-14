@@ -476,7 +476,7 @@ export async function generateHDReportPdf(data: ReportData): Promise<void> {
         if (next && next.type === 'bullet') {
           nextEl = React.createElement(
             View, { style: S.bulletRow },
-            React.createElement(Text, { style: S.bulletDot }, '\u25E6'),
+            React.createElement(Text, { style: S.bulletDot }, '\u25C6'),
             React.createElement(Text, { style: S.bulletText }, ...inlineNodes(next.segs, Text))
           )
         } else if (next && next.type === 'paragraph') {
@@ -509,7 +509,7 @@ export async function generateHDReportPdf(data: ReportData): Promise<void> {
       if (b.type === 'bullet') {
         elements.push(React.createElement(
           View, { key: i, style: S.bulletRow },
-          React.createElement(Text, { style: S.bulletDot }, '\u25E6'),
+          React.createElement(Text, { style: S.bulletDot }, '\u25C6'),
           React.createElement(Text, { style: S.bulletText }, ...inlineNodes(b.segs, Text))
         ))
         i++
