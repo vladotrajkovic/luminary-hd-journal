@@ -7,21 +7,34 @@ interface BodyGraphProps {
 }
 
 // ── CENTER GEOMETRY ────────────────────────────────────────────────────────────
-// Positions match the established layout; shapes match traditional HD conventions
+// Positions match JA layout:
+//   - Spleen: lower-left, level with SolarPlexus and Sacral (not level with G/Heart)
+//   - Heart:  upper-right, slightly above G center
+//   - G:      slightly larger diamond as the central anchor
 const CP: Record<Center, {
   x: number; y: number; w: number; h: number
   shape: 'diamond' | 'square' | 'tri-up' | 'tri-down'
 }> = {
-  Head:        { x: 220, y: 22,  w: 60, h: 50, shape: 'tri-up'   },
-  Ajna:        { x: 220, y: 100, w: 60, h: 50, shape: 'tri-down' },
-  Throat:      { x: 220, y: 185, w: 60, h: 40, shape: 'square'   },
-  G:           { x: 220, y: 265, w: 60, h: 60, shape: 'diamond'  },
-  Heart:       { x: 310, y: 255, w: 50, h: 50, shape: 'diamond'  },
-  Sacral:      { x: 220, y: 360, w: 60, h: 40, shape: 'square'   },
-  SolarPlexus: { x: 310, y: 340, w: 50, h: 50, shape: 'diamond'  },
-  Spleen:      { x: 130, y: 255, w: 50, h: 50, shape: 'diamond'  },
-  Root:        { x: 220, y: 430, w: 60, h: 40, shape: 'square'   },
+  Head:        { x: 222, y: 22,  w: 56, h: 50, shape: 'tri-up'   },
+  Ajna:        { x: 218, y: 100, w: 64, h: 52, shape: 'tri-down' },
+  Throat:      { x: 218, y: 182, w: 64, h: 40, shape: 'square'   },
+  G:           { x: 215, y: 262, w: 70, h: 70, shape: 'diamond'  },
+  Heart:       { x: 308, y: 248, w: 56, h: 56, shape: 'diamond'  },
+  Sacral:      { x: 218, y: 358, w: 64, h: 40, shape: 'square'   },
+  SolarPlexus: { x: 308, y: 338, w: 56, h: 56, shape: 'diamond'  },
+  Spleen:      { x: 126, y: 338, w: 56, h: 56, shape: 'diamond'  },
+  Root:        { x: 218, y: 432, w: 64, h: 40, shape: 'square'   },
 }
+// Center edge reference (cx, cy, edge points):
+//   Head:        cx=250 cy=47   tri-up:  tip=(250,22)  base-bottom=(250,72)
+//   Ajna:        cx=250 cy=126  tri-down: base-top=(250,100) tip=(250,152)
+//   Throat:      cx=250 cy=202  top=182 bottom=222 left=218 right=282
+//   G:           cx=250 cy=297  top=(250,262) bot=(250,332) left=(215,297) right=(285,297) half=35
+//   Heart:       cx=336 cy=276  top=(336,248) bot=(336,304) left=(308,276) right=(364,276) half=28
+//   Sacral:      cx=250 cy=378  top=358 bottom=398 left=218 right=282
+//   SolarPlexus: cx=336 cy=366  top=(336,338) bot=(336,394) left=(308,366) right=(364,366) half=28
+//   Spleen:      cx=154 cy=366  top=(154,338) bot=(154,394) left=(126,366) right=(182,366) half=28
+//   Root:        cx=250 cy=452  top=432 bottom=472 left=218 right=282
 
 const CENTER_LABELS: Record<Center, string> = {
   Head: 'HEAD', Ajna: 'AJNA', Throat: 'THROAT', G: 'G',
@@ -35,7 +48,7 @@ const CENTER_SUBLABELS: Partial<Record<Center, string>> = {
 
 // ── CORRIDORS ──────────────────────────────────────────────────────────────────
 // Each corridor is a thick pipe connecting two centers.
-// labelA = label anchor near centers[0], labelB = near centers[1].
+// labelA = gate-label anchor near centers[0], labelB = near centers[1].
 // perpSign: 1 = gate labels go to the right as you travel A→B, -1 = left.
 interface Corridor {
   id: string
@@ -57,107 +70,107 @@ const CORRIDORS: Corridor[] = [
   {
     id: 'Ajna-Throat',
     centers: ['Ajna', 'Throat'],
-    path: 'M250,150 L250,185',
-    labelA: [250, 150], labelB: [250, 185], perpSign: 1,
+    path: 'M250,152 L250,182',
+    labelA: [250, 152], labelB: [250, 182], perpSign: 1,
   },
   {
     id: 'Throat-G',
     centers: ['Throat', 'G'],
-    path: 'M250,225 L250,265',
-    labelA: [250, 225], labelB: [250, 265], perpSign: 1,
+    path: 'M250,222 L250,262',
+    labelA: [250, 222], labelB: [250, 262], perpSign: 1,
   },
   {
     id: 'G-Sacral',
     centers: ['G', 'Sacral'],
-    path: 'M250,325 L250,360',
-    labelA: [250, 325], labelB: [250, 360], perpSign: 1,
+    path: 'M250,332 L250,358',
+    labelA: [250, 332], labelB: [250, 358], perpSign: 1,
   },
   {
     id: 'Sacral-Root',
     centers: ['Sacral', 'Root'],
-    path: 'M250,400 L250,430',
-    labelA: [250, 400], labelB: [250, 430], perpSign: 1,
+    path: 'M250,398 L250,432',
+    labelA: [250, 398], labelB: [250, 432], perpSign: 1,
   },
 
   // ── Right branch ─────────────────────────────────────────────────
   {
     id: 'Throat-Heart',
     centers: ['Throat', 'Heart'],
-    path: 'M280,207 L312,258',
-    labelA: [280, 207], labelB: [312, 258], perpSign: 1,
+    path: 'M282,206 L308,270',
+    labelA: [282, 206], labelB: [308, 270], perpSign: 1,
   },
   {
     id: 'Heart-SolarPlexus',
     centers: ['Heart', 'SolarPlexus'],
-    path: 'M335,305 L335,340',
-    labelA: [335, 305], labelB: [335, 340], perpSign: 1,
+    path: 'M336,304 L336,338',
+    labelA: [336, 304], labelB: [336, 338], perpSign: 1,
   },
   {
     id: 'Sacral-SolarPlexus',
     centers: ['Sacral', 'SolarPlexus'],
-    path: 'M280,375 L312,360',
-    labelA: [280, 375], labelB: [312, 360], perpSign: 1,
+    path: 'M282,376 L308,366',
+    labelA: [282, 376], labelB: [308, 366], perpSign: 1,
   },
   {
     id: 'SolarPlexus-Root',
     centers: ['SolarPlexus', 'Root'],
-    path: 'M322,390 L282,430',
-    labelA: [322, 390], labelB: [282, 430], perpSign: 1,
+    path: 'M328,392 L282,442',
+    labelA: [328, 392], labelB: [282, 442], perpSign: 1,
   },
   {
     id: 'Throat-SolarPlexus',
     centers: ['Throat', 'SolarPlexus'],
-    path: 'M283,217 L315,345',
-    labelA: [283, 217], labelB: [315, 345], perpSign: -1,
+    path: 'M284,215 L316,340',
+    labelA: [284, 215], labelB: [316, 340], perpSign: -1,
   },
-  // Sacral→Throat (Channel of Charisma 34-20): routes right of G center
+  // Sacral→Throat (Channel 34-20 Charisma): routes right of G center
   {
     id: 'Sacral-Throat',
     centers: ['Sacral', 'Throat'],
-    path: 'M287,362 L287,225',
-    labelA: [287, 362], labelB: [287, 225], perpSign: 1,
+    path: 'M287,358 L287,222',
+    labelA: [287, 358], labelB: [287, 222], perpSign: 1,
   },
 
-  // ── Left branch ──────────────────────────────────────────────────
+  // ── Left branch (Spleen now lower-left, level with SolarPlexus) ──
   {
     id: 'G-Spleen',
     centers: ['G', 'Spleen'],
-    path: 'M222,293 L182,280',
-    labelA: [222, 293], labelB: [182, 280], perpSign: -1,
+    path: 'M215,297 L182,360',
+    labelA: [215, 297], labelB: [182, 360], perpSign: -1,
   },
   {
     id: 'Sacral-Spleen',
     centers: ['Sacral', 'Spleen'],
-    path: 'M222,377 L182,308',
-    labelA: [222, 377], labelB: [182, 308], perpSign: 1,
+    path: 'M218,376 L182,366',
+    labelA: [218, 376], labelB: [182, 366], perpSign: 1,
   },
   {
     id: 'Spleen-Root',
     centers: ['Spleen', 'Root'],
-    path: 'M157,305 L238,430',
-    labelA: [157, 305], labelB: [238, 430], perpSign: -1,
+    path: 'M158,394 L228,440',
+    labelA: [158, 394], labelB: [228, 440], perpSign: -1,
+  },
+  // Throat→Spleen (channels 16-48 and 57-20)
+  {
+    id: 'Throat-Spleen',
+    centers: ['Throat', 'Spleen'],
+    path: 'M218,206 L158,340',
+    labelA: [218, 206], labelB: [158, 340], perpSign: 1,
   },
 
   // ── Cross connections ─────────────────────────────────────────────
   {
     id: 'G-Heart',
     centers: ['G', 'Heart'],
-    path: 'M282,293 L312,280',
-    labelA: [282, 293], labelB: [312, 280], perpSign: 1,
+    path: 'M285,294 L308,270',
+    labelA: [285, 294], labelB: [308, 270], perpSign: 1,
   },
-  // Throat→Spleen (channels 16-48 and 57-20)
-  {
-    id: 'Throat-Spleen',
-    centers: ['Throat', 'Spleen'],
-    path: 'M222,205 L180,260',
-    labelA: [222, 205], labelB: [180, 260], perpSign: 1,
-  },
-  // Heart→Spleen (channel 26-44): arcs above G center diamond
+  // Heart→Spleen (channel 26-44): wide arc bridging right→left across the graph
   {
     id: 'Heart-Spleen',
     centers: ['Heart', 'Spleen'],
-    path: 'M310,272 C278,242 220,242 182,272',
-    labelA: [310, 272], labelB: [182, 272], perpSign: -1,
+    path: 'M308,272 C275,244 208,268 182,360',
+    labelA: [308, 272], labelB: [182, 360], perpSign: -1,
   },
 ]
 
@@ -188,68 +201,37 @@ function renderCenter(center: Center, isDefined: boolean) {
   const cx = pos.x + pos.w / 2
   const cy = pos.y + pos.h / 2
 
-  // Unified violet for all defined centers — traditional HD style
   const fill    = isDefined ? 'rgba(76,29,149,0.92)' : 'rgba(22,14,60,0.55)'
   const stroke  = isDefined ? '#A78BFA'               : 'rgba(167,139,250,0.32)'
   const strokeW = isDefined ? 1.5                     : 1
-  const labelFill = isDefined ? '#EDE9FE' : 'rgba(167,139,250,0.38)'
+  const labelFill = isDefined ? '#EDE9FE' : 'rgba(167,139,250,0.45)'
 
-  let shape: React.ReactElement
+  let shape: React.ReactNode
 
-  if (pos.shape === 'diamond') {
-    const hw = pos.w / 2
-    const hh = pos.h / 2
-    shape = (
-      <polygon
-        points={`${cx},${cy - hh} ${cx + hw},${cy} ${cx},${cy + hh} ${cx - hw},${cy}`}
-        fill={fill} stroke={stroke} strokeWidth={strokeW}
-      />
-    )
-  } else if (pos.shape === 'tri-up') {
-    shape = (
-      <polygon
-        points={`${cx},${pos.y} ${pos.x + pos.w},${pos.y + pos.h} ${pos.x},${pos.y + pos.h}`}
-        fill={fill} stroke={stroke} strokeWidth={strokeW}
-      />
-    )
+  if (pos.shape === 'tri-up') {
+    const pts = `${cx},${pos.y} ${pos.x},${pos.y + pos.h} ${pos.x + pos.w},${pos.y + pos.h}`
+    shape = <polygon points={pts} fill={fill} stroke={stroke} strokeWidth={strokeW} />
   } else if (pos.shape === 'tri-down') {
-    shape = (
-      <polygon
-        points={`${pos.x},${pos.y} ${pos.x + pos.w},${pos.y} ${cx},${pos.y + pos.h}`}
-        fill={fill} stroke={stroke} strokeWidth={strokeW}
-      />
-    )
-  } else {
-    // square
+    const pts = `${pos.x},${pos.y} ${pos.x + pos.w},${pos.y} ${cx},${pos.y + pos.h}`
+    shape = <polygon points={pts} fill={fill} stroke={stroke} strokeWidth={strokeW} />
+  } else if (pos.shape === 'square') {
     shape = (
       <rect
         x={pos.x} y={pos.y} width={pos.w} height={pos.h}
         rx={3} fill={fill} stroke={stroke} strokeWidth={strokeW}
       />
     )
-  }
-
-  // Two-line label for SolarPlexus
-  if (center === 'SolarPlexus') {
-    return (
-      <g key={center}>
-        {shape}
-        <text x={cx} y={cy - 3} textAnchor="middle"
-          fontSize={6} fontFamily="'Cinzel', serif" fontWeight="500"
-          letterSpacing={0.4} fill={labelFill} style={{ pointerEvents: 'none' }}>
-          SOLAR
-        </text>
-        <text x={cx} y={cy + 6} textAnchor="middle"
-          fontSize={6} fontFamily="'Cinzel', serif" fontWeight="500"
-          letterSpacing={0.4} fill={labelFill} style={{ pointerEvents: 'none' }}>
-          PLEXUS
-        </text>
-      </g>
-    )
+  } else {
+    // diamond
+    const hw = pos.w / 2
+    const hh = pos.h / 2
+    const pts = `${cx},${pos.y} ${pos.x + pos.w},${cy} ${cx},${pos.y + pos.h} ${pos.x},${cy}`
+    shape = <polygon points={pts} fill={fill} stroke={stroke} strokeWidth={strokeW} />
   }
 
   const fontSize =
-    center === 'G'      ? 10 :
+    center === 'Head'   ? 7   :
+    center === 'G'      ? 10  :
     center === 'Throat' ? 6.5 :
     center === 'Sacral' ? 6.5 :
     center === 'Root'   ? 6.5 : 7.5
@@ -284,8 +266,7 @@ export default function BodyGraph({ chart, size = 500 }: BodyGraphProps) {
     if (corr) activeCorridorIds.add(corr.id)
   })
 
-  // Precompute per-corridor gate label sets (sorted for consistent layout)
-  // Each entry: { gate0: near centers[0], gate1: near centers[1] }
+  // Precompute per-corridor gate label sets (sorted for consistent visual order)
   const corridorGateData = new Map<string, Array<{ gate0: number; gate1: number }>>()
   CORRIDORS.forEach(corr => {
     const entries: Array<{ gate0: number; gate1: number }> = []
@@ -299,7 +280,6 @@ export default function BodyGraph({ chart, size = 500 }: BodyGraphProps) {
         })
       }
     })
-    // Sort by gate0 for a consistent visual order
     entries.sort((a, b) => a.gate0 - b.gate0)
     corridorGateData.set(corr.id, entries)
   })
@@ -312,13 +292,11 @@ export default function BodyGraph({ chart, size = 500 }: BodyGraphProps) {
       style={{ maxWidth: '100%', display: 'block' }}
     >
       <defs>
-        {/* Subtle gradient for silhouette fill */}
         <radialGradient id="bgGrad" cx="50%" cy="42%" r="58%">
           <stop offset="0%"   stopColor="rgba(109,40,217,0.07)" />
           <stop offset="70%"  stopColor="rgba(88,28,135,0.04)" />
           <stop offset="100%" stopColor="rgba(46,16,101,0.01)" />
         </radialGradient>
-        {/* Active corridor glow */}
         <filter id="corridorGlow" x="-20%" y="-20%" width="140%" height="140%">
           <feGaussianBlur stdDeviation="2.5" result="blur" />
           <feMerge>
@@ -329,14 +307,12 @@ export default function BodyGraph({ chart, size = 500 }: BodyGraphProps) {
       </defs>
 
       {/* ── Human Silhouette (behind everything) ─────────────────── */}
-      {/* Head */}
       <ellipse
         cx="250" cy="10" rx="30" ry="25"
         fill="url(#bgGrad)"
         stroke="rgba(139,92,246,0.1)"
         strokeWidth={0.8}
       />
-      {/* Body torso */}
       <path
         d={`
           M 272,30
@@ -347,8 +323,7 @@ export default function BodyGraph({ chart, size = 500 }: BodyGraphProps) {
           C 369,402 367,426 358,450
           L 348,468
           L 152,468
-          L 142,450
-          C 133,426 131,402 137,377
+          C 142,450 133,426 137,377
           C 127,355 124,330 132,305
           C 123,283 124,260 134,232
           C 127,208 127,175 140,138
@@ -361,7 +336,7 @@ export default function BodyGraph({ chart, size = 500 }: BodyGraphProps) {
         strokeWidth={0.8}
       />
 
-      {/* ── Inactive corridors (rendered first, behind active) ───── */}
+      {/* ── Inactive corridors ───────────────────────────────────── */}
       {CORRIDORS.map(corr => {
         if (activeCorridorIds.has(corr.id)) return null
         return (
@@ -375,7 +350,6 @@ export default function BodyGraph({ chart, size = 500 }: BodyGraphProps) {
           />
         )
       })}
-      {/* Inactive inner fill (slightly lighter to create pipe depth) */}
       {CORRIDORS.map(corr => {
         if (activeCorridorIds.has(corr.id)) return null
         return (
@@ -390,12 +364,11 @@ export default function BodyGraph({ chart, size = 500 }: BodyGraphProps) {
         )
       })}
 
-      {/* ── Active corridors (full violet fill) ──────────────────── */}
+      {/* ── Active corridors ─────────────────────────────────────── */}
       {CORRIDORS.map(corr => {
         if (!activeCorridorIds.has(corr.id)) return null
         return (
           <g key={`active-${corr.id}`}>
-            {/* Outer glow */}
             <path
               d={corr.path}
               stroke="rgba(167,139,250,0.25)"
@@ -403,7 +376,6 @@ export default function BodyGraph({ chart, size = 500 }: BodyGraphProps) {
               strokeLinecap="round"
               fill="none"
             />
-            {/* Main corridor fill */}
             <path
               d={corr.path}
               stroke="rgba(109,40,217,0.82)"
@@ -411,7 +383,6 @@ export default function BodyGraph({ chart, size = 500 }: BodyGraphProps) {
               strokeLinecap="round"
               fill="none"
             />
-            {/* Inner highlight */}
             <path
               d={corr.path}
               stroke="rgba(167,139,250,0.35)"
@@ -434,23 +405,17 @@ export default function BodyGraph({ chart, size = 500 }: BodyGraphProps) {
         const dy = by - ay
         const len = Math.sqrt(dx * dx + dy * dy) || 1
 
-        // Unit vector along corridor A→B
         const ux = dx / len
         const uy = dy / len
-
-        // Unit perpendicular (right of A→B when perpSign=1)
         const px = (dy / len) * corr.perpSign
         const py = (-dx / len) * corr.perpSign
 
-        // How far labels sit from corridor center line
-        const base = 19
+        const base   = 19
         const spread = 10
 
         return chans.map((chan, i) => {
           const offset = base + (i - (chans.length - 1) / 2) * spread
-
-          // Inset along corridor direction so labels don't touch center shapes
-          const inset = 12
+          const inset  = 12
 
           const g0x = ax + ux * inset + px * offset
           const g0y = ay + uy * inset + py * offset
