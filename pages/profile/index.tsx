@@ -567,7 +567,7 @@ export default function MyChart() {
                       Body Graph
                     </p>
                     <div style={{ background: 'rgba(8,6,24,0.6)', borderRadius: 12, padding: 20, border: '1px solid rgba(167,139,250,0.1)' }}>
-                      <BodyGraph chart={chart} size={380} />
+                      <BodyGraph chart={chart} />
                     </div>
                     <div style={{ display: 'flex', gap: 20, marginTop: 16 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
