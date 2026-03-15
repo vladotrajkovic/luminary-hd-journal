@@ -560,7 +560,7 @@ export default function MyChart() {
             {/* ── Body Graph tab ── */}
             {activeTab === 'graph' && (
               <div className="glass" style={{ padding: 32 }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 40, alignItems: 'start' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '3fr 1fr', gap: 40, alignItems: 'start' }}>
                   {/* Left: SVG + legend */}
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                     <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, letterSpacing: '0.12em', color: 'rgba(167,139,250,0.5)', textTransform: 'uppercase', marginBottom: 16 }}>
