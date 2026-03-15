@@ -468,72 +468,59 @@ export default function ChartGenerator() {
                 </button>
               ))}
             </div>
- 
+
             {/* Body Graph Tab */}
             {activeTab === 'graph' && (
               <div className="glass" style={{ padding: 32 }}>
- 
-                {/* Full-width graph — no inner wrapper box */}
-                <div style={{ width: '100%', maxWidth: 560, margin: '0 auto' }}>
-                  <BodyGraph chart={chart} size={600} />
-                </div>
- 
-                {/* Legend row */}
-                <div style={{ display: 'flex', justifyContent: 'center', gap: 24, marginTop: 16, flexWrap: 'wrap' }}>
-                  {[
-                    { color: '#A78BFA', label: 'Personality' },
-                    { color: '#F87171', label: 'Design' },
-                    { color: '#EDE9FE', label: 'Both' },
-                  ].map(({ color, label }) => (
-                    <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <div style={{ width: 10, height: 10, borderRadius: '50%', background: color }} />
-                      <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(167,139,250,.6)', letterSpacing: '.05em' }}>
-                        {label}
-                      </span>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 40, alignItems: 'start' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, letterSpacing: '.12em', color: 'rgba(167,139,250,.5)', textTransform: 'uppercase', marginBottom: 16 }}>Body Graph</p>
+                    <div style={{ background: 'rgba(8,6,24,.6)', borderRadius: 12, padding: 20, border: '1px solid rgba(167,139,250,.1)' }}>
+                      <BodyGraph chart={chart} size={380} />
                     </div>
-                  ))}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <div style={{ width: 10, height: 10, borderRadius: '50%', background: 'rgba(167,139,250,.22)', border: '1px solid rgba(167,139,250,.3)' }} />
-                    <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(167,139,250,.6)', letterSpacing: '.05em' }}>
-                      Inactive
-                    </span>
+                    <div style={{ display: 'flex', gap: 20, marginTop: 16 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <div style={{ width: 16, height: 8, background: '#7B4FD4', borderRadius: 2 }} />
+                        <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(167,139,250,.6)' }}>Defined</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <div style={{ width: 16, height: 8, background: 'transparent', border: '1px solid rgba(167,139,250,.3)', borderRadius: 2 }} />
+                        <span style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: 'rgba(167,139,250,.6)' }}>Open</span>
+                      </div>
+                    </div>
                   </div>
-                </div>
- 
-                {/* Centers horizontal pill strip */}
-                <div style={{ marginTop: 28, borderTop: '1px solid rgba(167,139,250,.1)', paddingTop: 24 }}>
-                  <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, letterSpacing: '.12em', color: 'rgba(167,139,250,.4)', textTransform: 'uppercase', marginBottom: 14, textAlign: 'center' }}>
-                    Centers
-                  </p>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center' }}>
-                    {ALL_CENTER_NAMES_CHART.map(center => {
-                      const isDefined = chart.definedCenters.includes(center)
-                      const displayName = CENTER_DISPLAY[center] ?? center
-                      return (
-                        <div key={center} style={{
-                          display: 'flex', alignItems: 'center', gap: 7,
-                          padding: '7px 14px', borderRadius: 20,
-                          background: isDefined ? 'rgba(109,40,217,.25)' : 'rgba(22,14,60,.5)',
-                          border: `1px solid ${isDefined ? 'rgba(167,139,250,.4)' : 'rgba(167,139,250,.12)'}`,
-                        }}>
-                          <div style={{
-                            width: 7, height: 7, borderRadius: '50%', flexShrink: 0,
-                            background: isDefined ? '#A78BFA' : 'transparent',
-                            border: isDefined ? 'none' : '1px solid rgba(167,139,250,.3)',
-                          }} />
-                          <span style={{
-                            fontFamily: 'Cinzel, serif', fontSize: 11,
-                            color: isDefined ? '#C4B5FD' : 'rgba(167,139,250,.4)',
-                            letterSpacing: '.04em',
+
+                  <div>
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, letterSpacing: '.12em', color: 'rgba(167,139,250,.5)', textTransform: 'uppercase', marginBottom: 16 }}>Centers</p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      {ALL_CENTER_NAMES_CHART.map(center => {
+                        const isDefined = chart.definedCenters.includes(center)
+                        const displayName = CENTER_DISPLAY[center] ?? center
+                        return (
+                          <div key={center} style={{
+                            padding: '12px 16px', borderRadius: 10,
+                            background: isDefined ? 'rgba(123,79,212,.2)' : 'rgba(45,212,191,.06)',
+                            border: `1px solid ${isDefined ? 'rgba(123,79,212,.4)' : 'rgba(45,212,191,.2)'}`,
+                            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                           }}>
-                            {displayName}
-                          </span>
-                        </div>
-                      )
-                    })}
+                            <span style={{ fontFamily: 'Cinzel, serif', fontSize: 13, color: isDefined ? '#EDE9FE' : 'rgba(167,139,250,.5)' }}>
+                              {displayName}
+                            </span>
+                            <span style={{
+                              padding: '3px 10px', borderRadius: 20, fontSize: 11,
+                              fontFamily: 'Inter, sans-serif', letterSpacing: '.05em', flexShrink: 0, marginLeft: 12,
+                              background: isDefined ? 'rgba(123,79,212,.3)' : 'rgba(45,212,191,.1)',
+                              border: `1px solid ${isDefined ? 'rgba(123,79,212,.5)' : 'rgba(45,212,191,.3)'}`,
+                              color: isDefined ? '#C4B5FD' : '#5EEAD4',
+                            }}>
+                              {isDefined ? 'DEFINED' : 'OPEN'}
+                            </span>
+                          </div>
+                        )
+                      })}
+                    </div>
                   </div>
                 </div>
- 
               </div>
             )}
 
