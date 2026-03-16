@@ -158,11 +158,12 @@ function renderCenter(
   }
 
   const fontSize =
-    center === 'G'      ? 10  :
-    center === 'Head'   ? 7   :
-    center === 'Throat' ? 6.5 :
-    center === 'Sacral' ? 6.5 :
-    center === 'Root'   ? 6.5 : 7.5
+    center === 'G'      ? 13  :
+    center === 'Head'   ? 9   :
+    center === 'Throat' ? 9   :
+    center === 'Sacral' ? 9   :
+    center === 'Root'   ? 9   :
+    center === 'Ajna'   ? 9   : 8.5
 
   return (
     <g key={center}>
@@ -220,7 +221,7 @@ function renderSideColumn(
           x={align === 'left' ? startX : startX + colWidth}
           y={y + 10}
           textAnchor={align === 'left' ? 'start' : 'end'}
-          fontSize={8} fontFamily="'Cinzel', serif" fontWeight="500"
+          fontSize={11} fontFamily="'Cinzel', serif" fontWeight="500"
           letterSpacing={0.8}
           fill={isHov ? '#C4B5FD' : 'rgba(167,139,250,0.55)'}>
           {CENTER_LABELS[center]}
@@ -244,7 +245,7 @@ function renderSideColumn(
                 <circle cx={gx} cy={gy} r={GATE_R} fill="none" stroke={color} strokeWidth={1.5} />
               )}
               <text x={gx} y={gy + 3.5} textAnchor="middle"
-                fontSize={7} fontFamily="'Inter', sans-serif"
+                fontSize={9} fontFamily="'Inter', sans-serif"
                 fontWeight={fw} fill={color}>
                 {gate}
               </text>
@@ -416,40 +417,6 @@ export default function BodyGraph({ chart }: BodyGraphProps) {
         </g>
       ))}
 
-      {/* ── Gate number labels on corridors ──────────────────────── */}
-      {CORRIDORS.map(corr => {
-        const chans = corridorGateData.get(corr.id) || []
-        if (chans.length === 0) return null
-        const [ax, ay] = corr.labelA
-        const [bx, by] = corr.labelB
-        const dx = bx - ax, dy = by - ay
-        const len = Math.sqrt(dx*dx + dy*dy) || 1
-        const ux = dx/len, uy = dy/len
-        const px = (dy/len) * corr.perpSign
-        const py = (-dx/len) * corr.perpSign
-        const base = 19, spread = 10
-        return chans.map((chan, i) => {
-          const offset = base + (i - (chans.length - 1) / 2) * spread
-          const inset  = 12
-          const g0x = ax + ux*inset + px*offset, g0y = ay + uy*inset + py*offset
-          const g1x = bx - ux*inset + px*offset, g1y = by - uy*inset + py*offset
-          const c0  = gateColor(chan.gate0, allPersonalityGates, allDesignGates)
-          const c1  = gateColor(chan.gate1, allPersonalityGates, allDesignGates)
-          const fw0 = gateFontWeight(chan.gate0, allPersonalityGates, allDesignGates)
-          const fw1 = gateFontWeight(chan.gate1, allPersonalityGates, allDesignGates)
-          return (
-            <g key={`${corr.id}-${chan.gate0}-${chan.gate1}`}>
-              <text x={g0x} y={g0y+3} textAnchor="middle" fontSize={7}
-                fontFamily="'Inter', sans-serif" fontWeight={fw0} fill={c0}
-                style={{ pointerEvents: 'none' }}>{chan.gate0}</text>
-              <text x={g1x} y={g1y+3} textAnchor="middle" fontSize={7}
-                fontFamily="'Inter', sans-serif" fontWeight={fw1} fill={c1}
-                style={{ pointerEvents: 'none' }}>{chan.gate1}</text>
-            </g>
-          )
-        })
-      })}
-
       {/* ── Centers ──────────────────────────────────────────────── */}
       {(Object.keys(CP) as Center[]).map(center =>
         renderCenter(
@@ -466,13 +433,13 @@ export default function BodyGraph({ chart }: BodyGraphProps) {
 
       {/* ── Legend ───────────────────────────────────────────────── */}
       <g>
-        <circle cx={-195} cy={565} r={6} fill="none" stroke="#A78BFA" strokeWidth={1.5} />
-        <text x={-184} y={569} fontSize={8} fontFamily="'Inter', sans-serif" fill="rgba(167,139,250,0.65)">Personality gate</text>
-        <circle cx={-195} cy={582} r={6} fill="none" stroke="#F87171" strokeWidth={1.5} />
-        <text x={-184} y={586} fontSize={8} fontFamily="'Inter', sans-serif" fill="rgba(167,139,250,0.65)">Design gate</text>
-        <circle cx={-195} cy={599} r={6} fill="none" stroke="#EDE9FE" strokeWidth={1.5} />
-        <text x={-184} y={603} fontSize={8} fontFamily="'Inter', sans-serif" fill="rgba(167,139,250,0.65)">Both activated</text>
-        <text x={-195} y={618} fontSize={7.5} fontFamily="'Inter', sans-serif" fill="rgba(167,139,250,0.35)">Dim = inactive gate</text>
+        <circle cx={-195} cy={565} r={7} fill="none" stroke="#A78BFA" strokeWidth={1.5} />
+        <text x={-182} y={570} fontSize={10} fontFamily="'Inter', sans-serif" fill="rgba(167,139,250,0.65)">Personality gate</text>
+        <circle cx={-195} cy={584} r={7} fill="none" stroke="#F87171" strokeWidth={1.5} />
+        <text x={-182} y={589} fontSize={10} fontFamily="'Inter', sans-serif" fill="rgba(167,139,250,0.65)">Design gate</text>
+        <circle cx={-195} cy={603} r={7} fill="none" stroke="#EDE9FE" strokeWidth={1.5} />
+        <text x={-182} y={608} fontSize={10} fontFamily="'Inter', sans-serif" fill="rgba(167,139,250,0.65)">Both activated</text>
+        <text x={-195} y={625} fontSize={9} fontFamily="'Inter', sans-serif" fill="rgba(167,139,250,0.35)">Dim = inactive gate</text>
       </g>
     </svg>
   )
