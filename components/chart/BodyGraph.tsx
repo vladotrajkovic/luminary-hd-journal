@@ -343,7 +343,7 @@ export default function BodyGraph({ chart }: BodyGraphProps) {
 
   return (
     <svg
-      viewBox="-220 -110 940 800"
+      viewBox="-220 -110 1100 800"
       width="100%"
       height={600}
       style={{ maxWidth: '100%', display: 'block' }}
@@ -363,7 +363,7 @@ export default function BodyGraph({ chart }: BodyGraphProps) {
         allPersonalityGates, allDesignGates, setHoveredCenter, hoveredCenter)}
 
       {/* ── Right gate column ────────────────────────────────────── */}
-      {renderSideColumn(RIGHT_CENTERS, 465, 140, 'right',
+      {renderSideColumn(RIGHT_CENTERS, 630, 140, 'right',
         allPersonalityGates, allDesignGates, setHoveredCenter, hoveredCenter)}
 
       {/* ── Human Silhouette ─────────────────────────────────────── */}
