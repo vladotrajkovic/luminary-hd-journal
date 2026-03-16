@@ -21,10 +21,10 @@ const CP: Record<Center, {
   x: number; y: number; w: number; h: number
   shape: 'diamond' | 'square' | 'tri-up' | 'tri-down' | 'half-top' | 'half-left' | 'half-right'
 }> = {
-  Head:        { x: 222, y: -24, w: 56, h: 50, shape: 'tri-up'    },  // cx=250 top=-24 bot=26  — inside head silhouette
-  Ajna:        { x: 218, y: 52,  w: 64, h: 52, shape: 'tri-down'  },  // cx=250 top=52  bot=104 — inside head silhouette
-  Throat:      { x: 224, y: 128, w: 52, h: 52, shape: 'square'    },  // cx=250 top=128 bot=180 L=224 R=276
-  G:           { x: 212, y: 208, w: 76, h: 76, shape: 'diamond'   },  // cx=250 cy=246  top=208 bot=284 L=212 R=288
+  Head:        { x: 222, y: -44, w: 56, h: 50, shape: 'tri-up'    },  // cx=250 top=-44 bot=6
+  Ajna:        { x: 218, y: 32,  w: 64, h: 52, shape: 'tri-down'  },  // cx=250 top=32  bot=84
+  Throat:      { x: 224, y: 108, w: 52, h: 52, shape: 'square'    },  // cx=250 top=108 bot=160 L=224 R=276
+  G:           { x: 212, y: 188, w: 76, h: 76, shape: 'diamond'   },  // cx=250 cy=226  top=188 bot=264 L=212 R=288
   Heart:       { x: 298, y: 238, w: 66, h: 58, shape: 'half-top'  },  // unchanged
   Sacral:      { x: 224, y: 335, w: 52, h: 52, shape: 'square'    },  // unchanged
   SolarPlexus: { x: 300, y: 334, w: 62, h: 56, shape: 'half-left' },  // unchanged
@@ -49,15 +49,15 @@ interface Corridor {
 
 const CORRIDORS: Corridor[] = [
   // ── Vertical spine ───────────────────────────────────────────────
-  { id: 'Head-Ajna',   centers: ['Head', 'Ajna'],     path: 'M250,26 L250,52',    labelA: [250,26],  labelB: [250,52],  perpSign: 1 },
-  { id: 'Ajna-Throat', centers: ['Ajna', 'Throat'],   path: 'M250,104 L250,128',  labelA: [250,104], labelB: [250,128], perpSign: 1 },
-  { id: 'Throat-G',    centers: ['Throat', 'G'],      path: 'M250,180 L250,208',  labelA: [250,180], labelB: [250,208], perpSign: 1 },
-  { id: 'G-Sacral',    centers: ['G', 'Sacral'],      path: 'M250,284 L250,335',  labelA: [250,284], labelB: [250,335], perpSign: 1 },
+  { id: 'Head-Ajna',   centers: ['Head', 'Ajna'],     path: 'M250,6 L250,32',     labelA: [250,6],   labelB: [250,32],  perpSign: 1 },
+  { id: 'Ajna-Throat', centers: ['Ajna', 'Throat'],   path: 'M250,84 L250,108',   labelA: [250,84],  labelB: [250,108], perpSign: 1 },
+  { id: 'Throat-G',    centers: ['Throat', 'G'],      path: 'M250,160 L250,188',  labelA: [250,160], labelB: [250,188], perpSign: 1 },
+  { id: 'G-Sacral',    centers: ['G', 'Sacral'],      path: 'M250,264 L250,335',  labelA: [250,264], labelB: [250,335], perpSign: 1 },
   { id: 'Sacral-Root', centers: ['Sacral', 'Root'],   path: 'M250,387 L250,406',  labelA: [250,387], labelB: [250,406], perpSign: 1 },
 
   // ── Right branch ─────────────────────────────────────────────────
   // Throat R-mid → Heart tip
-  { id: 'Throat-Heart',       centers: ['Throat', 'Heart'],       path: 'M276,154 L331,238',  labelA: [276,154], labelB: [331,238], perpSign:  1 },
+  { id: 'Throat-Heart',       centers: ['Throat', 'Heart'],       path: 'M276,134 L331,238',  labelA: [276,134], labelB: [331,238], perpSign:  1 },
   // Heart R-base → SolarPlexus TR (unchanged — Heart & SP unchanged)
   { id: 'Heart-SolarPlexus',  centers: ['Heart', 'SolarPlexus'],  path: 'M364,296 L362,334',  labelA: [364,296], labelB: [362,334], perpSign:  1 },
   // Sacral R → SolarPlexus tip (unchanged)
@@ -65,24 +65,24 @@ const CORRIDORS: Corridor[] = [
   // SolarPlexus BR → Root (unchanged)
   { id: 'SolarPlexus-Root',   centers: ['SolarPlexus', 'Root'],   path: 'M362,390 L283,427',  labelA: [362,390], labelB: [283,427], perpSign:  1 },
   // Throat R-bot → SolarPlexus TR (long diagonal)
-  { id: 'Throat-SolarPlexus', centers: ['Throat', 'SolarPlexus'], path: 'M276,180 L362,334',  labelA: [276,180], labelB: [362,334], perpSign: -1 },
+  { id: 'Throat-SolarPlexus', centers: ['Throat', 'SolarPlexus'], path: 'M276,160 L362,334',  labelA: [276,160], labelB: [362,334], perpSign: -1 },
   // Sacral → Throat: runs right of G
-  { id: 'Sacral-Throat',      centers: ['Sacral', 'Throat'],      path: 'M280,335 L280,180',  labelA: [280,335], labelB: [280,180], perpSign:  1 },
+  { id: 'Sacral-Throat',      centers: ['Sacral', 'Throat'],      path: 'M280,335 L280,160',  labelA: [280,335], labelB: [280,160], perpSign:  1 },
 
   // ── Left branch ──────────────────────────────────────────────────
   // G L-edge → Spleen tip
-  { id: 'G-Spleen',     centers: ['G', 'Spleen'],       path: 'M212,246 L180,362',  labelA: [212,246], labelB: [180,362], perpSign: -1 },
+  { id: 'G-Spleen',     centers: ['G', 'Spleen'],       path: 'M212,226 L180,362',  labelA: [212,226], labelB: [180,362], perpSign: -1 },
   // Sacral L → Spleen tip (unchanged)
   { id: 'Sacral-Spleen', centers: ['Sacral', 'Spleen'], path: 'M224,361 L180,362',  labelA: [224,361], labelB: [180,362], perpSign:  1 },
   // Spleen BL → Root L (unchanged)
   { id: 'Spleen-Root',  centers: ['Spleen', 'Root'],    path: 'M118,390 L217,427',  labelA: [118,390], labelB: [217,427], perpSign: -1 },
   // Throat L-mid → Spleen TL
-  { id: 'Throat-Spleen', centers: ['Throat', 'Spleen'], path: 'M224,154 L118,334',  labelA: [224,154], labelB: [118,334], perpSign:  1 },
+  { id: 'Throat-Spleen', centers: ['Throat', 'Spleen'], path: 'M224,134 L118,334',  labelA: [224,134], labelB: [118,334], perpSign:  1 },
 
   // ── Cross connections ─────────────────────────────────────────────
   // G R-edge → Heart L-base
-  { id: 'G-Heart',      centers: ['G', 'Heart'],      path: 'M288,246 L298,296',                    labelA: [288,246], labelB: [298,296], perpSign:  1 },
-  // Heart L-base → Spleen tip (arc, unchanged — neither Heart nor Spleen moved)
+  { id: 'G-Heart',      centers: ['G', 'Heart'],      path: 'M288,226 L298,296',                   labelA: [288,226], labelB: [298,296], perpSign:  1 },
+  // Heart L-base → Spleen tip (arc, unchanged)
   { id: 'Heart-Spleen', centers: ['Heart', 'Spleen'], path: 'M298,296 C265,315 215,340 180,362',   labelA: [298,296], labelB: [180,362], perpSign: -1 },
 ]
 
