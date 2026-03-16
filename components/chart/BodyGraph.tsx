@@ -246,44 +246,45 @@ export default function BodyGraph({ chart, size = 600 }: BodyGraphProps) {
         </filter>
       </defs>
 
-      {/* ── Human Silhouette — head + neck + shoulders + torso ───────── */}
-
-      {/* Head — distinct circle clearly separated above the neck */}
-      <circle
-        cx="250" cy="-2" r="30"
-        fill="rgba(167,139,250,0.04)"
-        stroke="rgba(167,139,250,0.28)"
-        strokeWidth={1.5}
-      />
-
-      {/* Body — narrow neck, shoulder spread, torso widening naturally to base */}
+      {/* ── Human Silhouette — left-facing side profile, matching JA ─── */}
+      {/*
+          Single continuous path tracing the full profile clockwise:
+          Start at top of head → down the FACE side (left):
+            forehead → nose bump → lips → chin → neck
+          → left shoulder → left body → base
+          → base → right body → right shoulder
+          → back of neck → back of head (smooth curve) → top
+      */}
       <path
         d={`
-          M 242,26
-          C 240,32 239,38 240,44
-          C 236,46 230,50 224,56
-          C 212,64 198,78 186,96
-          C 170,118 158,144 152,170
-          C 146,194 146,220 150,244
-          C 144,264 142,286 146,308
-          C 140,330 140,354 148,376
-          C 144,398 144,420 152,440
-          L 158,454
-          L 342,454
-          L 348,440
-          C 356,420 356,398 352,376
-          C 360,354 360,330 354,308
-          C 358,286 356,264 350,244
-          C 354,220 354,194 348,170
-          C 342,144 330,118 314,96
-          C 302,78 288,64 276,56
-          C 270,50 264,46 260,44
-          C 261,38 260,32 258,26
-          C 255,22 252,20 250,20
-          C 248,20 245,22 242,26 Z
+          M 252,-36
+          C 240,-36 226,-26 218,-14
+          C 212,-6  210,4   214,12
+          C 217,18  220,21  218,26
+          C 215,31  213,35  216,40
+          C 219,46  222,50  220,56
+          C 218,62  222,68  228,74
+          C 232,80  232,86  228,94
+          C 218,108 196,124 172,144
+          C 148,164 130,192 122,222
+          C 114,252 116,282 118,310
+          C 120,338 118,366 120,394
+          C 122,416 124,436 128,454
+          L 372,454
+          C 376,436 378,416 380,394
+          C 382,366 380,338 382,310
+          C 384,282 386,252 378,222
+          C 370,192 352,164 328,144
+          C 304,124 282,108 272,94
+          C 268,86 268,80 272,74
+          C 278,68 282,62 280,56
+          C 278,48 278,40 280,32
+          C 282,24 282,12 278,2
+          C 274,-10 270,-22 270,-30
+          C 266,-36 258,-38 252,-36 Z
         `}
         fill="rgba(167,139,250,0.04)"
-        stroke="rgba(167,139,250,0.28)"
+        stroke="rgba(167,139,250,0.30)"
         strokeWidth={1.5}
         strokeLinejoin="round"
       />
