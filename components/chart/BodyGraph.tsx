@@ -21,15 +21,15 @@ const CP: Record<Center, {
   x: number; y: number; w: number; h: number
   shape: 'diamond' | 'square' | 'tri-up' | 'tri-down' | 'half-top' | 'half-left' | 'half-right'
 }> = {
-  Head:        { x: 222, y: -64, w: 56, h: 50, shape: 'tri-up'    },  // cx=250 top=-64 bot=-14
-  Ajna:        { x: 218, y: 12,  w: 64, h: 52, shape: 'tri-down'  },  // cx=250 top=12  bot=64
-  Throat:      { x: 224, y: 88,  w: 52, h: 52, shape: 'square'    },  // cx=250 top=88  bot=140 L=224 R=276
-  G:           { x: 212, y: 168, w: 76, h: 76, shape: 'diamond'   },  // cx=250 cy=206  top=168 bot=244 L=212 R=288
-  Heart:       { x: 298, y: 223, w: 66, h: 58, shape: 'half-top'  },  // tip=331,223 L-base=298,281 R-base=364,281
-  Sacral:      { x: 224, y: 335, w: 52, h: 52, shape: 'square'    },  // unchanged
-  SolarPlexus: { x: 300, y: 314, w: 62, h: 56, shape: 'half-left' },  // tip=300,342 TR=362,314 BR=362,370
-  Spleen:      { x: 118, y: 314, w: 62, h: 56, shape: 'half-right'},  // tip=180,342 TL=118,314 BL=118,370
-  Root:        { x: 217, y: 406, w: 66, h: 42, shape: 'square'    },  // unchanged
+  Head:        { x: 222, y: -64, w: 56,  h: 50, shape: 'tri-up'    },  // cx=250 top=-64 bot=-14
+  Ajna:        { x: 218, y: 12,  w: 64,  h: 52, shape: 'tri-down'  },  // cx=250 top=12  bot=64
+  Throat:      { x: 224, y: 88,  w: 52,  h: 52, shape: 'square'    },  // cx=250 top=88  bot=140 L=224 R=276
+  G:           { x: 212, y: 168, w: 76,  h: 76, shape: 'diamond'   },  // cx=250 cy=206  top=168 bot=244 L=212 R=288
+  Heart:       { x: 322, y: 213, w: 80,  h: 66, shape: 'half-top'  },  // tip=(362,213) L-base=(322,279) R-base=(402,279)
+  Sacral:      { x: 224, y: 335, w: 52,  h: 52, shape: 'square'    },  // cx=250 cy=361  top=335 bot=387 L=224 R=276
+  SolarPlexus: { x: 334, y: 308, w: 76,  h: 68, shape: 'half-left' },  // tip=(334,342) TR=(410,308) BR=(410,376)
+  Spleen:      { x: 70,  y: 308, w: 76,  h: 68, shape: 'half-right'},  // tip=(146,342) TL=(70,308) BL=(70,376)
+  Root:        { x: 217, y: 406, w: 66,  h: 42, shape: 'square'    },  // cx=250 unchanged
 }
 
 const CENTER_LABELS: Record<Center, string> = {
@@ -56,23 +56,22 @@ const CORRIDORS: Corridor[] = [
   { id: 'Sacral-Root', centers: ['Sacral', 'Root'],   path: 'M250,387 L250,406',  labelA: [250,387], labelB: [250,406], perpSign: 1 },
 
   // ── Right branch ─────────────────────────────────────────────────
-  // Throat R-mid → Heart tip
-  { id: 'Throat-Heart',       centers: ['Throat', 'Heart'],       path: 'M276,114 L331,223',  labelA: [276,114], labelB: [331,223], perpSign:  1 },
-  { id: 'Heart-SolarPlexus',  centers: ['Heart', 'SolarPlexus'],  path: 'M364,281 L362,314',  labelA: [364,281], labelB: [362,314], perpSign:  1 },
-  { id: 'Sacral-SolarPlexus', centers: ['Sacral', 'SolarPlexus'], path: 'M276,361 L300,342',  labelA: [276,361], labelB: [300,342], perpSign:  1 },
-  { id: 'SolarPlexus-Root',   centers: ['SolarPlexus', 'Root'],   path: 'M362,370 L283,427',  labelA: [362,370], labelB: [283,427], perpSign:  1 },
-  { id: 'Throat-SolarPlexus', centers: ['Throat', 'SolarPlexus'], path: 'M276,140 L362,314',  labelA: [276,140], labelB: [362,314], perpSign: -1 },
+  { id: 'Throat-Heart',       centers: ['Throat', 'Heart'],       path: 'M276,114 L362,213',  labelA: [276,114], labelB: [362,213], perpSign:  1 },
+  { id: 'Heart-SolarPlexus',  centers: ['Heart', 'SolarPlexus'],  path: 'M402,279 L410,308',  labelA: [402,279], labelB: [410,308], perpSign:  1 },
+  { id: 'Sacral-SolarPlexus', centers: ['Sacral', 'SolarPlexus'], path: 'M276,361 L334,342',  labelA: [276,361], labelB: [334,342], perpSign:  1 },
+  { id: 'SolarPlexus-Root',   centers: ['SolarPlexus', 'Root'],   path: 'M410,376 L283,427',  labelA: [410,376], labelB: [283,427], perpSign:  1 },
+  { id: 'Throat-SolarPlexus', centers: ['Throat', 'SolarPlexus'], path: 'M276,140 L410,308',  labelA: [276,140], labelB: [410,308], perpSign: -1 },
   { id: 'Sacral-Throat',      centers: ['Sacral', 'Throat'],      path: 'M280,335 L280,140',  labelA: [280,335], labelB: [280,140], perpSign:  1 },
 
   // ── Left branch ──────────────────────────────────────────────────
-  { id: 'G-Spleen',     centers: ['G', 'Spleen'],       path: 'M212,206 L180,342',  labelA: [212,206], labelB: [180,342], perpSign: -1 },
-  { id: 'Sacral-Spleen', centers: ['Sacral', 'Spleen'], path: 'M224,361 L180,342',  labelA: [224,361], labelB: [180,342], perpSign:  1 },
-  { id: 'Spleen-Root',  centers: ['Spleen', 'Root'],    path: 'M118,370 L217,427',  labelA: [118,370], labelB: [217,427], perpSign: -1 },
-  { id: 'Throat-Spleen', centers: ['Throat', 'Spleen'], path: 'M224,114 L118,314',  labelA: [224,114], labelB: [118,314], perpSign:  1 },
+  { id: 'G-Spleen',      centers: ['G', 'Spleen'],       path: 'M212,206 L146,342',  labelA: [212,206], labelB: [146,342], perpSign: -1 },
+  { id: 'Sacral-Spleen', centers: ['Sacral', 'Spleen'],  path: 'M224,361 L146,342',  labelA: [224,361], labelB: [146,342], perpSign:  1 },
+  { id: 'Spleen-Root',   centers: ['Spleen', 'Root'],    path: 'M70,376 L217,427',   labelA: [70,376],  labelB: [217,427], perpSign: -1 },
+  { id: 'Throat-Spleen', centers: ['Throat', 'Spleen'],  path: 'M224,114 L70,308',   labelA: [224,114], labelB: [70,308],  perpSign:  1 },
 
   // ── Cross connections ─────────────────────────────────────────────
-  { id: 'G-Heart',      centers: ['G', 'Heart'],      path: 'M288,206 L298,281',                   labelA: [288,206], labelB: [298,281], perpSign:  1 },
-  { id: 'Heart-Spleen', centers: ['Heart', 'Spleen'], path: 'M298,281 C265,305 215,325 180,342',   labelA: [298,281], labelB: [180,342], perpSign: -1 },
+  { id: 'G-Heart',      centers: ['G', 'Heart'],      path: 'M288,206 L322,279',                    labelA: [288,206], labelB: [322,279], perpSign:  1 },
+  { id: 'Heart-Spleen', centers: ['Heart', 'Spleen'], path: 'M322,279 C275,305 200,328 146,342',    labelA: [322,279], labelB: [146,342], perpSign: -1 },
 ]
 
 // Fast lookup: "C1-C2" or "C2-C1" → Corridor
@@ -213,7 +212,7 @@ export default function BodyGraph({ chart, size = 600 }: BodyGraphProps) {
 
   return (
     <svg
-      viewBox="50 -88 400 600"
+      viewBox="-20 -88 540 600"
       width="100%"
       height={600}
       style={{ maxWidth: '100%', display: 'block' }}
