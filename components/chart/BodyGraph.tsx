@@ -203,7 +203,7 @@ function renderCenter(center: Center, isDefined: boolean) {
 }
 
 // ── MAIN COMPONENT ────────────────────────────────────────────────────────────
-export default function BodyGraph({ chart, size = 500 }: BodyGraphProps) {
+export default function BodyGraph({ chart, size = 600 }: BodyGraphProps) {
   const { definedCenters, allPersonalityGates, allDesignGates, activeChannels } = chart
 
   const activeCorridorIds = new Set<string>()
@@ -231,17 +231,12 @@ export default function BodyGraph({ chart, size = 500 }: BodyGraphProps) {
 
   return (
     <svg
-      viewBox="60 -12 380 514"
+      viewBox="50 -20 400 530"
       width={size}
       height={size}
       style={{ maxWidth: '100%', display: 'block' }}
     >
       <defs>
-        <radialGradient id="bgGrad" cx="50%" cy="42%" r="58%">
-          <stop offset="0%"   stopColor="rgba(109,40,217,0.07)" />
-          <stop offset="70%"  stopColor="rgba(88,28,135,0.04)" />
-          <stop offset="100%" stopColor="rgba(46,16,101,0.01)" />
-        </radialGradient>
         <filter id="corridorGlow" x="-20%" y="-20%" width="140%" height="140%">
           <feGaussianBlur stdDeviation="2.5" result="blur" />
           <feMerge>
@@ -251,33 +246,60 @@ export default function BodyGraph({ chart, size = 500 }: BodyGraphProps) {
         </filter>
       </defs>
 
-      {/* ── Human Silhouette ─────────────────────────────────────── */}
-      <ellipse cx="250" cy="10" rx="30" ry="25" fill="url(#bgGrad)" stroke="rgba(139,92,246,0.1)" strokeWidth={0.8} />
+      {/* ── Human Silhouette — JA-style visible outline ───────────── */}
+      {/* Head circle */}
+      <ellipse
+        cx="250" cy="8" rx="32" ry="28"
+        fill="rgba(167,139,250,0.04)"
+        stroke="rgba(167,139,250,0.35)"
+        strokeWidth={1.5}
+      />
+      {/* Body outline — neck + torso + hips */}
       <path
-        d={`M 272,30 C 296,46 342,88 360,138 C 373,175 373,208 366,232 C 376,260 377,283 368,305
-            C 376,330 373,355 363,377 C 369,402 367,426 358,450 L 348,468 L 152,468
-            C 142,450 133,426 137,377 C 127,355 124,330 132,305 C 123,283 124,260 134,232
-            C 127,208 127,175 140,138 C 158,88 204,46 228,30 C 237,18 244,4 250,2
-            C 256,4 263,18 272,30 Z`}
-        fill="url(#bgGrad)"
-        stroke="rgba(139,92,246,0.08)"
-        strokeWidth={0.8}
+        d={`
+          M 234,34
+          C 228,38 224,44 222,52
+          C 216,52 212,54 210,58
+          C 204,62 202,70 204,78
+          C 185,92 168,112 158,136
+          C 146,164 144,196 148,224
+          C 140,244 138,264 142,284
+          C 136,308 136,332 144,354
+          C 140,376 140,400 148,422
+          L 154,450
+          L 346,450
+          L 352,422
+          C 360,400 360,376 356,354
+          C 364,332 364,308 358,284
+          C 362,264 360,244 352,224
+          C 356,196 354,164 342,136
+          C 332,112 315,92 296,78
+          C 298,70 296,62 290,58
+          C 288,54 284,52 278,52
+          C 276,44 272,38 266,34
+          C 262,30 257,26 252,26
+          C 247,26 242,30 238,34 Z
+        `}
+        fill="rgba(167,139,250,0.04)"
+        stroke="rgba(167,139,250,0.35)"
+        strokeWidth={1.5}
+        strokeLinejoin="round"
       />
 
       {/* ── Inactive corridors ───────────────────────────────────── */}
       {CORRIDORS.map(corr => activeCorridorIds.has(corr.id) ? null : (
-        <path key={`io-${corr.id}`} d={corr.path} stroke="rgba(139,92,246,0.13)" strokeWidth={13} strokeLinecap="round" fill="none" />
+        <path key={`io-${corr.id}`} d={corr.path} stroke="rgba(139,92,246,0.18)" strokeWidth={16} strokeLinecap="round" fill="none" />
       ))}
       {CORRIDORS.map(corr => activeCorridorIds.has(corr.id) ? null : (
-        <path key={`ii-${corr.id}`} d={corr.path} stroke="rgba(22,14,60,0.6)"    strokeWidth={9}  strokeLinecap="round" fill="none" />
+        <path key={`ii-${corr.id}`} d={corr.path} stroke="rgba(22,14,60,0.65)"   strokeWidth={11} strokeLinecap="round" fill="none" />
       ))}
 
       {/* ── Active corridors ─────────────────────────────────────── */}
       {CORRIDORS.map(corr => !activeCorridorIds.has(corr.id) ? null : (
         <g key={`active-${corr.id}`}>
-          <path d={corr.path} stroke="rgba(167,139,250,0.25)" strokeWidth={18} strokeLinecap="round" fill="none" />
-          <path d={corr.path} stroke="rgba(109,40,217,0.82)"  strokeWidth={13} strokeLinecap="round" fill="none" />
-          <path d={corr.path} stroke="rgba(167,139,250,0.35)" strokeWidth={5}  strokeLinecap="round" fill="none" />
+          <path d={corr.path} stroke="rgba(167,139,250,0.30)" strokeWidth={22} strokeLinecap="round" fill="none" />
+          <path d={corr.path} stroke="rgba(109,40,217,0.88)"  strokeWidth={16} strokeLinecap="round" fill="none" />
+          <path d={corr.path} stroke="rgba(167,139,250,0.40)" strokeWidth={6}  strokeLinecap="round" fill="none" />
         </g>
       ))}
 
