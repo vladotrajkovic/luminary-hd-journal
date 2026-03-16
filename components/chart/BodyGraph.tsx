@@ -204,7 +204,7 @@ function renderSideColumn(
     const gates  = CENTER_GATES[center]
     const rows   = Math.ceil(gates.length / GATE_COLS)
     const isHov  = hoveredCenter === center
-    const blockH = 18 + rows * ROW_GAP + 6
+    const blockH = 28 + rows * ROW_GAP + 6
 
     const el = (
       <g key={center}
@@ -237,7 +237,7 @@ function renderSideColumn(
           const gx = align === 'left'
             ? startX + GATE_R + col * COL_GAP
             : startX + colWidth - GATE_R - (GATE_COLS - 1 - col) * COL_GAP
-          const gy = y + 20 + row * ROW_GAP
+          const gy = y + 30 + row * ROW_GAP
 
           return (
             <g key={gate}>
