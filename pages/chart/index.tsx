@@ -475,7 +475,7 @@ export default function ChartGenerator() {
                 <div style={{ display: 'grid', gridTemplateColumns: '3fr 1fr', gap: 40, alignItems: 'start' }}>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                     <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, letterSpacing: '.12em', color: 'rgba(167,139,250,.5)', textTransform: 'uppercase', marginBottom: 16 }}>Body Graph</p>
-                    <div style={{ background: 'rgba(8,6,24,.6)', borderRadius: 12, padding: 20, border: '1px solid rgba(167,139,250,.1)', width: 'fit-content' }}>
+                    <div style={{ background: 'rgba(8,6,24,.6)', borderRadius: 12, padding: 20, border: '1px solid rgba(167,139,250,.1)', width: '100%' }}>
                       <BodyGraph chart={chart} />
                     </div>
                     <div style={{ display: 'flex', gap: 20, marginTop: 16 }}>
