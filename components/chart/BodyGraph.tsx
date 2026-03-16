@@ -25,10 +25,10 @@ const CP: Record<Center, {
   Ajna:        { x: 218, y: 12,  w: 64, h: 52, shape: 'tri-down'  },  // cx=250 top=12  bot=64
   Throat:      { x: 224, y: 88,  w: 52, h: 52, shape: 'square'    },  // cx=250 top=88  bot=140 L=224 R=276
   G:           { x: 212, y: 168, w: 76, h: 76, shape: 'diamond'   },  // cx=250 cy=206  top=168 bot=244 L=212 R=288
-  Heart:       { x: 298, y: 238, w: 66, h: 58, shape: 'half-top'  },  // unchanged
+  Heart:       { x: 298, y: 223, w: 66, h: 58, shape: 'half-top'  },  // tip=331,223 L-base=298,281 R-base=364,281
   Sacral:      { x: 224, y: 335, w: 52, h: 52, shape: 'square'    },  // unchanged
-  SolarPlexus: { x: 300, y: 334, w: 62, h: 56, shape: 'half-left' },  // unchanged
-  Spleen:      { x: 118, y: 334, w: 62, h: 56, shape: 'half-right'},  // unchanged
+  SolarPlexus: { x: 300, y: 314, w: 62, h: 56, shape: 'half-left' },  // tip=300,342 TR=362,314 BR=362,370
+  Spleen:      { x: 118, y: 314, w: 62, h: 56, shape: 'half-right'},  // tip=180,342 TL=118,314 BL=118,370
   Root:        { x: 217, y: 406, w: 66, h: 42, shape: 'square'    },  // unchanged
 }
 
@@ -57,22 +57,22 @@ const CORRIDORS: Corridor[] = [
 
   // ── Right branch ─────────────────────────────────────────────────
   // Throat R-mid → Heart tip
-  { id: 'Throat-Heart',       centers: ['Throat', 'Heart'],       path: 'M276,114 L331,238',  labelA: [276,114], labelB: [331,238], perpSign:  1 },
-  { id: 'Heart-SolarPlexus',  centers: ['Heart', 'SolarPlexus'],  path: 'M364,296 L362,334',  labelA: [364,296], labelB: [362,334], perpSign:  1 },
-  { id: 'Sacral-SolarPlexus', centers: ['Sacral', 'SolarPlexus'], path: 'M276,361 L300,362',  labelA: [276,361], labelB: [300,362], perpSign:  1 },
-  { id: 'SolarPlexus-Root',   centers: ['SolarPlexus', 'Root'],   path: 'M362,390 L283,427',  labelA: [362,390], labelB: [283,427], perpSign:  1 },
-  { id: 'Throat-SolarPlexus', centers: ['Throat', 'SolarPlexus'], path: 'M276,140 L362,334',  labelA: [276,140], labelB: [362,334], perpSign: -1 },
+  { id: 'Throat-Heart',       centers: ['Throat', 'Heart'],       path: 'M276,114 L331,223',  labelA: [276,114], labelB: [331,223], perpSign:  1 },
+  { id: 'Heart-SolarPlexus',  centers: ['Heart', 'SolarPlexus'],  path: 'M364,281 L362,314',  labelA: [364,281], labelB: [362,314], perpSign:  1 },
+  { id: 'Sacral-SolarPlexus', centers: ['Sacral', 'SolarPlexus'], path: 'M276,361 L300,342',  labelA: [276,361], labelB: [300,342], perpSign:  1 },
+  { id: 'SolarPlexus-Root',   centers: ['SolarPlexus', 'Root'],   path: 'M362,370 L283,427',  labelA: [362,370], labelB: [283,427], perpSign:  1 },
+  { id: 'Throat-SolarPlexus', centers: ['Throat', 'SolarPlexus'], path: 'M276,140 L362,314',  labelA: [276,140], labelB: [362,314], perpSign: -1 },
   { id: 'Sacral-Throat',      centers: ['Sacral', 'Throat'],      path: 'M280,335 L280,140',  labelA: [280,335], labelB: [280,140], perpSign:  1 },
 
   // ── Left branch ──────────────────────────────────────────────────
-  { id: 'G-Spleen',     centers: ['G', 'Spleen'],       path: 'M212,206 L180,362',  labelA: [212,206], labelB: [180,362], perpSign: -1 },
-  { id: 'Sacral-Spleen', centers: ['Sacral', 'Spleen'], path: 'M224,361 L180,362',  labelA: [224,361], labelB: [180,362], perpSign:  1 },
-  { id: 'Spleen-Root',  centers: ['Spleen', 'Root'],    path: 'M118,390 L217,427',  labelA: [118,390], labelB: [217,427], perpSign: -1 },
-  { id: 'Throat-Spleen', centers: ['Throat', 'Spleen'], path: 'M224,114 L118,334',  labelA: [224,114], labelB: [118,334], perpSign:  1 },
+  { id: 'G-Spleen',     centers: ['G', 'Spleen'],       path: 'M212,206 L180,342',  labelA: [212,206], labelB: [180,342], perpSign: -1 },
+  { id: 'Sacral-Spleen', centers: ['Sacral', 'Spleen'], path: 'M224,361 L180,342',  labelA: [224,361], labelB: [180,342], perpSign:  1 },
+  { id: 'Spleen-Root',  centers: ['Spleen', 'Root'],    path: 'M118,370 L217,427',  labelA: [118,370], labelB: [217,427], perpSign: -1 },
+  { id: 'Throat-Spleen', centers: ['Throat', 'Spleen'], path: 'M224,114 L118,314',  labelA: [224,114], labelB: [118,314], perpSign:  1 },
 
   // ── Cross connections ─────────────────────────────────────────────
-  { id: 'G-Heart',      centers: ['G', 'Heart'],      path: 'M288,206 L298,296',                   labelA: [288,206], labelB: [298,296], perpSign:  1 },
-  { id: 'Heart-Spleen', centers: ['Heart', 'Spleen'], path: 'M298,296 C265,315 215,340 180,362',   labelA: [298,296], labelB: [180,362], perpSign: -1 },
+  { id: 'G-Heart',      centers: ['G', 'Heart'],      path: 'M288,206 L298,281',                   labelA: [288,206], labelB: [298,281], perpSign:  1 },
+  { id: 'Heart-Spleen', centers: ['Heart', 'Spleen'], path: 'M298,281 C265,305 215,325 180,342',   labelA: [298,281], labelB: [180,342], perpSign: -1 },
 ]
 
 // Fast lookup: "C1-C2" or "C2-C1" → Corridor
@@ -213,7 +213,7 @@ export default function BodyGraph({ chart, size = 600 }: BodyGraphProps) {
 
   return (
     <svg
-      viewBox="50 -55 400 570"
+      viewBox="50 -88 400 600"
       width={size}
       height={size}
       style={{ maxWidth: '100%', display: 'block' }}
