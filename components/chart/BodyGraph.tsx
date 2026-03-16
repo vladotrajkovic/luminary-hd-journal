@@ -214,8 +214,8 @@ export default function BodyGraph({ chart, size = 600 }: BodyGraphProps) {
   return (
     <svg
       viewBox="50 -88 400 600"
-      width={size}
-      height={size}
+      width="100%"
+      height="auto"
       style={{ maxWidth: '100%', display: 'block' }}
     >
       <defs>
