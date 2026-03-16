@@ -192,11 +192,11 @@ function renderSideColumn(
   onHover: (c: Center | null) => void,
   hoveredCenter: Center | null
 ) {
-  const GATE_R   = 7.5
+  const GATE_R   = 12
   const GATE_COLS = 4
-  const COL_GAP  = 22
-  const ROW_GAP  = 18
-  const BLOCK_GAP = 24
+  const COL_GAP  = 32
+  const ROW_GAP  = 28
+  const BLOCK_GAP = 48
 
   let y = -72
 
@@ -204,7 +204,7 @@ function renderSideColumn(
     const gates  = CENTER_GATES[center]
     const rows   = Math.ceil(gates.length / GATE_COLS)
     const isHov  = hoveredCenter === center
-    const blockH = 14 + rows * ROW_GAP + 4
+    const blockH = 18 + rows * ROW_GAP + 6
 
     const el = (
       <g key={center}
@@ -221,7 +221,7 @@ function renderSideColumn(
           x={align === 'left' ? startX : startX + colWidth}
           y={y + 10}
           textAnchor={align === 'left' ? 'start' : 'end'}
-          fontSize={11} fontFamily="'Cinzel', serif" fontWeight="500"
+          fontSize={14} fontFamily="'Cinzel', serif" fontWeight="500"
           letterSpacing={0.8}
           fill={isHov ? '#C4B5FD' : 'rgba(167,139,250,0.55)'}>
           {CENTER_LABELS[center]}
@@ -245,7 +245,7 @@ function renderSideColumn(
                 <circle cx={gx} cy={gy} r={GATE_R} fill="none" stroke={color} strokeWidth={1.5} />
               )}
               <text x={gx} y={gy + 3.5} textAnchor="middle"
-                fontSize={9} fontFamily="'Inter', sans-serif"
+                fontSize={13} fontFamily="'Inter', sans-serif"
                 fontWeight={fw} fill={color}>
                 {gate}
               </text>
@@ -343,7 +343,7 @@ export default function BodyGraph({ chart }: BodyGraphProps) {
 
   return (
     <svg
-      viewBox="-210 -110 920 740"
+      viewBox="-220 -110 940 800"
       width="100%"
       height={600}
       style={{ maxWidth: '100%', display: 'block' }}
@@ -433,13 +433,13 @@ export default function BodyGraph({ chart }: BodyGraphProps) {
 
       {/* ── Legend ───────────────────────────────────────────────── */}
       <g>
-        <circle cx={-195} cy={565} r={7} fill="none" stroke="#A78BFA" strokeWidth={1.5} />
-        <text x={-182} y={570} fontSize={10} fontFamily="'Inter', sans-serif" fill="rgba(167,139,250,0.65)">Personality gate</text>
-        <circle cx={-195} cy={584} r={7} fill="none" stroke="#F87171" strokeWidth={1.5} />
-        <text x={-182} y={589} fontSize={10} fontFamily="'Inter', sans-serif" fill="rgba(167,139,250,0.65)">Design gate</text>
-        <circle cx={-195} cy={603} r={7} fill="none" stroke="#EDE9FE" strokeWidth={1.5} />
-        <text x={-182} y={608} fontSize={10} fontFamily="'Inter', sans-serif" fill="rgba(167,139,250,0.65)">Both activated</text>
-        <text x={-195} y={625} fontSize={9} fontFamily="'Inter', sans-serif" fill="rgba(167,139,250,0.35)">Dim = inactive gate</text>
+        <circle cx={-195} cy={565} r={9} fill="none" stroke="#A78BFA" strokeWidth={1.8} />
+        <text x={-180} y={570} fontSize={13} fontFamily="'Inter', sans-serif" fill="rgba(167,139,250,0.65)">Personality gate</text>
+        <circle cx={-195} cy={590} r={9} fill="none" stroke="#F87171" strokeWidth={1.8} />
+        <text x={-180} y={595} fontSize={13} fontFamily="'Inter', sans-serif" fill="rgba(167,139,250,0.65)">Design gate</text>
+        <circle cx={-195} cy={615} r={9} fill="none" stroke="#EDE9FE" strokeWidth={1.8} />
+        <text x={-180} y={620} fontSize={13} fontFamily="'Inter', sans-serif" fill="rgba(167,139,250,0.65)">Both activated</text>
+        <text x={-195} y={642} fontSize={11} fontFamily="'Inter', sans-serif" fill="rgba(167,139,250,0.35)">Dim = inactive gate</text>
       </g>
     </svg>
   )
