@@ -25,9 +25,9 @@ const CP: Record<Center, {
   Ajna:        { x: 209, y: 4,   w: 82,  h: 68,  shape: 'tri-down'  },  // cx=250 top=4    bot=72  — scaled from cx=250 cy=38
   Throat:      { x: 216, y: 80,  w: 68,  h: 68,  shape: 'square'    },  // cx=250 top=80   bot=148 L=216 R=284
   G:           { x: 201, y: 157, w: 98,  h: 98,  shape: 'diamond'   },  // cx=250 cy=206   top=157 bot=255 L=201 R=299
-  Heart:       { x: 310, y: 203, w: 104, h: 86,  shape: 'half-top'  },  // tip=(362,203) L-base=(310,289) R-base=(414,289)
+  Heart:       { x: 330, y: 203, w: 104, h: 86,  shape: 'half-top'  },  // tip=(382,203) L-base=(330,289) R-base=(434,289)
   Sacral:      { x: 216, y: 382, w: 68,  h: 68,  shape: 'square'    },  // cx=250 cy=416   top=382 bot=450 L=216 R=284
-  SolarPlexus: { x: 323, y: 360, w: 99,  h: 88,  shape: 'half-left' },  // tip=(323,404) TR=(422,360) BR=(422,448)
+  SolarPlexus: { x: 343, y: 360, w: 99,  h: 88,  shape: 'half-left' },  // tip=(343,404) TR=(442,360) BR=(442,448)
   Spleen:      { x: 59,  y: 360, w: 99,  h: 88,  shape: 'half-right'},  // tip=(158,404) TL=(59,360) BL=(59,448)
   Root:        { x: 207, y: 474, w: 86,  h: 55,  shape: 'square'    },  // cx=250 cy=501   top=474 bot=529 L=207 R=293
 }
@@ -56,11 +56,11 @@ const CORRIDORS: Corridor[] = [
   { id: 'Sacral-Root', centers: ['Sacral', 'Root'],   path: 'M250,450 L250,474',  labelA: [250,450], labelB: [250,474], perpSign: 1 },
 
   // ── Right branch ─────────────────────────────────────────────────
-  { id: 'Throat-Heart',       centers: ['Throat', 'Heart'],       path: 'M284,114 L362,203',  labelA: [284,114], labelB: [362,203], perpSign:  1 },
-  { id: 'Heart-SolarPlexus',  centers: ['Heart', 'SolarPlexus'],  path: 'M414,289 L422,360',  labelA: [414,289], labelB: [422,360], perpSign:  1 },
-  { id: 'Sacral-SolarPlexus', centers: ['Sacral', 'SolarPlexus'], path: 'M284,416 L323,404',  labelA: [284,416], labelB: [323,404], perpSign:  1 },
-  { id: 'SolarPlexus-Root',   centers: ['SolarPlexus', 'Root'],   path: 'M422,448 L293,501',  labelA: [422,448], labelB: [293,501], perpSign:  1 },
-  { id: 'Throat-SolarPlexus', centers: ['Throat', 'SolarPlexus'], path: 'M284,148 L422,360',  labelA: [284,148], labelB: [422,360], perpSign: -1 },
+  { id: 'Throat-Heart',       centers: ['Throat', 'Heart'],       path: 'M284,114 L382,203',  labelA: [284,114], labelB: [382,203], perpSign:  1 },
+  { id: 'Heart-SolarPlexus',  centers: ['Heart', 'SolarPlexus'],  path: 'M434,289 L442,360',  labelA: [434,289], labelB: [442,360], perpSign:  1 },
+  { id: 'Sacral-SolarPlexus', centers: ['Sacral', 'SolarPlexus'], path: 'M284,416 L343,404',  labelA: [284,416], labelB: [343,404], perpSign:  1 },
+  { id: 'SolarPlexus-Root',   centers: ['SolarPlexus', 'Root'],   path: 'M442,448 L293,501',  labelA: [442,448], labelB: [293,501], perpSign:  1 },
+  { id: 'Throat-SolarPlexus', centers: ['Throat', 'SolarPlexus'], path: 'M284,148 L442,360',  labelA: [284,148], labelB: [442,360], perpSign: -1 },
   { id: 'Sacral-Throat',      centers: ['Sacral', 'Throat'],      path: 'M284,382 L284,148',  labelA: [284,382], labelB: [284,148], perpSign:  1 },
 
   // ── Left branch ──────────────────────────────────────────────────
@@ -70,8 +70,8 @@ const CORRIDORS: Corridor[] = [
   { id: 'Throat-Spleen', centers: ['Throat', 'Spleen'],  path: 'M216,114 L59,360',   labelA: [216,114], labelB: [59,360],  perpSign:  1 },
 
   // ── Cross connections ─────────────────────────────────────────────
-  { id: 'G-Heart',      centers: ['G', 'Heart'],      path: 'M299,206 L310,289',                    labelA: [299,206], labelB: [310,289], perpSign:  1 },
-  { id: 'Heart-Spleen', centers: ['Heart', 'Spleen'], path: 'M310,289 C270,330 200,375 158,404',    labelA: [310,289], labelB: [158,404], perpSign: -1 },
+  { id: 'G-Heart',      centers: ['G', 'Heart'],      path: 'M299,206 L330,289',                    labelA: [299,206], labelB: [330,289], perpSign:  1 },
+  { id: 'Heart-Spleen', centers: ['Heart', 'Spleen'], path: 'M330,289 C280,330 210,375 158,404',    labelA: [330,289], labelB: [158,404], perpSign: -1 },
 ]
 
 // Fast lookup: "C1-C2" or "C2-C1" → Corridor
