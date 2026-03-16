@@ -432,14 +432,18 @@ export default function BodyGraph({ chart }: BodyGraphProps) {
       {hoveredCenter && renderTooltip(hoveredCenter, allPersonalityGates, allDesignGates)}
 
       {/* ── Legend ───────────────────────────────────────────────── */}
+      {/* ── Legend — horizontal row centered below silhouette ────── */}
       <g>
-        <circle cx={-195} cy={670} r={9} fill="none" stroke="#A78BFA" strokeWidth={1.8} />
-        <text x={-180} y={675} fontSize={13} fontFamily="'Inter', sans-serif" fill="rgba(167,139,250,0.65)">Personality gate</text>
-        <circle cx={-195} cy={695} r={9} fill="none" stroke="#F87171" strokeWidth={1.8} />
-        <text x={-180} y={700} fontSize={13} fontFamily="'Inter', sans-serif" fill="rgba(167,139,250,0.65)">Design gate</text>
-        <circle cx={-195} cy={720} r={9} fill="none" stroke="#EDE9FE" strokeWidth={1.8} />
-        <text x={-180} y={725} fontSize={13} fontFamily="'Inter', sans-serif" fill="rgba(167,139,250,0.65)">Both activated</text>
-        <text x={-195} y={747} fontSize={11} fontFamily="'Inter', sans-serif" fill="rgba(167,139,250,0.35)">Dim = inactive gate</text>
+        <circle cx={-20} cy={572} r={9} fill="none" stroke="#A78BFA" strokeWidth={1.8} />
+        <text x={-6} y={577} fontSize={13} fontFamily="'Inter', sans-serif" fill="rgba(167,139,250,0.65)">Personality gate</text>
+
+        <circle cx={160} cy={572} r={9} fill="none" stroke="#F87171" strokeWidth={1.8} />
+        <text x={174} y={577} fontSize={13} fontFamily="'Inter', sans-serif" fill="rgba(167,139,250,0.65)">Design gate</text>
+
+        <circle cx={310} cy={572} r={9} fill="none" stroke="#EDE9FE" strokeWidth={1.8} />
+        <text x={324} y={577} fontSize={13} fontFamily="'Inter', sans-serif" fill="rgba(167,139,250,0.65)">Both activated</text>
+
+        <text x={470} y={577} fontSize={12} fontFamily="'Inter', sans-serif" fill="rgba(167,139,250,0.35)">Dim = inactive gate</text>
       </g>
     </svg>
   )
