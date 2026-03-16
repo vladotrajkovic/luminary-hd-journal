@@ -433,13 +433,13 @@ export default function BodyGraph({ chart }: BodyGraphProps) {
 
       {/* ── Legend ───────────────────────────────────────────────── */}
       <g>
-        <circle cx={-195} cy={565} r={9} fill="none" stroke="#A78BFA" strokeWidth={1.8} />
-        <text x={-180} y={570} fontSize={13} fontFamily="'Inter', sans-serif" fill="rgba(167,139,250,0.65)">Personality gate</text>
-        <circle cx={-195} cy={590} r={9} fill="none" stroke="#F87171" strokeWidth={1.8} />
-        <text x={-180} y={595} fontSize={13} fontFamily="'Inter', sans-serif" fill="rgba(167,139,250,0.65)">Design gate</text>
-        <circle cx={-195} cy={615} r={9} fill="none" stroke="#EDE9FE" strokeWidth={1.8} />
-        <text x={-180} y={620} fontSize={13} fontFamily="'Inter', sans-serif" fill="rgba(167,139,250,0.65)">Both activated</text>
-        <text x={-195} y={642} fontSize={11} fontFamily="'Inter', sans-serif" fill="rgba(167,139,250,0.35)">Dim = inactive gate</text>
+        <circle cx={-195} cy={670} r={9} fill="none" stroke="#A78BFA" strokeWidth={1.8} />
+        <text x={-180} y={675} fontSize={13} fontFamily="'Inter', sans-serif" fill="rgba(167,139,250,0.65)">Personality gate</text>
+        <circle cx={-195} cy={695} r={9} fill="none" stroke="#F87171" strokeWidth={1.8} />
+        <text x={-180} y={700} fontSize={13} fontFamily="'Inter', sans-serif" fill="rgba(167,139,250,0.65)">Design gate</text>
+        <circle cx={-195} cy={720} r={9} fill="none" stroke="#EDE9FE" strokeWidth={1.8} />
+        <text x={-180} y={725} fontSize={13} fontFamily="'Inter', sans-serif" fill="rgba(167,139,250,0.65)">Both activated</text>
+        <text x={-195} y={747} fontSize={11} fontFamily="'Inter', sans-serif" fill="rgba(167,139,250,0.35)">Dim = inactive gate</text>
       </g>
     </svg>
   )
