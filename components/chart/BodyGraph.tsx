@@ -26,10 +26,10 @@ const CP: Record<Center, {
   Throat:      { x: 224, y: 88,  w: 52,  h: 52, shape: 'square'    },  // cx=250 top=88  bot=140 L=224 R=276
   G:           { x: 212, y: 168, w: 76,  h: 76, shape: 'diamond'   },  // cx=250 cy=206  top=168 bot=244 L=212 R=288
   Heart:       { x: 322, y: 213, w: 80,  h: 66, shape: 'half-top'  },  // tip=(362,213) L-base=(322,279) R-base=(402,279)
-  Sacral:      { x: 224, y: 335, w: 52,  h: 52, shape: 'square'    },  // cx=250 cy=361  top=335 bot=387 L=224 R=276
-  SolarPlexus: { x: 334, y: 308, w: 76,  h: 68, shape: 'half-left' },  // tip=(334,342) TR=(410,308) BR=(410,376)
-  Spleen:      { x: 70,  y: 308, w: 76,  h: 68, shape: 'half-right'},  // tip=(146,342) TL=(70,308) BL=(70,376)
-  Root:        { x: 217, y: 406, w: 66,  h: 42, shape: 'square'    },  // cx=250 unchanged
+  Sacral:      { x: 224, y: 390, w: 52,  h: 52, shape: 'square'    },  // cx=250 cy=416  top=390 bot=442 L=224 R=276
+  SolarPlexus: { x: 334, y: 370, w: 76,  h: 68, shape: 'half-left' },  // tip=(334,404) TR=(410,370) BR=(410,438)
+  Spleen:      { x: 70,  y: 370, w: 76,  h: 68, shape: 'half-right'},  // tip=(146,404) TL=(70,370) BL=(70,438)
+  Root:        { x: 217, y: 480, w: 66,  h: 42, shape: 'square'    },  // cx=250 cy=501  top=480 bot=522
 }
 
 const CENTER_LABELS: Record<Center, string> = {
@@ -52,26 +52,26 @@ const CORRIDORS: Corridor[] = [
   { id: 'Head-Ajna',   centers: ['Head', 'Ajna'],     path: 'M250,-14 L250,12',   labelA: [250,-14], labelB: [250,12],  perpSign: 1 },
   { id: 'Ajna-Throat', centers: ['Ajna', 'Throat'],   path: 'M250,64 L250,88',    labelA: [250,64],  labelB: [250,88],  perpSign: 1 },
   { id: 'Throat-G',    centers: ['Throat', 'G'],      path: 'M250,140 L250,168',  labelA: [250,140], labelB: [250,168], perpSign: 1 },
-  { id: 'G-Sacral',    centers: ['G', 'Sacral'],      path: 'M250,244 L250,335',  labelA: [250,244], labelB: [250,335], perpSign: 1 },
-  { id: 'Sacral-Root', centers: ['Sacral', 'Root'],   path: 'M250,387 L250,406',  labelA: [250,387], labelB: [250,406], perpSign: 1 },
+  { id: 'G-Sacral',    centers: ['G', 'Sacral'],      path: 'M250,244 L250,390',  labelA: [250,244], labelB: [250,390], perpSign: 1 },
+  { id: 'Sacral-Root', centers: ['Sacral', 'Root'],   path: 'M250,442 L250,480',  labelA: [250,442], labelB: [250,480], perpSign: 1 },
 
   // ── Right branch ─────────────────────────────────────────────────
   { id: 'Throat-Heart',       centers: ['Throat', 'Heart'],       path: 'M276,114 L362,213',  labelA: [276,114], labelB: [362,213], perpSign:  1 },
-  { id: 'Heart-SolarPlexus',  centers: ['Heart', 'SolarPlexus'],  path: 'M402,279 L410,308',  labelA: [402,279], labelB: [410,308], perpSign:  1 },
-  { id: 'Sacral-SolarPlexus', centers: ['Sacral', 'SolarPlexus'], path: 'M276,361 L334,342',  labelA: [276,361], labelB: [334,342], perpSign:  1 },
-  { id: 'SolarPlexus-Root',   centers: ['SolarPlexus', 'Root'],   path: 'M410,376 L283,427',  labelA: [410,376], labelB: [283,427], perpSign:  1 },
-  { id: 'Throat-SolarPlexus', centers: ['Throat', 'SolarPlexus'], path: 'M276,140 L410,308',  labelA: [276,140], labelB: [410,308], perpSign: -1 },
-  { id: 'Sacral-Throat',      centers: ['Sacral', 'Throat'],      path: 'M280,335 L280,140',  labelA: [280,335], labelB: [280,140], perpSign:  1 },
+  { id: 'Heart-SolarPlexus',  centers: ['Heart', 'SolarPlexus'],  path: 'M402,279 L410,370',  labelA: [402,279], labelB: [410,370], perpSign:  1 },
+  { id: 'Sacral-SolarPlexus', centers: ['Sacral', 'SolarPlexus'], path: 'M276,416 L334,404',  labelA: [276,416], labelB: [334,404], perpSign:  1 },
+  { id: 'SolarPlexus-Root',   centers: ['SolarPlexus', 'Root'],   path: 'M410,438 L283,501',  labelA: [410,438], labelB: [283,501], perpSign:  1 },
+  { id: 'Throat-SolarPlexus', centers: ['Throat', 'SolarPlexus'], path: 'M276,140 L410,370',  labelA: [276,140], labelB: [410,370], perpSign: -1 },
+  { id: 'Sacral-Throat',      centers: ['Sacral', 'Throat'],      path: 'M280,390 L280,140',  labelA: [280,390], labelB: [280,140], perpSign:  1 },
 
   // ── Left branch ──────────────────────────────────────────────────
-  { id: 'G-Spleen',      centers: ['G', 'Spleen'],       path: 'M212,206 L146,342',  labelA: [212,206], labelB: [146,342], perpSign: -1 },
-  { id: 'Sacral-Spleen', centers: ['Sacral', 'Spleen'],  path: 'M224,361 L146,342',  labelA: [224,361], labelB: [146,342], perpSign:  1 },
-  { id: 'Spleen-Root',   centers: ['Spleen', 'Root'],    path: 'M70,376 L217,427',   labelA: [70,376],  labelB: [217,427], perpSign: -1 },
-  { id: 'Throat-Spleen', centers: ['Throat', 'Spleen'],  path: 'M224,114 L70,308',   labelA: [224,114], labelB: [70,308],  perpSign:  1 },
+  { id: 'G-Spleen',      centers: ['G', 'Spleen'],       path: 'M212,206 L146,404',  labelA: [212,206], labelB: [146,404], perpSign: -1 },
+  { id: 'Sacral-Spleen', centers: ['Sacral', 'Spleen'],  path: 'M224,416 L146,404',  labelA: [224,416], labelB: [146,404], perpSign:  1 },
+  { id: 'Spleen-Root',   centers: ['Spleen', 'Root'],    path: 'M70,438 L217,501',   labelA: [70,438],  labelB: [217,501], perpSign: -1 },
+  { id: 'Throat-Spleen', centers: ['Throat', 'Spleen'],  path: 'M224,114 L70,370',   labelA: [224,114], labelB: [70,370],  perpSign:  1 },
 
   // ── Cross connections ─────────────────────────────────────────────
   { id: 'G-Heart',      centers: ['G', 'Heart'],      path: 'M288,206 L322,279',                    labelA: [288,206], labelB: [322,279], perpSign:  1 },
-  { id: 'Heart-Spleen', centers: ['Heart', 'Spleen'], path: 'M322,279 C275,305 200,328 146,342',    labelA: [322,279], labelB: [146,342], perpSign: -1 },
+  { id: 'Heart-Spleen', centers: ['Heart', 'Spleen'], path: 'M322,279 C275,330 200,375 146,404',    labelA: [322,279], labelB: [146,404], perpSign: -1 },
 ]
 
 // Fast lookup: "C1-C2" or "C2-C1" → Corridor
@@ -212,7 +212,7 @@ export default function BodyGraph({ chart, size = 600 }: BodyGraphProps) {
 
   return (
     <svg
-      viewBox="-30 -95 560 620"
+      viewBox="-30 -95 560 700"
       width="100%"
       height={600}
       style={{ maxWidth: '100%', display: 'block' }}
@@ -239,11 +239,13 @@ export default function BodyGraph({ chart, size = 600 }: BodyGraphProps) {
           C 202,86  200,96  196,108
           C 180,128 152,152 118,180
           C 84,208  60,244  52,282
-          C 44,318  46,354  48,388
-          C 50,414  52,436  56,458
-          L 444,458
-          C 448,436 450,414 452,388
-          C 454,354 456,318 448,282
+          C 44,318  44,358  46,396
+          C 48,430  50,462  52,494
+          C 54,514  56,528  58,540
+          L 442,540
+          C 444,528 446,514 448,494
+          C 450,462 452,430 454,396
+          C 456,358 456,318 448,282
           C 440,244 416,208 382,180
           C 348,152 320,128 304,108
           C 300,96  298,86  294,76
