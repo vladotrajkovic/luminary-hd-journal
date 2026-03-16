@@ -153,6 +153,7 @@ export const HD_AUTHORITIES = {
 export const HD_CENTERS = [
   {
     name: 'Head',
+    description: 'The pressure center for mental inspiration and existential questions',
     defined_gift: 'Consistent mental pressure and inspiration',
     open_gift: 'Broad range of mental inspiration from others',
     open_conditioning: 'Pressure to figure everything out; mental anxiety',
@@ -161,6 +162,7 @@ export const HD_CENTERS = [
   },
   {
     name: 'Ajna',
+    description: 'The mind\'s processing hub for concepts, beliefs, and mental patterns',
     defined_gift: 'Consistent way of conceptualizing and processing',
     open_gift: 'Mental flexibility and seeing many perspectives',
     open_conditioning: 'Needing to appear certain; mental anxiety about knowing',
@@ -169,6 +171,7 @@ export const HD_CENTERS = [
   },
   {
     name: 'Throat',
+    description: 'The manifestation center governing voice, communication, and action',
     defined_gift: 'Consistent voice and way of expressing/manifesting',
     open_gift: 'Versatile communicator, many voices',
     open_conditioning: 'Talking to be heard; attention-seeking',
@@ -177,6 +180,7 @@ export const HD_CENTERS = [
   },
   {
     name: 'G Center',
+    description: 'The seat of identity, love, and life direction',
     defined_gift: 'Fixed sense of identity, direction, and love',
     open_gift: 'Open to many directions and identities; seeks love',
     open_conditioning: 'Asking "Who am I? Where am I going?" with anxiety',
@@ -185,6 +189,7 @@ export const HD_CENTERS = [
   },
   {
     name: 'Heart/Ego',
+    description: 'The willpower center governing commitment and material resources',
     defined_gift: 'Consistent willpower, self-worth, and ability to commit',
     open_gift: 'Not here to prove themselves; wisdom about willpower',
     open_conditioning: 'Proving self-worth; overcommitting to prove value',
@@ -193,6 +198,7 @@ export const HD_CENTERS = [
   },
   {
     name: 'Sacral',
+    description: 'The life force center driving sustainable work, creativity, and sexuality',
     defined_gift: 'Life force, sustainable work energy, gut knowing',
     open_gift: 'Amplifies others\' sacral energy; wisdom about life force',
     open_conditioning: 'Not knowing when to stop; over-working',
@@ -201,6 +207,7 @@ export const HD_CENTERS = [
   },
   {
     name: 'Solar Plexus',
+    description: 'The emotional center where truth unfolds over time through a wave',
     defined_gift: 'Consistent emotional wave; truth emerges over time',
     open_gift: 'Emotional sensitivity and empathy; feels others deeply',
     open_conditioning: 'Avoiding truth and conflict to keep peace',
@@ -209,6 +216,7 @@ export const HD_CENTERS = [
   },
   {
     name: 'Spleen',
+    description: 'The intuition and immune center operating spontaneously in the present moment',
     defined_gift: 'Consistent intuition, immune system, survival instincts',
     open_gift: 'Highly attuned to others\' health and intuition',
     open_conditioning: 'Holding on to what isn\'t healthy out of fear',
@@ -217,6 +225,7 @@ export const HD_CENTERS = [
   },
   {
     name: 'Root',
+    description: 'The pressure and adrenaline center fueling momentum and the drive to act',
     defined_gift: 'Consistent adrenaline and pressure to fuel action',
     open_gift: 'Wisdom about pressure and stress; knows when to act',
     open_conditioning: 'Always in a rush to get things done to relieve pressure',
