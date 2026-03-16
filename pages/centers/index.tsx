@@ -5,7 +5,6 @@ import { supabase } from '../../lib/supabase'
 import { HD_CENTERS } from '../../lib/hdData'
 
 // Maps HD_CENTERS display names → internal DB keys stored in profile.defined_centers
-// HD_CENTERS uses human-readable names; the DB stores internal Center keys
 const CENTER_NAME_TO_KEY: Record<string, string> = {
   'Solar Plexus': 'SolarPlexus',
   'G Center':     'G',
@@ -13,11 +12,11 @@ const CENTER_NAME_TO_KEY: Record<string, string> = {
 }
 
 export default function Centers() {
-  const [profile, setProfile]       = useState<any>(null)
+  const [profile, setProfile]         = useState<any>(null)
   const [reflections, setReflections] = useState<any[]>([])
-  const [selected, setSelected]     = useState<string | null>(null)
-  const [notes, setNotes]           = useState<Record<string, string>>({})
-  const [saving, setSaving]         = useState(false)
+  const [selected, setSelected]       = useState<string | null>(null)
+  const [notes, setNotes]             = useState<Record<string, string>>({})
+  const [saving, setSaving]           = useState(false)
 
   useEffect(() => {
     const load = async () => {
@@ -38,7 +37,6 @@ export default function Centers() {
 
   const definedCenters: string[] = profile?.defined_centers || []
 
-  // Resolve whether a center (by display name) is defined
   const isCenterDefined = (displayName: string) => {
     const key = CENTER_NAME_TO_KEY[displayName] ?? displayName
     return definedCenters.includes(key)
@@ -50,7 +48,6 @@ export default function Centers() {
     if (!session) return
 
     const existing = reflections.find(r => r.center_name === centerName)
-    // FIX: normalise display name before checking defined status
     const isDefined = isCenterDefined(centerName)
 
     if (existing) {
@@ -98,7 +95,6 @@ export default function Centers() {
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 20 }}>
           {HD_CENTERS.map(center => {
-            // FIX: normalise display name → internal key before comparing with DB values
             const isDefined  = isCenterDefined(center.name)
             const isOpen     = !isDefined
             const isSelected = selected === center.name
@@ -123,19 +119,30 @@ export default function Centers() {
                     </span>
                   </div>
 
+                  {/* Top line: description for defined, open_gift for open — no duplication */}
                   <p style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 18, color: 'rgba(196,181,253,0.7)', marginBottom: 12, lineHeight: 1.5 }}>
-                    {isDefined ? center.defined_gift : center.open_gift}
+                    {isDefined
+                      ? (center as any).description ?? center.defined_gift
+                      : center.open_gift}
                   </p>
 
+                  {/* Gift / conditioning box */}
                   <div style={{
                     background: isOpen ? 'rgba(248,113,113,0.06)' : 'rgba(123,79,212,0.08)',
                     borderRadius: 8, padding: '10px 14px',
                     border: `1px solid ${isOpen ? 'rgba(248,113,113,0.15)' : 'rgba(123,79,212,0.15)'}`,
                   }}>
-                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, color: isOpen ? 'rgba(248,113,113,0.6)' : 'rgba(167,139,250,0.5)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>
+                    <p style={{
+                      fontFamily: 'Inter, sans-serif', fontSize: 11,
+                      color: isOpen ? 'rgba(248,113,113,0.6)' : 'rgba(167,139,250,0.5)',
+                      textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4,
+                    }}>
                       {isOpen ? 'Watch for conditioning' : 'Your consistent gift'}
                     </p>
-                    <p style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 17, color: isOpen ? 'rgba(248,113,113,0.8)' : 'rgba(167,139,250,0.7)' }}>
+                    <p style={{
+                      fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: 17,
+                      color: isOpen ? 'rgba(248,113,113,0.8)' : 'rgba(167,139,250,0.7)',
+                    }}>
                       {isOpen ? center.not_self_question : center.defined_gift}
                     </p>
                   </div>
