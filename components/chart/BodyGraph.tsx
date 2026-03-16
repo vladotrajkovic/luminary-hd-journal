@@ -366,6 +366,9 @@ export default function BodyGraph({ chart }: BodyGraphProps) {
       {renderSideColumn(RIGHT_CENTERS, 715, 140, 'right',
         allPersonalityGates, allDesignGates, setHoveredCenter, hoveredCenter)}
 
+      {/* ── Body graph group — translated right to center between columns ── */}
+      <g transform="translate(80, 0)">
+
       {/* ── Human Silhouette ─────────────────────────────────────── */}
       <path
         d={`
@@ -430,6 +433,8 @@ export default function BodyGraph({ chart }: BodyGraphProps) {
 
       {/* ── Hover tooltip (on top of everything) ─────────────────── */}
       {hoveredCenter && renderTooltip(hoveredCenter, allPersonalityGates, allDesignGates)}
+
+      </g>{/* end body graph group */}
 
       {/* ── Legend ───────────────────────────────────────────────── */}
       <g>
