@@ -4,6 +4,7 @@ import { useRouter } from 'next/router'
 import Layout from '../../components/layout/Layout'
 import { supabase } from '../../lib/supabase'
 import { generateHDReportPdf } from '../../lib/generatePdf'
+import BodyGraph from '../../components/chart/BodyGraph'
 
 // ── SECTION CONFIG ─────────────────────────────────────────
 const SECTIONS = [
@@ -61,10 +62,6 @@ const S = {
 }
 
 // ── MARKDOWN RENDERER ──────────────────────────────────────
-// Handles the subset of markdown the content library emits:
-//   **bold**  *italic*  - bullets  --- dividers  blank-line paragraphs
-//   **Heading** — subtitle  (center / channel label lines)
-
 type Segment = { type: 'text' | 'bold' | 'italic'; value: string }
 
 function parseInline(raw: string): Segment[] {
@@ -121,7 +118,6 @@ function MarkdownContent({ text, accentColor, isStreaming }: {
   }
 
   for (const line of lines) {
-    // Horizontal divider ---
     if (line.trim() === '---') {
       flushParagraph()
       blocks.push(
@@ -133,8 +129,6 @@ function MarkdownContent({ text, accentColor, isStreaming }: {
       )
       continue
     }
-
-    // Bullet point
     if (line.trimStart().startsWith('- ')) {
       flushParagraph()
       const bulletText = line.trimStart().slice(2)
@@ -148,14 +142,10 @@ function MarkdownContent({ text, accentColor, isStreaming }: {
       )
       continue
     }
-
-    // Blank line → flush paragraph
     if (line.trim() === '') {
       flushParagraph()
       continue
     }
-
-    // Accumulate into paragraph
     paragraphLines.push(line)
   }
   flushParagraph()
@@ -250,7 +240,8 @@ export default function ReportPage() {
   const [exporting, setExporting]   = useState(false)
   const [saving, setSaving]         = useState(false)
   const [savedAt, setSavedAt]       = useState<string | null>(null)
-  const rawRef = useRef('')
+  const rawRef       = useRef('')
+  const bodyGraphRef = useRef<HTMLDivElement>(null)
 
   // ── LOAD ────────────────────────────────────────────────
   useEffect(() => {
@@ -278,8 +269,12 @@ export default function ReportPage() {
           .filter((c: string) => !(data?.defined_centers || []).includes(c)),
         activeChannels:      [],
         allGates:            data?.active_gates        || [],
-        allPersonalityGates: [],
-        allDesignGates:      [],
+        allPersonalityGates: data?.planet_activations
+          ? data.planet_activations.map((a: any) => a.personality?.gate).filter(Boolean)
+          : [],
+        allDesignGates: data?.planet_activations
+          ? data.planet_activations.map((a: any) => a.design?.gate).filter(Boolean)
+          : [],
       }
 
       // Restore persisted report
@@ -403,7 +398,18 @@ export default function ReportPage() {
   const handleExportPdf = async () => {
     setExporting(true)
     try {
-      await generateHDReportPdf({ sections, profile })
+      let bodyGraphImage: string | undefined
+      if (bodyGraphRef.current) {
+        const html2canvas = (await import('html2canvas')).default
+        const canvas = await html2canvas(bodyGraphRef.current, {
+          backgroundColor: '#0f0a2e',
+          scale: 2,
+          logging: false,
+          useCORS: true,
+        })
+        bodyGraphImage = canvas.toDataURL('image/png')
+      }
+      await generateHDReportPdf({ sections, profile, bodyGraphImage })
     } catch (e) {
       console.error('PDF export failed', e)
     } finally {
@@ -524,7 +530,6 @@ export default function ReportPage() {
               To generate a full report, please complete your chart data in{' '}
               <a href="/profile" style={{ color: '#D4AF37', textDecoration: 'underline' }}>My Chart</a> or run the{' '}
               <a href="/chart" style={{ color: '#D4AF37', textDecoration: 'underline' }}>HD Chart Generator</a> first.
-              At minimum, Type, Authority, and Profile are required.
             </p>
           </div>
         )}
@@ -642,6 +647,23 @@ export default function ReportPage() {
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {/* ── Hidden Body Graph for PDF capture ───────────────── */}
+        {chartData && (
+          <div
+            ref={bodyGraphRef}
+            style={{
+              position: 'absolute',
+              left: -9999,
+              top: 0,
+              width: 900,
+              background: '#0f0a2e',
+              padding: 20,
+            }}
+          >
+            <BodyGraph chart={chartData} />
           </div>
         )}
 
