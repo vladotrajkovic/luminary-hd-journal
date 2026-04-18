@@ -76,7 +76,7 @@ export default function Login() {
                 />
               </div>
 
-              <div style={{ marginBottom: 28 }}>
+              <div style={{ marginBottom: 10 }}>
                 <label style={{ fontFamily: 'Inter, sans-serif', fontSize: 11, letterSpacing: '0.1em', color: 'rgba(167,139,250,0.7)', textTransform: 'uppercase', display: 'block', marginBottom: 8 }}>
                   Password
                 </label>
@@ -88,6 +88,22 @@ export default function Login() {
                   placeholder="••••••••"
                   required
                 />
+              </div>
+
+              {/* Forgot password link */}
+              <div style={{ textAlign: 'right', marginBottom: 24 }}>
+                <Link
+                  href="/auth/forgot-password"
+                  style={{
+                    fontFamily: 'Inter, sans-serif',
+                    fontSize: 12,
+                    color: 'rgba(167,139,250,0.7)',
+                    textDecoration: 'none',
+                    letterSpacing: '0.02em',
+                  }}
+                >
+                  Forgot your password?
+                </Link>
               </div>
 
               <button type="submit" className="btn-cosmic" style={{ width: '100%', padding: '14px', fontSize: 13 }} disabled={loading}>
